@@ -1,14 +1,11 @@
 function test() {
-                            let tmp:number = 1;
+    let tmp: number = 1;
 
-        for (let i = 0; i < 10; i++) {
-            tmp += i
-        }
+    for (let i = 0; i < 10; i++) {
+        tmp += i;
+    }
 }
 
+test();
 
-            test()
-
-                        function t() {
-                            
-                        }
+function t() {}
