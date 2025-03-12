@@ -13,7 +13,7 @@
     },
     "husky": {
         "hooks": {
-            "pre-commit": "npx prettier --write '*.md' '*.json' '*.ts' '*.js'"
+            "pre-push": "npx prettier --write '*.md' '*.json' '*.ts' '*.js'"
         }
     },
     "prettier": {
