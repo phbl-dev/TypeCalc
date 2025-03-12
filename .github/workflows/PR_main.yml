@@ -1,0 +1,29 @@
+name: Vitest CI
+
+on:
+  pull_request:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16]
+
+    steps:
+      - name: Look at repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with: 
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - name: Downloading and installing dependencies 
+        run: npm install
+      
+      - name: Run tests
+        run: npm run test
+        
+    
