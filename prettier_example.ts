@@ -9,3 +9,9 @@ function test() {
 test();
 
 function t() {}
+
+function s() {
+                                                        this
+
+                                                    
+}
