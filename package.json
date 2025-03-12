@@ -1,31 +1,32 @@
 {
-  "name": "spreadsheet",
-  "version": "1.0.0",
-  "description": "Open-source Thesis project based on the spreadsheet implementation technology: Basics and Extensions book by Peter Sestoft.",
-  "main": "index.js",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build GUI",
-    "preview": "vite preview",
-    "test": "npx vitest run"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/phbl-dev/Spreadsheet.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/phbl-dev/Spreadsheet/issues"
-  },
-  "homepage": "https://github.com/phbl-dev/Spreadsheet#readme",
-  "devDependencies": {
-    "typescript": "^5.8.2",
-    "vite": "^6.2.1"
-  },
-  "dependencies": {
-    "vitest": "^3.0.8"
-  }
+    "name": "spreadsheet",
+    "version": "1.0.0",
+    "description": "Open-source Thesis project based on the spreadsheet implementation technology: Basics and Extensions book by Peter Sestoft.",
+    "main": "index.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build GUI",
+        "preview": "vite preview",
+        "test": "npx vitest run",
+        "pretty": "npx prettier --write '**/*.{js,ts,tsx,json,md}'"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/phbl-dev/Spreadsheet.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "bugs": {
+        "url": "https://github.com/phbl-dev/Spreadsheet/issues"
+    },
+    "homepage": "https://github.com/phbl-dev/Spreadsheet#readme",
+    "devDependencies": {
+        "typescript": "^5.8.2",
+        "vite": "^6.2.1"
+    },
+    "dependencies": {
+        "vitest": "^3.0.8"
+    }
 }
