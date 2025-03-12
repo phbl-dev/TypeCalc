@@ -23,6 +23,12 @@ jobs:
       - name: Downloading and installing dependencies 
         run: npm install
       
+      - name: Pretty formatting 
+        id: prettier-run
+        uses: rutajdash/prettier-cli-action@v1.0.0
+        with: 
+          config_path: ./.prettierrc.yml
+      
       - name: Run tests
         run: npm run test
         

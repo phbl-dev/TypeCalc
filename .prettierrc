@@ -1,0 +1,6 @@
+{
+    "tabWidth": 4,
+    "objectWrap": "collapse",
+    "printWidth": 160,
+    "singleAttributePerLine": false
+}
