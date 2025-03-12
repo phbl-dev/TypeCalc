@@ -9,7 +9,6 @@ function test() {
 
             test()
 
-
-    function s() {
-        
-    }
+                        function t() {
+                            
+                        }
