@@ -11,7 +11,10 @@ test();
 function t() {}
 
 function s() {
-                                                        this
+    this;
+}
 
-                                                    
+function weee() {
+    const i = 0;
+    const j = i;
 }
