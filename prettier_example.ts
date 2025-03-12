@@ -8,3 +8,8 @@ function test() {
 
 
             test()
+
+
+    function s() {
+        
+    }
