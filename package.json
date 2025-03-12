@@ -9,14 +9,20 @@
         "preview": "vite preview",
         "test": "npx vitest run",
         "pretty": "npx prettier --write '**/*.{js,ts,tsx,json,md}'",
-        "prepare": "husky"
+        "prepare": "husky install"
     },
+    "husky": {
+  "hooks": {
+    "pre-commit": "npx prettier --write \"$(git ls-files --exclude-standard '*.md' '*.json' '*.ts' '*.js')\""
+  }
+}
+,
     "prettier": {
-    "objectWrap": "collapse",
-    "printWidth": 160,
-    "tabWidth": 4,
-    "singleAttributePerLine": false
-  },
+        "objectWrap": "collapse",
+        "printWidth": 160,
+        "tabWidth": 4,
+        "singleAttributePerLine": false
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/phbl-dev/Spreadsheet.git"
@@ -31,6 +37,8 @@
     "homepage": "https://github.com/phbl-dev/Spreadsheet#readme",
     "devDependencies": {
         "husky": "^9.1.7",
+        "lint-staged": "^15.5.0",
+        "prettier": "^3.5.3",
         "typescript": "^5.8.2",
         "vite": "^6.2.1"
     },
