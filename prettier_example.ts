@@ -5,3 +5,6 @@ function test() {
             tmp += i
         }
 }
+
+
+test()
