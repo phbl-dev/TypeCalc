@@ -12,11 +12,10 @@
         "prepare": "husky install"
     },
     "husky": {
-  "hooks": {
-    "pre-commit": "npx prettier --write \"$(git ls-files --exclude-standard '*.md' '*.json' '*.ts' '*.js')\""
-  }
-}
-,
+        "hooks": {
+            "pre-commit": "npx prettier --write \"$(git ls-files --exclude-standard '*.md' '*.json' '*.ts' '*.js')\""
+        }
+    },
     "prettier": {
         "objectWrap": "collapse",
         "printWidth": 160,
