@@ -19,13 +19,13 @@ function newTable() {
   const inputElem = document.getElementById("sheetInput") as HTMLInputElement;
   const input = inputElem.value || "20x20";
   const sheetDimensions = input.split("x");
-  createTable(parseInt(sheetDimensions[0]), parseInt(sheetDimensions[1]));
+  table(parseInt(sheetDimensions[0]), parseInt(sheetDimensions[1]));
 }
 
 /* Creates a table with the specified number of rows and columns, where the first column and first row are
  * labeled with numbers and letters, respectively.
  */
-function createTable(rows: number, columns: number) {
+function table(rows: number, columns: number) {
   /* 'document' represents the html. Typescript can manipulate the document structure through 'document'.
    * 'document.createElement' creates the HTML element specified by the tagName which is 'table' here.<br>
    * 'table': The HTMLTableElement interface provides special properties and methods for manipulating the
