@@ -1,0 +1,47 @@
+{
+    "name": "spreadsheet",
+    "version": "1.0.0",
+    "description": "Open-source Thesis project based on the spreadsheet implementation technology: Basics and Extensions book by Peter Sestoft.",
+    "main": "index.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build GUI",
+        "preview": "vite preview",
+        "test": "npx vitest run",
+        "pretty": "npx prettier --write '**/*.{js,ts,tsx,json,md}'",
+        "prepare": "husky install"
+    },
+    "husky": {
+        "hooks": {
+            "pre-push": "npx prettier --write '*.md' '*.json' '*.ts' '*.js'"
+        }
+    },
+    "prettier": {
+        "objectWrap": "collapse",
+        "printWidth": 160,
+        "tabWidth": 4,
+        "singleAttributePerLine": false
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/phbl-dev/Spreadsheet.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "bugs": {
+        "url": "https://github.com/phbl-dev/Spreadsheet/issues"
+    },
+    "homepage": "https://github.com/phbl-dev/Spreadsheet#readme",
+    "devDependencies": {
+        "husky": "^9.1.7",
+        "lint-staged": "^15.5.0",
+        "prettier": "^3.5.3",
+        "typescript": "^5.8.2",
+        "vite": "^6.2.1"
+    },
+    "dependencies": {
+        "vitest": "^3.0.8"
+    }
+}
