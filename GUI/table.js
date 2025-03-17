@@ -1,3 +1,6 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+require("../src/WorkbookIO");
 // Converts a number n into a corresponding letter A-Z. If n > 26, it assigns multiple letters, e.g.,
 // AA-AZ, BA-BZ, etc.
 function numberToLetters(n) {
@@ -20,6 +23,12 @@ function newTable() {
     var sheetDimensions = input.split("x");
     table(parseInt(sheetDimensions[0]), parseInt(sheetDimensions[1]));
 }
+// function loadFile():void {
+//   const fileName = document.getElementById("fileName") as HTMLInputElement;
+//   const input:string = fileName.value;
+//   let fileReader:XMLReader = new XMLReader();
+//   fileReader.readFile(input);
+// }
 /* Creates a table with the specified number of rows and columns, where the first column and first row are
  * labeled with numbers and letters, respectively.
  */
@@ -90,6 +99,12 @@ function table(rows, columns) {
         table.appendChild(row);
     }
 }
+// function showCell(col:number, row:number, value:string):void {
+//   //Here we convert a col and row to an A1-format, but this is actually already done in cell
+//   //addressing, so can maybe find a better signature and call it directly.
+//   const cellID:string = `${numberToLetters(col)}${row}`;
+//   localStorage.setItem(cellID, value);
+// }
 // 'DOMContentLoaded' ensures the script first tries to access elements after
 // the page has fully loaded.
 document.addEventListener("DOMContentLoaded", function () {
@@ -98,6 +113,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // which calls the 'newTable()' function.
     var button = document.getElementById("create");
     button.addEventListener("click", newTable);
+    // const readFileButton:HTMLElement = document.getElementById("readFile");
+    // readFileButton.addEventListener("click", loadFile)
     // Alternatively, the same event can also be executed using the 'Enter'-key
     // when standing in the sheetInput field.
     var tableFromInput = document.getElementById("sheetInput");
