@@ -1,9 +1,11 @@
-import "../src/WorkbookIO";
+//import {XMLReader} from "../src/WorkbookIO.js";
 // Converts a number n into a corresponding letter A-Z. If n > 26, it assigns multiple letters, e.g.,
 // AA-AZ, BA-BZ, etc.
 
 
-function numberToLetters(n: number) {
+import {XMLReader} from "../src/WorkbookIO";
+
+export function numberToLetters(n: number) {
   let letter = "";
   while (n > 0) {
     n--; // Required so that 1 = 'A'
@@ -18,19 +20,12 @@ function numberToLetters(n: number) {
  * by an 'x'. The function splits on 'x' and creates a table with the given input.
  * If no input has been given, it creates a 20x20 table.
  */
-function newTable() {
+export function newTable() {
   const inputElem = document.getElementById("sheetInput") as HTMLInputElement;
   const input = inputElem.value || "20x20";
   const sheetDimensions = input.split("x");
   table(parseInt(sheetDimensions[0]), parseInt(sheetDimensions[1]));
 }
-
-// function loadFile():void {
-//   const fileName = document.getElementById("fileName") as HTMLInputElement;
-//   const input:string = fileName.value;
-//   let fileReader:XMLReader = new XMLReader();
-//   fileReader.readFile(input);
-// }
 
 /* Creates a table with the specified number of rows and columns, where the first column and first row are
  * labeled with numbers and letters, respectively.
@@ -108,6 +103,26 @@ function table(rows: number, columns: number) {
     }
     table.appendChild(row);
   }
+}
+
+export function update():void {
+  let table = document.getElementById(
+      "dynamicTable",
+  ) as HTMLTableElement | null;
+  const location = document.getElementById("tableContainer") as HTMLDivElement;
+
+  /* The .appendChild() function adds a node to the end list of children of a specified parent node.
+   */
+
+  // If a table does not already exist, creates one in the <div> specified above.
+  if (!table) {
+    table = document.createElement("table");
+    table.id = "dynamicTable";
+    location.appendChild(table);
+  }
+
+  // Clears the existing table BUT NOT ITS CONTENTS
+  table.innerHTML = "";
 }
 
 // function showCell(col:number, row:number, value:string):void {

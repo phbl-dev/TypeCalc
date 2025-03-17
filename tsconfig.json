@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "outDir": "./dist",
+    "strict": true
+  },
+  "scrips": {
+    "dev": "vite"
+  },
+  "include": ["src", "GUI"]  // Add all directories you want to compile
+}

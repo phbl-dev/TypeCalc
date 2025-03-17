@@ -3,8 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title>Main page</title>
-        <script type="module" src = "GUI/table.js"></script>
-        <script type="module" src = "src/WorkbookIO.js"></script>
+        <script type="module" src = "dist/GUI/table.js"></script>
         <link rel="stylesheet" href="GUI/stylesheet.css">
     </head>
     <body>
@@ -16,10 +15,17 @@
 <!--            <button class="menuButton" type = "button" id = "readFile">Read File</button>-->
 <!--            <label for="fileName"></label><input class="menuTextField" type = "text" id = "fileName"> &lt;!&ndash; Text field for specifying s&ndash;&gt;-->
             <h3>Spreadsheet name</h3>
+
         </header>
         <article>
             <div id="tableContainer" class="tableContainer">
                 <!-- The spreadsheet table is created here -->
+            </div>
+            <div
+                    id="drop_zone"
+                    ondrop="dropHandler(event);"
+                    ondragover="dragOverHandler(event);">
+                <p>Drag one or more files to this <i>drop zone</i>.</p>
             </div>
         </article>
         <footer>
@@ -28,5 +34,12 @@
             <button class="sheetTabButton">Sheet 3</button>
             <button class="addSheetButton">+</button>
         </footer>
+        <script type="module">
+            import { dragOverHandler, dropHandler } from './dist/src/WorkbookIO.js';  // Import handlers from the module
+
+            // Attach handlers to the global window object
+            window.dragOverHandler = dragOverHandler;
+            window.dropHandler = dropHandler;
+        </script>
     </body>
 </html>

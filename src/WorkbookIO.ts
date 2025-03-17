@@ -5,7 +5,8 @@
  */
 
 import { XMLParser } from "fast-xml-parser";
-import { readFileSync } from "fs";
+import {newTable, numberToLetters, update} from "../GUI/table";
+
 
 // //Abstract class primarily AI-generated, though I checked the buffer methods in the node.js documentation
 // //If any issues look at this again.
@@ -44,8 +45,9 @@ import { readFileSync } from "fs";
 export class XMLReader {
     constructor() {}
 
-    readFile(xml_filename: string): void {
-        const xmlString: string = readFileSync(xml_filename, "utf8");
+    readFile(xml_input: string): void {
+        const xmlString: string = xml_input;
+        console.log(xmlString);
         const parser: XMLParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "", removeNSPrefix: true }); // attributeNamePrefix: "", removeNSPrefix: true
         const parsedData: WorkbookType = parser.parse(xmlString);
         //let workbook:Workbook = new Workbook();
@@ -74,14 +76,14 @@ export class XMLReader {
                     cells.push(rows[g].Cell as CellType);
                 }
                 //const cells = rows[g].Cell;
-                let cellIndex: number = 0;
+                let colIndex: number = 0;
                 //console.log(cells);
                 for (let f: number = 0; f < cells.length; f++) {
                     let cellValue: string | number | boolean | Date;
                     if (!cells[f].Index) {
-                        cellIndex++;
+                        colIndex++;
                     } else {
-                        cellIndex = cells[f].Index as number;
+                        colIndex = cells[f].Index as number;
                     }
                     if (cells[f].Formula) {
                         cellValue = cells[f].Formula as string;
@@ -91,11 +93,14 @@ export class XMLReader {
                     // let cellToBeAdded:Cell = Cell.Parse(cellValue, workbook, rowIndex, cellIndex);
                     console.log("sheetName:", sheetName);
                     console.log("rowIndex:", rowIndex);
-                    console.log("cellIndex:", cellIndex);
+                    console.log("cellIndex:", colIndex);
                     console.log("cellValue:", cellValue);
                     console.log("valueType:", typeof cellValue);
+                    pushCellToGUI(colIndex, rowIndex, cellValue);
+
                 }
             }
+            newTable();
         }
         //workbook.AddSheet(sheet);
     }
@@ -147,6 +152,45 @@ interface CellType {
     Index?: number; // Optional, since it may not be present
     Formula?: string; // Optional, stores formulas if present
     Data: CellData;
+}
+
+//Handles when files are dropped in the dropzone in the browser
+export function dropHandler(ev:DragEvent) {
+    let xmlReader:XMLReader = new XMLReader();
+    console.log("File(s) dropped");
+
+    // Prevent default behavior (Prevent file from being opened)
+    ev.preventDefault();
+
+    if (ev.dataTransfer){
+        const files:FileList = ev.dataTransfer.files;
+        if (files.length === 0) return;
+        const file:File = files[0];
+        console.log(file.name);
+        const reader = new FileReader();
+        reader.onload = (e:ProgressEvent<FileReader>) => {
+            if(!e.target){
+                return;
+            }
+            const xmlContent = e.target.result as string;
+
+            xmlReader.readFile(xmlContent);
+        };
+        reader.readAsText(file);
+    }
+}
+
+//Handles when files are dragged over the drop zone in the browser
+export function dragOverHandler(ev:DragEvent) {
+    console.log("File(s) in drop zone");
+
+    // Prevent default behavior (Prevent file from being opened)
+    ev.preventDefault();
+}
+
+export function pushCellToGUI(col:number, row:number, value: string | number | boolean | Date):void {
+    const cellID = `${numberToLetters(col)}${row}`;
+    localStorage.setItem(cellID, JSON.stringify(value));
 }
 
 // const xmltest = new XMLReader();

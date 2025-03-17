@@ -8,7 +8,8 @@
  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
   <Author>Peter Klarskov</Author>
   <LastAuthor>Peter Klarskov</LastAuthor>
-  <Created>2025-03-10T12:50:14Z</Created>
+  <Created>2025-03-17T13:43:58Z</Created>
+  <LastSaved>2025-03-17T13:44:24Z</LastSaved>
   <Version>16.00</Version>
  </DocumentProperties>
  <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">
@@ -35,22 +36,22 @@
  </Styles>
  <Worksheet ss:Name="Sheet1">
   <Table ss:ExpandedColumnCount="3" ss:ExpandedRowCount="8" x:FullColumns="1"
-   x:FullRows="1" ss:DefaultRowHeight="14.4375">
-   <Row ss:AutoFitHeight="0">
+   x:FullRows="1" ss:DefaultRowHeight="15">
+   <Row>
     <Cell ss:Formula="=RC[1]"><Data ss:Type="Number">0</Data></Cell>
     <Cell ss:Index="3"><Data ss:Type="Number">3</Data></Cell>
    </Row>
-   <Row ss:AutoFitHeight="0">
+   <Row>
     <Cell><Data ss:Type="Number">3</Data></Cell>
     <Cell ss:Index="3"><Data ss:Type="Number">3</Data></Cell>
    </Row>
-   <Row ss:Index="4" ss:AutoFitHeight="0">
+   <Row ss:Index="4">
     <Cell ss:Index="2"><Data ss:Type="Number">5</Data></Cell>
    </Row>
-   <Row ss:AutoFitHeight="0">
+   <Row>
     <Cell ss:Index="2"><Data ss:Type="Number">6</Data></Cell>
    </Row>
-   <Row ss:Index="8" ss:AutoFitHeight="0">
+   <Row ss:Index="8">
     <Cell ss:Index="3"><Data ss:Type="String">Hej</Data></Cell>
    </Row>
   </Table>
@@ -60,38 +61,11 @@
     <Footer x:Margin="0.3"/>
     <PageMargins x:Bottom="0.75" x:Left="0.7" x:Right="0.7" x:Top="0.75"/>
    </PageSetup>
-   <Unsynced/>
    <Selected/>
    <Panes>
     <Pane>
      <Number>3</Number>
-     <ActiveRow>7</ActiveRow>
-     <ActiveCol>12</ActiveCol>
-    </Pane>
-   </Panes>
-   <ProtectObjects>False</ProtectObjects>
-   <ProtectScenarios>False</ProtectScenarios>
-  </WorksheetOptions>
- </Worksheet>
- <Worksheet ss:Name="Sheet2">
-  <Table ss:ExpandedColumnCount="4" ss:ExpandedRowCount="10" x:FullColumns="1"
-   x:FullRows="1" ss:DefaultRowHeight="14.4375">
-   <Row ss:AutoFitHeight="0"/>
-   <Row ss:Index="10" ss:AutoFitHeight="0">
-    <Cell ss:Index="4"><Data ss:Type="Number">1</Data></Cell>
-   </Row>
-  </Table>
-  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
-   <PageSetup>
-    <Header x:Margin="0.3"/>
-    <Footer x:Margin="0.3"/>
-    <PageMargins x:Bottom="0.75" x:Left="0.7" x:Right="0.7" x:Top="0.75"/>
-   </PageSetup>
-   <Unsynced/>
-   <Panes>
-    <Pane>
-     <Number>3</Number>
-     <ActiveRow>11</ActiveRow>
+     <ActiveRow>9</ActiveRow>
      <ActiveCol>5</ActiveCol>
     </Pane>
    </Panes>

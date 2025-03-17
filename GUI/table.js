@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-require("../src/WorkbookIO");
+var WorkbookIO_1 = require("../src/WorkbookIO");
 // Converts a number n into a corresponding letter A-Z. If n > 26, it assigns multiple letters, e.g.,
 // AA-AZ, BA-BZ, etc.
 function numberToLetters(n) {
@@ -23,12 +23,13 @@ function newTable() {
     var sheetDimensions = input.split("x");
     table(parseInt(sheetDimensions[0]), parseInt(sheetDimensions[1]));
 }
-// function loadFile():void {
-//   const fileName = document.getElementById("fileName") as HTMLInputElement;
-//   const input:string = fileName.value;
-//   let fileReader:XMLReader = new XMLReader();
-//   fileReader.readFile(input);
-// }
+function loadFile() {
+    var fileName = document.getElementById("fileName");
+    var input = fileName.value;
+    var fileReader = new WorkbookIO_1.XMLReader();
+    fileReader.readFile(input);
+}
+
 /* Creates a table with the specified number of rows and columns, where the first column and first row are
  * labeled with numbers and letters, respectively.
  */
