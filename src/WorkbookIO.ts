@@ -47,21 +47,34 @@ export class XMLReader {
 
     readFile(xml_input: string): void {
         const xmlString: string = xml_input;
-        console.log(xmlString);
+        // console.log(xmlString);
         const parser: XMLParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "", removeNSPrefix: true }); // attributeNamePrefix: "", removeNSPrefix: true
         const parsedData: WorkbookType = parser.parse(xmlString);
         //let workbook:Workbook = new Workbook();
-        const sheets: WorksheetType[] = parsedData.Workbook.Worksheet;
-        //console.log(sheets);
+        let sheets: WorksheetType[] = [];
+        if (Array.isArray(parsedData.Workbook.Worksheet)) {
+            sheets = parsedData.Workbook.Worksheet;
+        }
+        else { sheets.push(parsedData.Workbook.Worksheet) }
+        //const sheets: WorksheetType[] = parsedData.Workbook.Worksheet;
+        console.log(sheets);
 
         for (let i: number = 0; i < sheets.length; i++) {
+            console.log(sheets[i]);
             //console.log(sheets[i]);
             const sheetName: string = sheets[i].Name;
             //let sheet:Sheet = new Sheet(workbook, sheetName, false); //what is up with all these constructors?
-            const rows: RowType[] = sheets[i].Table.Row;
-            //console.log(rows.length);
+            let rows: RowType[] = [];
+            if (Array.isArray(sheets[i].Table.Row)) {
+                rows = sheets[i].Table.Row as RowType[];
+            }
+            else {
+                rows.push(sheets[i].Table.Row as RowType);
+            }
+            console.log(rows);
             let rowIndex: number = 0; //starts from 1 in XMLSS
             for (let g: number = 0; g < rows.length; g++) {
+                console.log(rows[g]);
                 let cells: CellType[] = [];
                 //console.log(rows[g]);
                 if (!rows[g].Index) {
@@ -77,26 +90,32 @@ export class XMLReader {
                 }
                 //const cells = rows[g].Cell;
                 let colIndex: number = 0;
+                //console.log(cells)
                 //console.log(cells);
                 for (let f: number = 0; f < cells.length; f++) {
-                    let cellValue: string | number | boolean | Date;
+                    if (!cells[f]){
+                        continue;
+                    }
+                    //console.log(f);
+                    //console.log(cells[f]);
+                    let cellContent: string | number | boolean | Date;
                     if (!cells[f].Index) {
                         colIndex++;
                     } else {
                         colIndex = cells[f].Index as number;
                     }
                     if (cells[f].Formula) {
-                        cellValue = cells[f].Formula as string;
+                        cellContent = cells[f].Formula as string;
                     } else {
-                        cellValue = this.parseCellData(cells[f].Data);
+                        cellContent = this.parseCellData(cells[f].Data);
                     }
-                    // let cellToBeAdded:Cell = Cell.Parse(cellValue, workbook, rowIndex, cellIndex);
-                    console.log("sheetName:", sheetName);
-                    console.log("rowIndex:", rowIndex);
-                    console.log("cellIndex:", colIndex);
-                    console.log("cellValue:", cellValue);
-                    console.log("valueType:", typeof cellValue);
-                    pushCellToGUI(colIndex, rowIndex, cellValue);
+                    // let cellToBeAdded:Cell = Cell.Parse(cellContent, workbook, rowIndex, cellIndex);
+                    // console.log("sheetName:", sheetName);
+                    // console.log("rowIndex:", rowIndex);
+                    // console.log("cellIndex:", colIndex);
+                    // console.log("cellContent:", cellContent);
+                    // console.log("contentType:", typeof cellContent);
+                    pushCellToGUI(colIndex, rowIndex, cellContent);
 
                 }
             }
@@ -140,7 +159,7 @@ interface WorksheetType {
 }
 
 interface TableType {
-    Row: RowType[];
+    Row: RowType | RowType[];
 }
 
 interface RowType {
