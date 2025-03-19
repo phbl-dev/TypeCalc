@@ -5,7 +5,7 @@
  */
 
 import { XMLParser } from "fast-xml-parser";
-import {newTable, numberToLetters, update} from "../GUI/table";
+import {newTable, numberToLetters} from "../GUI/table";
 
 
 // //Abstract class primarily AI-generated, though I checked the buffer methods in the node.js documentation
@@ -62,7 +62,7 @@ export class XMLReader {
         for (let i: number = 0; i < sheets.length; i++) {
             console.log(sheets[i]);
             //console.log(sheets[i]);
-            const sheetName: string = sheets[i].Name;
+            //const sheetName: string = sheets[i].Name;
             //let sheet:Sheet = new Sheet(workbook, sheetName, false); //what is up with all these constructors?
             let rows: RowType[] = [];
             if (Array.isArray(sheets[i].Table.Row)) {
