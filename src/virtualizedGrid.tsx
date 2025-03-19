@@ -53,13 +53,14 @@ function rowHeaderRenderer({ rowIndex, key, style }) {
 function cellRenderer({ columnIndex, key, rowIndex, style }) {
     const ID = numberToLetters(columnIndex+1) + (rowIndex+1).toString();
     return React.createElement("div", { key,
+        contentEditable: true,
         style: { ...style,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             border: '1px solid #ddd',
             background: rowIndex % 2 === 0 ? 'lightgrey' : 'white' } },
-        `${ID}`
+        //`${ID}`
     );
 }
 

@@ -5,7 +5,7 @@ export const createGrid = () => {
     const location = document.getElementById('root');
     if (location) {
         const table = ReactDOM.createRoot(location);
-        table.render(<VirtualizedGrid columnCount={200} rowCount={200}/>);
+        table.render(<VirtualizedGrid columnCount={64000} rowCount={1000000}/>);
     }
 }
 
