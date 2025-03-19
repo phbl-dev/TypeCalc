@@ -48,33 +48,51 @@ input {
     flex-direction: column;
 }
 
-.gridBody {
-    display: flex;
-}
 #headerCorner {
-    background: grey;
+    background: #3b3b3b;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    border-right: 1px solid black
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
 }
 
-#topHeaders {
+#columnHeaders {
     display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     background-color: grey;
     color: white;
     font-weight: bold;
-    border-bottom: 1px solid black;
+    border: 1px solid white;
+    z-index: 2;
 }
 
 #rowHeaders {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background-color: grey;
     color: white;
     font-weight: bold;
-    border-right: 1px solid black
+    z-index: 2;
+    border: 1px solid white;
+}
+
+.gridBody {
+    display: flex;
+}
+.Cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: white 1px solid;
+    overflow-x: clip;
+    text-align: left;
+    z-index: 1;
 }
 
 /* ------------------------------------------ */
@@ -91,4 +109,3 @@ footer {
     z-index: 2;
     border-top: 1px solid black;
 }
-
