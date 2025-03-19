@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, {useRef } from "react";
 import { FixedSizeGrid as Grid } from "react-window";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -13,7 +13,10 @@ interface GridInterface {
     height?: number;
 }
 
-// Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
+/** Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
+ *
+ * @param n - The number to convert
+ */
 function numberToLetters(n: number) {
     let letter = "";
     while (n > 0) {
@@ -24,7 +27,12 @@ function numberToLetters(n: number) {
     return letter;
 }
 
-// Defines the column headers as a div with ID, style, and contents
+/** Defines the column headers as a div with ID, style, and contents
+ *
+ * @param columnIndex - Current column index shown in the header as a corresponding letter, as defined in the numberToLetters function
+ * @param style - Lets the header inherit style from a css style sheet
+ * @constructor
+ */
 const ColumnHeader = ({ columnIndex, style }) => (
     <div id="columnHeaders"
          style={{
@@ -35,32 +43,42 @@ const ColumnHeader = ({ columnIndex, style }) => (
     </div>
 );
 
-// Defines the row headers as a div with ID, style, and contents
+/** Defines the row headers as a div with ID, style, and contents
+ *
+ * @param rowIndex - Current row index shown in the header
+ * @param style - Lets the header inherit style from a css style sheet
+ * @constructor
+ */
 const RowHeader = ({ rowIndex, style }) => (
     <div id="rowHeaders"
          style={{
              ...style, // Inherit style from style.css
          }}
     >
-        {rowIndex + 1}
+        {rowIndex + 1} {/* +1 since its 0-indexed */}
     </div>
 );
 
-// Defines the regular cell along with an ID in A1 format
+/** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
+ * @param columnIndex - Current column index, used to define cell ID
+ * @param rowIndex - Current row index, used to define cell ID and determine cell background color
+ * @param style - Lets the cell inherit the style from a css style sheet
+ * @constructor
+ */
 const Cell = ({ columnIndex, rowIndex, style }) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1);
     return (
         <div className="Cell" contentEditable={true} id={ID}
              style={{
                  ...style, // Inherit style from style.css
-                 background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to main body
+                 background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
         >
         </div>
     );
 };
 
-/* Creates the sheet itself with headers and body. It extends the GridInterface so that
+/** Creates the sheet itself with headers and body. It extends the GridInterface so that
  * we can create a sheet with a self-defined amount of rows and columns.
  * The sheet itself consists of a top row flexbox with a corner cell and a row of column
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
@@ -70,7 +88,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
      columnCount,
      rowCount,
      columnWidth = 80,
-     rowHeight = 25,
+     rowHeight = 30,
      colHeaderHeight = rowHeight * 1.2,
      rowHeaderWidth = columnWidth * 0.65,
      width = window.innerWidth,
@@ -81,7 +99,12 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
 
-    // Synchronizes scrolling
+    /** Synchronizes scrolling between the grid body and the headers so that it works
+     * like one, big grid. Does not currently synchronize scrolling done on the headers.
+     *
+     * @param scrollLeft Horizontal scrolling value
+     * @param scrollTop Vertical scrolling value
+     */
     function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }) {
         if (colHeaderRef.current && scrollLeft !== undefined) {
             colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });

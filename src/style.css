@@ -39,6 +39,12 @@ input {
     text-align: center;
 }
 
+header h4 {
+    margin-right: 10px;
+    margin-left: auto;
+    color: white;
+}
+
 
 /* ------------------------------------------ */
 #root {
@@ -85,13 +91,14 @@ input {
 .gridBody {
     display: flex;
 }
+
 .Cell {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     border: white 1px solid;
-    overflow-x: clip;
-    text-align: left;
+    font-size: small;
+    text-indent: 5px;
     z-index: 1;
 }
 
