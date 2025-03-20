@@ -1,6 +1,7 @@
-import { Grid } from 'react-virtualized';
-import React, { useRef } from "react";
+import React, {useRef } from "react";
+import { FixedSizeGrid as Grid } from "react-window";
 
+// Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
     columnCount: number;
     rowCount: number;
@@ -12,7 +13,10 @@ interface GridInterface {
     height?: number;
 }
 
-// Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
+/** Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
+ *
+ * @param n - The number to convert
+ */
 function numberToLetters(n: number) {
     let letter = "";
     while (n > 0) {
@@ -23,110 +27,150 @@ function numberToLetters(n: number) {
     return letter;
 }
 
-// Defines the column headers
-function colHeaderRenderer({ columnIndex, key, style }) {
-    return React.createElement("div", { key,
-        style: { ...style,
-            borderRight: '1px solid black',
-            borderBottom: '1px solid black',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center' }},
-        `${numberToLetters(columnIndex+1)}`
-    );
-}
+/** Defines the column headers as a div with ID, style, and contents
+ *
+ * @param columnIndex - Current column index shown in the header as a corresponding letter, as defined in the numberToLetters function
+ * @param style - Lets the header inherit style from a css style sheet
+ * @constructor
+ */
+const ColumnHeader = ({ columnIndex, style }) => (
+    <div id="columnHeaders"
+         style={{
+             ...style, // Inherit style from style.css
+         }}
+    >
+        {numberToLetters(columnIndex + 1)}
+    </div>
+);
 
-// Defines the row headers
-function rowHeaderRenderer({ rowIndex, key, style }) {
-    return React.createElement("div", { key,
-        style: { ...style,
-            borderLeft: '1px solid black',
-            borderBottom: '1px solid black',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center' }},
-        `${rowIndex+1}`
-    );
-}
+/** Defines the row headers as a div with ID, style, and contents
+ *
+ * @param rowIndex - Current row index shown in the header
+ * @param style - Lets the header inherit style from a css style sheet
+ * @constructor
+ */
+const RowHeader = ({ rowIndex, style }) => (
+    <div id="rowHeaders"
+         style={{
+             ...style, // Inherit style from style.css
+         }}
+    >
+        {rowIndex + 1} {/* +1 since its 0-indexed */}
+    </div>
+);
 
-// Defines the regular cells
-function cellRenderer({ columnIndex, key, rowIndex, style }) {
-    const ID = numberToLetters(columnIndex+1) + (rowIndex+1).toString();
-    return React.createElement("div", { key,
-        contentEditable: true,
-        style: { ...style,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid #ddd',
-            background: rowIndex % 2 === 0 ? 'lightgrey' : 'white' } },
-        //`${ID}`
-    );
-}
-
-// Created as an interface so that it can take input for the size
-export const VirtualizedGrid: React.FC<GridInterface> = ({
-    columnCount,
-    rowCount,
-    columnWidth = 70,
-    rowHeight = 25,
-    colHeaderHeight = rowHeight*1.2,
-    rowHeaderWidth = columnWidth*0.75,
-    width = window.innerWidth,
-    height = window.innerHeight * 0.9201,
-}) => {
-    const colHeaderRef = useRef<Grid | null>(null);
-    const rowHeaderRef = useRef<Grid | null>(null);
-    const bodyRef = useRef<Grid | null>(null);
-
-    /* Synchronizes scrolling as the grid is technically 4 grids put together */
-    function syncScroll({ scrollLeft, scrollTop }: {scrollLeft: number; scrollTop: number}) {
-        if (colHeaderRef.current)
-            colHeaderRef.current.scrollToPosition({ scrollLeft, scrollTop:0 });
-        if (rowHeaderRef.current)
-            rowHeaderRef.current.scrollToPosition({ scrollTop, scrollLeft:0 });
-    }
-
-    return React.createElement("div", null,
-        React.createElement( "div", { // Creates the top header row + corner
-            id: "topHeaders" },
-            React.createElement( // Corner elem
-                "div", { id: "headerCorner", style: {
-                    width: rowHeaderWidth,
-                    height: colHeaderHeight}}, "#"),
-            React.createElement( Grid, {
-                id: "colHeaders",
-                ref: colHeaderRef,
-                cellRenderer: colHeaderRenderer,
-                columnCount, columnWidth,
-                height: colHeaderHeight,
-                rowCount: 1,
-                rowHeight: colHeaderHeight,
-                width: (width - rowHeaderWidth),
-                onScroll: syncScroll }),
-        ),
-        // Creates the rest of the grid
-        React.createElement( "div", { className: "gridBody" },
-            React.createElement( Grid, { // Creates the row headers
-                    id: "rowHeaders",
-                    ref: rowHeaderRef,
-                    cellRenderer: rowHeaderRenderer,
-                    columnCount: 1,
-                    columnWidth: rowHeaderWidth,
-                    height: (height - colHeaderHeight),
-                    rowCount, rowHeight,
-                    width: rowHeaderWidth,
-                    onscroll: syncScroll }),
-            React.createElement( Grid, { // Creates the regular cells
-                    id: "gridBody",
-                    ref: bodyRef,
-                    cellRenderer: cellRenderer,
-                    columnCount, columnWidth,
-                    height: (height - colHeaderHeight),
-                    rowCount, rowHeight,
-                    width: (width - rowHeaderWidth),
-                    onScroll: syncScroll }),
-        )
+/** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
+ * @param columnIndex - Current column index, used to define cell ID
+ * @param rowIndex - Current row index, used to define cell ID and determine cell background color
+ * @param style - Lets the cell inherit the style from a css style sheet
+ * @constructor
+ */
+const Cell = ({ columnIndex, rowIndex, style }) => {
+    const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1);
+    return (
+        <div className="Cell" contentEditable={true} id={ID}
+             style={{
+                 ...style, // Inherit style from style.css
+                 background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
+             }}
+        >
+        </div>
     );
 };
 
+/** Creates the sheet itself with headers and body. It extends the GridInterface so that
+ * we can create a sheet with a self-defined amount of rows and columns.
+ * The sheet itself consists of a top row flexbox with a corner cell and a row of column
+ * headers created as a Grid. The main body itself is also a flexbox, consisting of two
+ * additional grids; one for the row headers and one for the regular cells.
+ */
+export const VirtualizedGrid: React.FC<GridInterface> = ({
+     columnCount,
+     rowCount,
+     columnWidth = 80,
+     rowHeight = 30,
+     colHeaderHeight = rowHeight * 1.2,
+     rowHeaderWidth = columnWidth * 0.65,
+     width = window.innerWidth,
+     height = window.innerHeight * 0.92,
+ }) => {
+    // Used to synchronize scrolling between the referenced objects
+    const colHeaderRef = useRef<Grid>(null);
+    const rowHeaderRef = useRef<Grid>(null);
+    const bodyRef = useRef<Grid>(null);
+
+    /** Synchronizes scrolling between the grid body and the headers so that it works
+     * like one, big grid. Does not currently synchronize scrolling done on the headers.
+     *
+     * @param scrollLeft Horizontal scrolling value
+     * @param scrollTop Vertical scrolling value
+     */
+    function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }) {
+        if (colHeaderRef.current && scrollLeft !== undefined) {
+            colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
+        }
+        if (rowHeaderRef.current && scrollTop !== undefined) {
+            rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
+        }
+    }
+
+    return (
+        // Container that wraps around all parts of the sheet
+        <div id="sheet">
+            {/* Header row as a 1-row grid */}
+            <div style={{ display: "flex" }}>
+                {/* Top-left corner */}
+                <div id="headerCorner"
+                     style={{ // Has to be defined here to use dimensions of the sheet
+                         width: rowHeaderWidth-1,
+                         height: colHeaderHeight,
+                     }}
+                >
+                    #
+                </div>
+                {/* Column headers as a grid */}
+                <Grid
+                    ref={colHeaderRef}
+                    columnCount={columnCount}
+                    columnWidth={columnWidth}
+                    height={colHeaderHeight}
+                    rowCount={1}
+                    rowHeight={colHeaderHeight}
+                    width={width - rowHeaderWidth}
+                >
+                    {ColumnHeader}
+                </Grid>
+            </div>
+
+            {/* Remaining grid */}
+            <div style={{ display: "flex" }}>
+                {/* Row headers */}
+                <Grid
+                    ref={rowHeaderRef}
+                    columnCount={1}
+                    columnWidth={rowHeaderWidth}
+                    height={height - colHeaderHeight}
+                    rowCount={rowCount}
+                    rowHeight={rowHeight}
+                    width={rowHeaderWidth}
+                >
+                    {RowHeader}
+                </Grid>
+
+                {/* Grid body */}
+                <Grid
+                    ref={bodyRef}
+                    columnCount={columnCount}
+                    columnWidth={columnWidth}
+                    height={height - colHeaderHeight}
+                    rowCount={rowCount}
+                    rowHeight={rowHeight}
+                    width={width - rowHeaderWidth}
+                    onScroll={syncScroll}
+                >
+                    {Cell}
+                </Grid>
+            </div>
+        </div>
+    );
+};
