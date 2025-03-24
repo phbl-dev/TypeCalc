@@ -5,7 +5,12 @@
  */
 
 import { XMLParser } from "fast-xml-parser";
-import {newTable, numberToLetters} from "../GUI/table";
+//import {newTable, numberToLetters} from "../GUI/table";
+
+import {Workbook} from "./back-end/Workbook.ts";
+import {Sheet} from "./back-end/Sheet.ts";
+import {NumberCell, QuoteCell} from "./back-end/Cells.ts";
+import {numberToLetters} from "./virtualizedGrid.tsx";
 
 
 // //Abstract class primarily AI-generated, though I checked the buffer methods in the node.js documentation
@@ -45,25 +50,23 @@ import {newTable, numberToLetters} from "../GUI/table";
 export class XMLReader {
     constructor() {}
 
-    readFile(xml_input: string): void {
-        const xmlString: string = xml_input;
+    readFile(xmlString: string): void {
         // console.log(xmlString);
         const parser: XMLParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "", removeNSPrefix: true }); // attributeNamePrefix: "", removeNSPrefix: true
         const parsedData: WorkbookType = parser.parse(xmlString);
-        //let workbook:Workbook = new Workbook();
-        let sheets: WorksheetType[] = [];
-        if (Array.isArray(parsedData.Workbook.Worksheet)) {
-            sheets = parsedData.Workbook.Worksheet;
-        }
-        else { sheets.push(parsedData.Workbook.Worksheet) }
-        //const sheets: WorksheetType[] = parsedData.Workbook.Worksheet;
-        console.log(sheets);
+        const workbook:Workbook = new Workbook();
+        const sheets: WorksheetType[] = parsedData.Workbook.Worksheet;
+        // let sheets: WorksheetType[] = [];
+        // if (Array.isArray(parsedData.Workbook.Worksheet)) {
+        //     sheets = parsedData.Workbook.Worksheet;
+        // }
+        // else { sheets.push(parsedData.Workbook.Worksheet) }
 
         for (let i: number = 0; i < sheets.length; i++) {
-            console.log(sheets[i]);
             //console.log(sheets[i]);
-            //const sheetName: string = sheets[i].Name;
-            //let sheet:Sheet = new Sheet(workbook, sheetName, false); //what is up with all these constructors?
+            const sheetName: string = sheets[i].Name;
+            const sheet: Sheet = new Sheet(workbook, sheetName, 100, 100, false); //what is up with all these constructors?
+            workbook.AddSheet(sheet);
             let rows: RowType[] = [];
             if (Array.isArray(sheets[i].Table.Row)) {
                 rows = sheets[i].Table.Row as RowType[];
@@ -71,10 +74,10 @@ export class XMLReader {
             else {
                 rows.push(sheets[i].Table.Row as RowType);
             }
-            console.log(rows);
+            //console.log(rows);
             let rowIndex: number = 0; //starts from 1 in XMLSS
             for (let g: number = 0; g < rows.length; g++) {
-                console.log(rows[g]);
+                //console.log(rows[g]);
                 let cells: CellType[] = [];
                 //console.log(rows[g]);
                 if (!rows[g].Index) {
@@ -102,24 +105,31 @@ export class XMLReader {
                     if (!cells[f].Index) {
                         colIndex++;
                     } else {
-                        colIndex = cells[f].Index as number;
+                        colIndex = Number(cells[f].Index);
                     }
                     if (cells[f].Formula) {
                         cellContent = cells[f].Formula as string;
                     } else {
                         cellContent = this.parseCellData(cells[f].Data);
                     }
+                    let cellToBeAdded: QuoteCell | NumberCell =
+                        typeof cellContent === "number" ? new NumberCell(cellContent as number) : new QuoteCell(cellContent as string);
+                    console.log(cellToBeAdded.showValue(sheet, colIndex as number, rowIndex));
+                    //This is not the way we want to do it in the end. Needs upgrade when parser works.
+                    sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
                     // let cellToBeAdded:Cell = Cell.Parse(cellContent, workbook, rowIndex, cellIndex);
                     // console.log("sheetName:", sheetName);
                     // console.log("rowIndex:", rowIndex);
                     // console.log("cellIndex:", colIndex);
                     // console.log("cellContent:", cellContent);
                     // console.log("contentType:", typeof cellContent);
-                    pushCellToGUI(colIndex, rowIndex, cellContent);
-
+                    //pushCellToGUI(colIndex, rowIndex, cellContent);
                 }
+                sheet.ShowAll((col, row, value) => {
+                    console.log(`Cell (${col}, ${row}): ${value}`);
+                });
             }
-            newTable();
+            //newTable();
         }
         //workbook.AddSheet(sheet);
     }

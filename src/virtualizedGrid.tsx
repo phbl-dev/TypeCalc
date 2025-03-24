@@ -1,5 +1,6 @@
 import React, {useRef } from "react";
 import { FixedSizeGrid as Grid } from "react-window";
+import {XMLReader} from "./WorkbookIO.ts";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -17,7 +18,7 @@ interface GridInterface {
  *
  * @param n - The number to convert
  */
-function numberToLetters(n: number) {
+export function numberToLetters(n: number) {
     let letter = "";
     while (n > 0) {
         n--; // Required so that 1 = 'A'
@@ -59,6 +60,21 @@ const RowHeader = ({ rowIndex, style }) => (
     </div>
 );
 
+// function loadFile() {
+//     var fileName = document.getElementById("fileName");
+//     var input = fileName.value;
+//     var fileReader = new XMLReader();
+//     fileReader.readFile(input);
+// }
+
+export function getCell(cellID:string):HTMLElement|null{
+    return document.getElementById(cellID);
+}
+
+function updateCellsInView(upperLeftCol, upperLeftRow):void {
+
+}
+
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
@@ -77,6 +93,10 @@ const Cell = ({ columnIndex, rowIndex, style }) => {
         </div>
     );
 };
+
+// function updateCell(cellID:string, cellValue:string):void {
+//
+// }
 
 /** Creates the sheet itself with headers and body. It extends the GridInterface so that
  * we can create a sheet with a self-defined amount of rows and columns.
@@ -111,6 +131,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
         }
         if (rowHeaderRef.current && scrollTop !== undefined) {
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
+        }
+        let cellToChange = getCell("B2");
+        if (cellToChange) {
+            cellToChange.innerText = "5";
         }
     }
 
