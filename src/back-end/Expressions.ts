@@ -1,9 +1,9 @@
-import { Sheet } from "./Sheet.ts";
-import { Value } from "./Value.ts";
-import { Adjusted, FullCellAddress, Interval, RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing.ts";
-import { Cell } from "./Cells.ts";
-import { Formats, IEquatable } from "./Types.ts";
-import { NumberValue } from "./NumberValue.ts";
+import { Sheet } from "./Sheet";
+import { Value } from "./Value";
+import { Adjusted, FullCellAddress, Interval, RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
+import { Cell } from "./Cells";
+import { Formats, IEquatable } from "./Types";
+import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ErrorValue } from "./ErrorValue";
 import { ArrayView } from "./ArrayValue";

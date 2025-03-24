@@ -1,6 +1,6 @@
-import { Formats } from "./Types.ts";
-import { Sheet } from "./Sheet.ts";
-import { Cell } from "./Cells.ts";
+import { Formats } from "./Types";
+import { Sheet } from "./Sheet";
+import { Cell } from "./Cells";
 
 //An interval represents a range of numbers from a min to a max, including both
 export class Interval {

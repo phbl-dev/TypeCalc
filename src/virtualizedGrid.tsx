@@ -1,6 +1,6 @@
-import React, {useRef } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import { FixedSizeGrid as Grid } from "react-window";
-import {XMLReader} from "./WorkbookIO.ts";
+import {ShowWindowInGUI, WorkbookManager, XMLReader} from "./WorkbookIO";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -71,9 +71,9 @@ export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
 }
 
-function updateCellsInView(upperLeftCol, upperLeftRow):void {
-
-}
+// function updateCellsInView(upperLeftCol, upperLeftRow):void {
+//
+// }
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
@@ -114,10 +114,46 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
      width = window.innerWidth,
      height = window.innerHeight * 0.92,
  }) => {
-    // Used to synchronize scrolling between the referenced objects
+       // Used to synchronize scrolling between the referenced objects
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
+    const [scrollOffset, setScrollOffset] = useState({ left: 0, top: 0 });
+    let leftOffset = 0;
+    let topOffset = 0;
+
+    useEffect(() => {
+        // Handle file drop events entirely in React
+        function handleDrop(event: DragEvent) {
+            event.preventDefault();
+            const file = event.dataTransfer?.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target?.result as string;
+                    WorkbookManager.createNewWorkbook(); // or call createNewWorkbook()
+                    const xmlReader = new XMLReader();
+                    xmlReader.readFile(content); // Assumes it modifies the current workbook
+                    console.log("[React Drop Handler] File loaded. Updating UI...");
+                    setTimeout(() => {
+                        ShowWindowInGUI(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+                    }, 100); // Give XMLReader a moment to finish parsing
+                };
+                reader.readAsText(file);
+            }
+        }
+        function handleDragOver(event: DragEvent) {
+            event.preventDefault();
+        }
+
+        window.addEventListener("drop", handleDrop);
+        window.addEventListener("dragover", handleDragOver);
+
+        return () => {
+            window.removeEventListener("drop", handleDrop);
+            window.removeEventListener("dragover", handleDragOver);
+        };
+    }, [scrollOffset]);
 
     /** Synchronizes scrolling between the grid body and the headers so that it works
      * like one, big grid. Does not currently synchronize scrolling done on the headers.
@@ -126,16 +162,18 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
      * @param scrollTop Vertical scrolling value
      */
     function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }) {
+        const left = scrollLeft ?? scrollOffset.left;
+        const top = scrollTop ?? scrollOffset.top;
+
         if (colHeaderRef.current && scrollLeft !== undefined) {
             colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
         }
         if (rowHeaderRef.current && scrollTop !== undefined) {
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
         }
-        let cellToChange = getCell("B2");
-        if (cellToChange) {
-            cellToChange.innerText = "5";
-        }
+
+        setScrollOffset({ left, top });
+        ShowWindowInGUI(left, left + 30, top, top + 30);
     }
 
     return (

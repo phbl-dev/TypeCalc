@@ -1,7 +1,7 @@
-import { FullCellAddress } from "./CellAddressing.ts";
-import { Sheet } from "./Sheet.ts";
-import { Value } from "./Value.ts";
-import { Expression } from "./Expressions.ts";
+import { FullCellAddress } from "./CellAddressing";
+import { Sheet } from "./Sheet";
+import { Value } from "./Value";
+import { Expr } from "./Expressions";
 
 // An IDepend is an object such as Cell, Expr, CGExpr, ComputeCell that can tell what full
 // cell addresses it depends on.
@@ -22,7 +22,7 @@ export interface IEquatable<T> {
  * @param {number} col - The column containing the cell in which the function is called.
  * @param {number} row - The row containing the cell in which the function is called.
  */
-export type Applier = (sheet: Sheet, es: Expression[], col: number, row: number) => Value;
+export type Applier = (sheet: Sheet, es: Expr[], col: number, row: number) => Value;
 
 // Signals that a cyclic dependency is discovered during evaluation.
 export class CyclicException extends Error {

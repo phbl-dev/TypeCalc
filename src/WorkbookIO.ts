@@ -7,10 +7,10 @@
 import { XMLParser } from "fast-xml-parser";
 //import {newTable, numberToLetters} from "../GUI/table";
 
-import {Workbook} from "./back-end/Workbook.ts";
-import {Sheet} from "./back-end/Sheet.ts";
-import {NumberCell, QuoteCell} from "./back-end/Cells.ts";
-import {numberToLetters} from "./virtualizedGrid.tsx";
+import {Workbook} from "./back-end/Workbook";
+import {Sheet} from "./back-end/Sheet";
+import {Cell, NumberCell, QuoteCell} from "./back-end/Cells";
+import {numberToLetters} from "./virtualizedGrid";
 
 
 // //Abstract class primarily AI-generated, though I checked the buffer methods in the node.js documentation
@@ -42,6 +42,10 @@ import {numberToLetters} from "./virtualizedGrid.tsx";
 //     }
 // }
 
+//This is not how we want to do it, but the links right now are messy
+
+
+
 //The XMLReader is used to read an XML file via the method readFile(xml_filename)
 /*More in-depth explanation is as follows:
  * The readFile method makes use of the package fast-xml-parser to turn an XML file into a
@@ -52,10 +56,12 @@ export class XMLReader {
 
     readFile(xmlString: string): void {
         // console.log(xmlString);
+        //createOverarchingWorkbook();
+
         const parser: XMLParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "", removeNSPrefix: true }); // attributeNamePrefix: "", removeNSPrefix: true
         const parsedData: WorkbookType = parser.parse(xmlString);
-        const workbook:Workbook = new Workbook();
         const sheets: WorksheetType[] = parsedData.Workbook.Worksheet;
+
         // let sheets: WorksheetType[] = [];
         // if (Array.isArray(parsedData.Workbook.Worksheet)) {
         //     sheets = parsedData.Workbook.Worksheet;
@@ -65,8 +71,10 @@ export class XMLReader {
         for (let i: number = 0; i < sheets.length; i++) {
             //console.log(sheets[i]);
             const sheetName: string = sheets[i].Name;
-            const sheet: Sheet = new Sheet(workbook, sheetName, 100, 100, false); //what is up with all these constructors?
-            workbook.AddSheet(sheet);
+            const sheet: Sheet = new Sheet(WorkbookManager.getWorkbook() as Workbook, sheetName, 100, 100, false); //what is up with all these constructors?
+            (WorkbookManager.getWorkbook() as Workbook).AddSheet(sheet);
+            //console.log(wb);
+            //console.log(wb.get(sheetName))
             let rows: RowType[] = [];
             if (Array.isArray(sheets[i].Table.Row)) {
                 rows = sheets[i].Table.Row as RowType[];
@@ -114,7 +122,7 @@ export class XMLReader {
                     }
                     let cellToBeAdded: QuoteCell | NumberCell =
                         typeof cellContent === "number" ? new NumberCell(cellContent as number) : new QuoteCell(cellContent as string);
-                    console.log(cellToBeAdded.showValue(sheet, colIndex as number, rowIndex));
+                    //console.log(cellToBeAdded.showValue(sheet, colIndex as number, rowIndex));
                     //This is not the way we want to do it in the end. Needs upgrade when parser works.
                     sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
                     // let cellToBeAdded:Cell = Cell.Parse(cellContent, workbook, rowIndex, cellIndex);
@@ -125,13 +133,14 @@ export class XMLReader {
                     // console.log("contentType:", typeof cellContent);
                     //pushCellToGUI(colIndex, rowIndex, cellContent);
                 }
-                sheet.ShowAll((col, row, value) => {
-                    console.log(`Cell (${col}, ${row}): ${value}`);
-                });
+                // sheet.ShowAll((col, row, value) => {
+                //     console.log(`Cell (${col}, ${row}): ${value}`);
+                // });
             }
             //newTable();
         }
-        //workbook.AddSheet(sheet);
+        console.log("[readFile] Final workbook contents:", WorkbookManager.getWorkbook());
+        //WorkbookManager.notifyUpdate();
     }
     parseCellData(cellData: CellData): string | number | boolean | Date {
         if (!cellData.Type) {
@@ -150,7 +159,64 @@ export class XMLReader {
                 return String(cellData["#text"]); // Ensure it's a string
         }
     }
+
 }
+
+export class WorkbookManager {
+    private static instance: Workbook | null = null;
+
+    static getWorkbook(): Workbook | null {
+        console.log("[WorkbookManager] getWorkbook ->", this.instance);
+        return this.instance;
+    }
+
+    static createNewWorkbook(): void {
+        console.log("[WorkbookManager] createNewWorkbook");
+        this.instance = new Workbook();
+    }
+
+    static setWorkbook(wb: Workbook): void {
+        console.log("[WorkbookManager] setWorkbook ->", wb);
+        this.instance = wb;
+    }
+
+    static notifyUpdate() {
+        window.dispatchEvent(new Event("workbookUpdated"));
+    }
+}
+
+export function ShowWindowInGUI(leftCornerCol: number, rightCornerCol:number, topCornerRow: number, bottomCornerRow: number):void {
+    const wb = WorkbookManager.getWorkbook();
+    console.log("[ShowWindowInGUI] Retrieved workbook:", wb);
+
+    if (!wb) {
+        console.log("[ShowWindowInGUI] No workbook found!");
+        return;
+    }
+    const startCol:number = leftCornerCol;
+    const endCol:number = rightCornerCol;
+    const startRow:number = topCornerRow;
+    const endRow:number = bottomCornerRow;
+    console.log("Calling get");
+    const sheet = wb.get("Sheet1");
+    console.log("[ShowWindowInGUI] Sheet1:", sheet);
+    //console.log(workbook);
+    //console.log(currentSheet);
+    if (sheet) {
+        for (let col: number = startCol; col < endCol ; col++) {
+            for (let row: number = startRow; row < endRow; row++) {
+                console.log("this happens");
+                let colName:string = numberToLetters(col);
+                let cellHTML = document.getElementById(colName + row);
+                if (cellHTML != null) {
+                    cellHTML.innerText = sheet.Show(col,row);
+                }
+            }
+        }
+    }
+}
+
+
 
 interface CellData {
     "#text": string | number;
@@ -191,6 +257,8 @@ export function dropHandler(ev:DragEvent) {
     // Prevent default behavior (Prevent file from being opened)
     ev.preventDefault();
 
+    WorkbookManager.createNewWorkbook();
+
     if (ev.dataTransfer){
         const files:FileList = ev.dataTransfer.files;
         if (files.length === 0) return;
@@ -203,10 +271,14 @@ export function dropHandler(ev:DragEvent) {
             }
             const xmlContent = e.target.result as string;
 
+            //createOverarchingWorkbook();
             xmlReader.readFile(xmlContent);
+            //console.log(overarchingWorkbook);
         };
         reader.readAsText(file);
     }
+    //WorkbookManager.notifyUpdate();
+    console.log("workbook in dropHandler", WorkbookManager.getWorkbook());
 }
 
 //Handles when files are dragged over the drop zone in the browser

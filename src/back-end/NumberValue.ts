@@ -1,4 +1,4 @@
-import { Value } from "./Value.ts";
+import { Value } from "./Value";
 import { ErrorValue } from "./ErrorValue";
 
 /**

@@ -1,7 +1,7 @@
-import { Sheet } from "./Sheet.ts";
-import { Formats } from "./Types.ts";
-import { FullCellAddress } from "./CellAddressing.ts";
-import { Cell } from "./Cells.ts";
+import { Sheet } from "./Sheet";
+import { Formats } from "./Types";
+import { FullCellAddress } from "./CellAddressing";
+import { Cell } from "./Cells";
 
 export class Workbook extends EventTarget {
     private readonly sheets: Sheet[] = new Array<Sheet>();
@@ -61,13 +61,13 @@ export class Workbook extends EventTarget {
     public get(name: string | number): Sheet | null {
         if (typeof name === "string") {
             name = name.toUpperCase();
-            this.sheets.forEach((sheet) => {
+            for (const sheet of this.sheets) {
                 if (sheet.getName().toUpperCase() === name) {
+                    console.log("MATCH FOUND");
                     return sheet;
                 }
-            });
+            }
         } else {
-            name = name as number;
             return this.sheets[name];
         }
         return null;
@@ -82,7 +82,7 @@ export class Workbook extends EventTarget {
         this.editedCells.length = 0;
     }
 
-    //TODO: RecalculateFull()
+    // TODO: RecalculateFull()
 
     // TODO: RecalculateFullAfterSdfCheck()
 

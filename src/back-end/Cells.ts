@@ -1,12 +1,12 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
-import { Sheet } from "./Sheet.ts";
-import { Value } from "./Value.ts";
-import { Adjusted, FullCellAddress, Interval, SupportSet } from "./CellAddressing.ts";
-import { Expr } from "./Expressions.ts"; // This should be imported when it's done
-import { Formats } from "./Types.ts";
-import { Workbook } from "./Workbook.ts"; // This should be imported when it's done
-import { Parser } from "./Parser"; // This should be imported when it's done
-import { NumberValue } from "./NumberValue.ts";
+import { Sheet } from "./Sheet";
+import { Value } from "./Value";
+import { Adjusted, FullCellAddress, Interval, SupportSet } from "./CellAddressing";
+import { Expr } from "./Expressions"; // This should be imported when it's done
+import { Formats } from "./Types";
+import { Workbook } from "./Workbook"; // This should be imported when it's done
+//import { Parser } from "./Parser"; // This should be imported when it's done
+import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue"; // This should be imported when it's done
 
 export enum CellState {

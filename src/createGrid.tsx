@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import {getCell, VirtualizedGrid} from "./virtualizedGrid.tsx";
+import {getCell, VirtualizedGrid} from "./virtualizedGrid";
 
 export const createGrid = () => {
     const input = (document.getElementById("sheetInput") as HTMLInputElement).value || "64000x1000000";
