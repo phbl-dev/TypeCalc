@@ -1,37 +1,47 @@
 {
-  "name": "reactgrid",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "jquery": "^3.7.1",
-    "jquery-scrollsync": "^1.0.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-virtualized": "^9.22.6",
-    "react-window": "^1.8.11",
-    "scryll": "^0.1.5"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.21.0",
-    "@types/jquery": "^3.5.32",
-    "@types/react": "^19.0.10",
-    "@types/react-dom": "^19.0.4",
-    "@types/react-virtualized": "^9.22.2",
-    "@types/react-window": "^1.8.8",
-    "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^9.21.0",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
-    "globals": "^15.15.0",
-    "typescript": "~5.7.2",
-    "typescript-eslint": "^8.24.1",
-    "vite": "^6.2.0"
-  }
+    "name": "spreadsheet",
+    "version": "1.0.0",
+    "description": "Open-source Thesis project based on the spreadsheet implementation technology: Basics and Extensions book by Peter Sestoft.",
+    "main": "index.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build GUI",
+        "preview": "vite preview",
+        "test": "npx vitest run",
+        "pretty": "npx prettier --write '**/*.{js,ts,tsx,json,md}'",
+        "prepare": "husky install"
+    },
+    "husky": {
+        "hooks": {
+            "pre-push": "npx prettier --write '*.md' '*.json' '*.ts' '*.js'"
+        }
+    },
+    "prettier": {
+        "objectWrap": "collapse",
+        "printWidth": 160,
+        "tabWidth": 4,
+        "singleAttributePerLine": false
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/phbl-dev/Spreadsheet.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "type": "commonjs",
+    "bugs": {
+        "url": "https://github.com/phbl-dev/Spreadsheet/issues"
+    },
+    "homepage": "https://github.com/phbl-dev/Spreadsheet#readme",
+    "devDependencies": {
+        "husky": "^9.1.7",
+        "lint-staged": "^15.5.0",
+        "prettier": "^3.5.3",
+        "typescript": "^5.8.2",
+        "vite": "^6.2.1"
+    },
+    "dependencies": {
+        "vitest": "^3.0.8"
+    }
 }

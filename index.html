@@ -1,24 +1,28 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="src/style.css" />
-    <title>Spreadsheet test</title>
-    <script type="module" src = "src/createGrid.tsx"></script>
-  </head>
-
-  <body>
-    <header>
-      <button class="menuButton" type = "reset" id = "reset" onclick = " localStorage.clear(); location.reload()">Reset data</button> <!-- Clear's the local storage and reloads the page -->
-      <button class="menuButton" type = "button" id = "create">Create sheet</button>
-      <label for="sheetInput"></label><input class="menuTextField" type = "text" id = "sheetInput"> <!-- Text field for specifying size -->
-      <h4 contenteditable="true" id="documentTitle">Spreadsheet name</h4>
-    </header>
-    <div id="root"><!--Table goes here--></div>
-    <footer>
-
-    </footer>
-  </body>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Main page</title>
+        <script type="module" src = "GUI/table.js"></script>
+        <link rel="stylesheet" href="GUI/stylesheet.css">
+    </head>
+    <body>
+        <header>
+            <button class="menuButton" type = "reset" id = "reset" onclick = " localStorage.clear(); location.reload()">Reset data</button> <!-- Clear's the local storage and reloads the page -->
+            <button class="menuButton" type = "button" id = "create">Create sheet</button>
+            <label for="sheetInput"></label><input class="menuTextField" type = "text" id = "sheetInput"> <!-- Text field for specifying s-->
+            <h3>Spreadsheet name</h3>
+        </header>
+        <article>
+            <div id="tableContainer" class="tableContainer">
+                <!-- The spreadsheet table is created here -->
+            </div>
+        </article>
+        <footer>
+            <button class="sheetTabButton">Sheet 1</button>
+            <button class="sheetTabButton">Sheet 2</button>
+            <button class="sheetTabButton">Sheet 3</button>
+            <button class="addSheetButton">+</button>
+        </footer>
+    </body>
 </html>
