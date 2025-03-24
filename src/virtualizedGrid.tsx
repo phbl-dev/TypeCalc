@@ -63,18 +63,26 @@ const RowHeader = ({ rowIndex, style }) => (
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
  * @param style - Lets the cell inherit the style from a css style sheet
- * @param onHoverCell - Tells the cell to pass on its ID when hovered over by the mouse cursor
  * @constructor
  */
-const Cell = ({ columnIndex, rowIndex, style, onHoverCell }) => {
+const Cell = ({ columnIndex, rowIndex, style }) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1);
+
+    // Passes the cell ID to the headerCorner as textContent of the headerCorner
+    const handleHover = () => {
+        const headerCorner = document.getElementById("headerCorner");
+        if(headerCorner) { // if-statement handles possibility that headerCorner is null
+            headerCorner.textContent = ID;
+        }
+    }
+
     return (
         <div className="Cell" contentEditable={true} id={ID}
              style={{
                  ...style, // Inherit style from style.css
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
-             onMouseMove={() => onHoverCell(ID)} // Gets the
+             onMouseMove={handleHover} // Gets the
         >
         </div>
     );
@@ -100,17 +108,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
-    const [hoveredCell, setHoveredCell] = useState<string | null>(null);
-
-    /** Updates the mouse cursor position dynamically and checks if it is hovering
-     * over a cell. If so, displays that cell's ID in the top-left corner cell.
-     *
-     * @param ID The ID of the cell the cursor is currently hovering over
-     */
-        //TODO: Currently cant edit a cell and move cursor
-    const handleMouseMove = (ID: string) => {
-        setHoveredCell(ID);
-    };
 
     /** Synchronizes scrolling between the grid body and the headers so that it works
      * like one, big grid. Does not currently synchronize scrolling done on the headers.
@@ -139,7 +136,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                          height: colHeaderHeight,
                      }}
                 >
-                    {hoveredCell ?? "#"}
+                    {"#"}
                 </div>
                 {/* Column headers as a grid */}
                 <Grid
@@ -180,15 +177,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                     rowHeight={rowHeight}
                     width={width - rowHeaderWidth}
                     onScroll={syncScroll}
-                >   {/* Needed for the Cell to receive handleMouseMove */}
-                    {({ columnIndex, rowIndex, style }) => (
-                        <Cell
-                            columnIndex={columnIndex}
-                            rowIndex={rowIndex}
-                            style={style}
-                            onHoverCell={handleMouseMove}  // Pass the function to the Cell component
-                        />
-                    )}
+                >
+                    {Cell}
                 </Grid>
             </div>
         </div>
