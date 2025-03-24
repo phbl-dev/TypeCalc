@@ -1,4 +1,4 @@
-import React, {useRef } from "react";
+import React, {useRef, useState} from "react";
 import { FixedSizeGrid as Grid } from "react-window";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -67,12 +67,22 @@ const RowHeader = ({ rowIndex, style }) => (
  */
 const Cell = ({ columnIndex, rowIndex, style }) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1);
+
+    // Passes the cell ID to the headerCorner as textContent of the headerCorner
+    const handleHover = () => {
+        const headerCorner = document.getElementById("headerCorner");
+        if(headerCorner) { // if-statement handles possibility that headerCorner is null
+            headerCorner.textContent = ID;
+        }
+    }
+
     return (
         <div className="Cell" contentEditable={true} id={ID}
              style={{
                  ...style, // Inherit style from style.css
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
+             onMouseMove={handleHover} // Gets the
         >
         </div>
     );
@@ -126,7 +136,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                          height: colHeaderHeight,
                      }}
                 >
-                    #
+                    {"#"}
                 </div>
                 {/* Column headers as a grid */}
                 <Grid
