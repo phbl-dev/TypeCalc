@@ -5,11 +5,9 @@
  */
 
 import { XMLParser } from "fast-xml-parser";
-//import {newTable, numberToLetters} from "../GUI/table";
-
 import {Workbook} from "./back-end/Workbook";
 import {Sheet} from "./back-end/Sheet";
-import {Cell, NumberCell, QuoteCell} from "./back-end/Cells";
+import {NumberCell, QuoteCell} from "./back-end/Cells";
 import {numberToLetters} from "./virtualizedGrid";
 
 

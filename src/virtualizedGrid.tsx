@@ -119,8 +119,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
     const [scrollOffset, setScrollOffset] = useState({ left: 0, top: 0 });
-    let leftOffset = 0;
-    let topOffset = 0;
 
     useEffect(() => {
         // Handle file drop events entirely in React
@@ -172,8 +170,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
         }
 
-        setScrollOffset({ left, top });
-        ShowWindowInGUI(left, left + 30, top, top + 30);
+        // setScrollOffset({ left, top });
+        // ShowWindowInGUI(left - 10, left + 30, top - 10, top + 30);
     }
 
     return (
@@ -229,6 +227,19 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                     rowHeight={rowHeight}
                     width={width - rowHeaderWidth}
                     onScroll={syncScroll}
+                    onItemsRendered={({
+                      visibleRowStartIndex,
+                      visibleRowStopIndex,
+                      visibleColumnStartIndex,
+                      visibleColumnStopIndex,
+                    }) => {
+                        ShowWindowInGUI(
+                            visibleColumnStartIndex,
+                            visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
+                            visibleRowStartIndex,
+                            visibleRowStopIndex + 1
+                        );
+                    }}
                 >
                     {Cell}
                 </Grid>
