@@ -1,11 +1,6 @@
-//import {XMLReader} from "../src/WorkbookIO.js";
 // Converts a number n into a corresponding letter A-Z. If n > 26, it assigns multiple letters, e.g.,
 // AA-AZ, BA-BZ, etc.
-
-
-import {XMLReader} from "../src/WorkbookIO";
-
-export function numberToLetters(n: number) {
+function numberToLetters(n: number) {
   let letter = "";
   while (n > 0) {
     n--; // Required so that 1 = 'A'
@@ -20,7 +15,7 @@ export function numberToLetters(n: number) {
  * by an 'x'. The function splits on 'x' and creates a table with the given input.
  * If no input has been given, it creates a 20x20 table.
  */
-export function newTable() {
+function newTable() {
   const inputElem = document.getElementById("sheetInput") as HTMLInputElement;
   const input = inputElem.value || "20x20";
   const sheetDimensions = input.split("x");
@@ -105,33 +100,6 @@ function table(rows: number, columns: number) {
   }
 }
 
-export function update():void {
-  let table = document.getElementById(
-      "dynamicTable",
-  ) as HTMLTableElement | null;
-  const location = document.getElementById("tableContainer") as HTMLDivElement;
-
-  /* The .appendChild() function adds a node to the end list of children of a specified parent node.
-   */
-
-  // If a table does not already exist, creates one in the <div> specified above.
-  if (!table) {
-    table = document.createElement("table");
-    table.id = "dynamicTable";
-    location.appendChild(table);
-  }
-
-  // Clears the existing table BUT NOT ITS CONTENTS
-  table.innerHTML = "";
-}
-
-// function showCell(col:number, row:number, value:string):void {
-//   //Here we convert a col and row to an A1-format, but this is actually already done in cell
-//   //addressing, so can maybe find a better signature and call it directly.
-//   const cellID:string = `${numberToLetters(col)}${row}`;
-//   localStorage.setItem(cellID, value);
-// }
-
 // 'DOMContentLoaded' ensures the script first tries to access elements after
 // the page has fully loaded.
 document.addEventListener("DOMContentLoaded", () => {
@@ -141,9 +109,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // which calls the 'newTable()' function.
   const button = document.getElementById("create") as HTMLButtonElement;
   button.addEventListener("click", newTable);
-
-  // const readFileButton:HTMLElement = document.getElementById("readFile");
-  // readFileButton.addEventListener("click", loadFile)
 
   // Alternatively, the same event can also be executed using the 'Enter'-key
   // when standing in the sheetInput field.

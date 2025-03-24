@@ -1,2 +1,12 @@
-#!/usr/bin/env sh
-. "$(dirname "$0")/h"
+#!/bin/sh
+echo "Running pre-commit hook"
+
+# Run Prettier on the specified file types
+npx prettier --write "*.md" "*.json" "*.ts" "*.js"
+
+# Check if Prettier ran successfully
+if [ $? -eq 0 ]; then
+  echo "Prettier ran successfully"
+else
+  echo "Prettier failed"
+fi
