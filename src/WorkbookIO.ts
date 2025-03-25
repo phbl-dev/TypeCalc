@@ -8,7 +8,7 @@ import { XMLParser } from "fast-xml-parser";
 import {Workbook} from "./back-end/Workbook";
 import {Sheet} from "./back-end/Sheet";
 import {NumberCell, QuoteCell} from "./back-end/Cells";
-import {numberToLetters} from "./virtualizedGrid";
+import {numberToLetters} from "./front-end/virtualizedGrid.tsx";
 
 
 // //Abstract class primarily AI-generated, though I checked the buffer methods in the node.js documentation
@@ -172,7 +172,7 @@ export class WorkbookManager {
     }
 }
 
-//This is the method for retrieving cell data for the current view-port in the GUI.
+//This is the method for retrieving cell data for the current view-port in the front-end.
 //Updates on every scroll, meaning that the values are stored only in back-end, and then repeatedly fetched
 //Makes sure that we only load data in the viewport, everything else stays in back-end.
 export function ShowWindowInGUI(leftCornerCol: number, rightCornerCol:number, topCornerRow: number, bottomCornerRow: number):void {

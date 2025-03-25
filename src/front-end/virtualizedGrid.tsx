@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
 import { FixedSizeGrid as Grid } from "react-window";
-import {ShowWindowInGUI, WorkbookManager, XMLReader} from "./WorkbookIO";
+import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO.ts";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
