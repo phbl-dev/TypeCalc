@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, {useRef } from "react";
 import { FixedSizeGrid as Grid } from "react-window";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -33,7 +33,7 @@ function numberToLetters(n: number) {
  * @param style - Lets the header inherit style from a css style sheet
  * @constructor
  */
-const ColumnHeader = ({ columnIndex, style }) => (
+const ColumnHeader = ({ columnIndex, style }: {columnIndex:number, style:any}) => (
     <div id="columnHeaders"
          style={{
              ...style, // Inherit style from style.css
@@ -49,7 +49,7 @@ const ColumnHeader = ({ columnIndex, style }) => (
  * @param style - Lets the header inherit style from a css style sheet
  * @constructor
  */
-const RowHeader = ({ rowIndex, style }) => (
+const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
     <div id="rowHeaders"
          style={{
              ...style, // Inherit style from style.css
@@ -59,14 +59,15 @@ const RowHeader = ({ rowIndex, style }) => (
     </div>
 );
 
+// @ts-ignore
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
  * @param style - Lets the cell inherit the style from a css style sheet
  * @constructor
  */
-const Cell = ({ columnIndex, rowIndex, style }) => {
-    const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1);
+const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: number, style:any}) => {
+    const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
 
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
     const handleHover = () => {
@@ -76,13 +77,45 @@ const Cell = ({ columnIndex, rowIndex, style }) => {
         }
     }
 
+    // Allows us to navigate the cells using the arrow keys
+    const arrowNav = (event:any): void => {
+        let nextRow = rowIndex;
+        let nextCol = columnIndex;
+
+        switch (event.key) {
+            case "ArrowUp":
+                nextRow = Math.max(0, rowIndex - 1); //Needed to not go too far up
+                break;
+            case "ArrowDown":
+                nextRow = rowIndex + 1;
+                break;
+            case "ArrowLeft":
+                nextCol = Math.max(0, columnIndex - 1); //Needed to not go too far left
+                break;
+            case "ArrowRight":
+                nextCol = columnIndex + 1;
+                break;
+            default:
+                return;
+        }
+
+        // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID so we can focus the cell
+        const nextCellID = numberToLetters(nextCol + 1) + (nextRow + 1);
+        const nextCell = document.getElementById(nextCellID);
+        if (nextCell) {
+            nextCell.focus();
+            event.preventDefault(); // Prevents scrolling until edges are reached
+        }
+    }
+
     return (
         <div className="Cell" contentEditable={true} id={ID}
              style={{
                  ...style, // Inherit style from style.css
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
-             onMouseMove={handleHover} // Gets the
+             onMouseMove={handleHover} // Gets the cellID when moving the mouse
+             onKeyDown={arrowNav} // Checks if the key pressed is an arrow key
         >
         </div>
     );
