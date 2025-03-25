@@ -145,8 +145,12 @@ describe("Formula.js", () => {
         let expr3: Expr = new NumberConst(8);
 
         let funCall: Expr = FunCall.Make("DATE", [expr1, expr2, expr3]);
+        let array: string[] = []
+        let str: string | null | undefined = TextValue.ToString(funCall.Eval(sheet,0,0));
 
-        let array: string[] = TextValue.ToString(funCall.Eval(sheet,0,0)).split(" ")
+        if (str !== null && str !== undefined) {
+            array = str.split(" ");
+        }
         expect(array[0]).toBe("Tue")
         expect(array[1]).toBe("Jul")
         expect(array[2]).toBe("08")
@@ -157,8 +161,12 @@ describe("Formula.js", () => {
         let expr1: Expr = new TextConst('7/8/2008');
 
         let funCall: Expr = FunCall.Make("DATEVALUE", [expr1]);
+        let array: string[] = []
+        let str: string | null | undefined = TextValue.ToString(funCall.Eval(sheet,0,0));
 
-        let array: string[] = TextValue.ToString(funCall.Eval(sheet,0,0)).split(" ")
+        if (str !== null && str !== undefined) {
+            array = str.split(" ");
+        }
         expect(array[0]).toBe("Tue")
         expect(array[1]).toBe("Jul")
         expect(array[2]).toBe("08")
@@ -196,8 +204,12 @@ describe("Formula.js", () => {
         let expr2: Expr = new NumberConst(-1);
 
         let funCall: Expr = FunCall.Make("EDATE", [expr1, expr2]);
+        let array: string[] = []
+        let str: string | null | undefined = TextValue.ToString(funCall.Eval(sheet,0,0));
 
-        let array: string[] = TextValue.ToString(funCall.Eval(sheet,0,0)).split(" ")
+        if (str !== null && str !== undefined) {
+            array = str.split(" ");
+        }
         expect(array[0]).toBe("Wed")
         expect(array[1]).toBe("Dec")
         expect(array[2]).toBe("15")
@@ -210,12 +222,124 @@ describe("Formula.js", () => {
         let expr2: Expr = new NumberConst(-3);
 
         let funCall: Expr = FunCall.Make("EOMONTH", [expr1, expr2]);
+        let array: string[] = []
+        let str: string | null | undefined = TextValue.ToString(funCall.Eval(sheet,0,0));
 
-        let array: string[] = TextValue.ToString(funCall.Eval(sheet,0,0)).split(" ")
+        if (str !== null && str !== undefined) {
+            array = str.split(" ");
+        }
         expect(array[0]).toBe("Wed")
         expect(array[1]).toBe("Dec")
         expect(array[2]).toBe("15")
         expect(array[3]).toBe("2010")
     })
 
+    test("Eval with CHAR", () => {
+        let expr1: Expr = new NumberConst(65);
+        let expr2: Expr = new NumberConst(89);
+
+        let funCall: Expr = FunCall.Make("CHAR", [expr1]);
+        let funCall2: Expr = FunCall.Make("CHAR", [expr2]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("A");
+        expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe("Y");
+    });
+
+    test("Eval with CODE", () => {
+        let expr1: Expr = new TextConst("A");
+        let expr2: Expr = new TextConst("Y");
+
+        let funCall: Expr = FunCall.Make("CODE", [expr1]);
+        let funCall2: Expr = FunCall.Make("CODE", [expr2]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(65);
+        expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe(89);
+    });
+
+    test("Eval with CONCATENATE", () => {
+        let expr1: Expr = new TextConst("Hello");
+        let expr2: Expr = new TextConst(" ");
+        let expr3: Expr = new TextConst("World!");
+
+        let funCall: Expr = FunCall.Make("CONCATENATE", [expr1, expr2, expr3]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("Hello World!");
+    });
+
+    test("Eval with TEXTJOIN", () => {
+        let expr1: Expr = new TextConst("Hello");
+        let expr2: Expr = new TextConst(" ");
+        let expr3: Expr = new TextConst("World!");
+        let expr4: Expr = new TextConst("true");
+
+        let funCall: Expr = FunCall.Make("TEXTJOIN", [expr2, expr4, expr1, expr3]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("Hello World!");
+    });
+
+    test("Eval with EXACT", () => {
+        let expr1: Expr = new TextConst("Test");
+        let expr2: Expr = new TextConst("test");
+        let expr3: Expr = new TextConst("Test");
+
+        let funCall: Expr = FunCall.Make("EXACT", [expr1, expr2]);
+        let funCall2: Expr = FunCall.Make("EXACT", [expr1, expr3]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(false);
+        expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe(true);
+    });
+
+    test("Eval with FIND", () => {
+        let expr1: Expr = new TextConst("I");
+        let expr2: Expr = new TextConst("Welcome to ITU");
+        let expr3: Expr = new NumberConst(5);
+
+        // Finds the position of "I" in "Welcome to ITU" at word "ITU"
+        let funCall: Expr = FunCall.Make("FIND", [expr1, expr2, expr3]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(12);
+    });
+
+    test("Eval with LEN", () => {
+        let expr1: Expr = new TextConst("Welcome to ITU");
+
+        let funCall: Expr = FunCall.Make("LEN", [expr1]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(14);
+    });
+
+    test("Eval with UPPER", () => {
+        let expr1: Expr = new TextConst("Welcome to ITU");
+
+        let funCall: Expr = FunCall.Make("UPPER", [expr1]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("WELCOME TO ITU");
+    });
+
+    test("Eval with LOWER", () => {
+        let expr1: Expr = new TextConst("Welcome to ITU");
+
+        let funCall: Expr = FunCall.Make("LOWER", [expr1]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("welcome to itu");
+    });
+
+    test("Eval with PROPER", () => {
+        let expr1: Expr = new TextConst("Welcome to ITU");
+
+        let funCall: Expr = FunCall.Make("PROPER", [expr1]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("Welcome To Itu");
+    });
+
+    test("Eval with ROMAN", () => {
+        let expr1: Expr = new NumberConst(100);
+        let expr2: Expr = new NumberConst(499);
+
+        let funCall: Expr = FunCall.Make("ROMAN", [expr1]);
+        let funCall2: Expr = FunCall.Make("ROMAN", [expr2]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("C");
+        expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe("CDXCIX");
+    });
 });

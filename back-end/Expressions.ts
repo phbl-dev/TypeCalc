@@ -265,28 +265,27 @@ export class FunCall extends Expr {
         // and store the result in a variable called 'result':
         const result = this.function(...args);
 
-        // From number to Date (string):
-        if (["DATE"].includes(this.functionName)) {
+        // To Date (string):
+        if (["DATE", "DATEVALUE", "EDATE", "EMONTH"].includes(this.functionName)) {
             // We have to cast the result as a Date before calling toString() because the DATE function returns
             // an object of type Date:
             return TextValue.Make((result as Date).toString());
+        }
 
-        // From number to number:
-        } else if (["SUM", "PRODUCT", "POWER", "ABS", "ACOS", "CEILINGMATH", "FACT", "FLOOR"].includes(this.functionName)) {
-            // And at last we return the 'result' as a number
-            return NumberValue.Make(result as number);
-
-        // From string to Date (string):
-        } else if (["DATEVALUE", "EDATE", "EMONTH"].includes(this.functionName)) {
-            return TextValue.Make((result as Date).toString());
-
-        // From string to number:
-        } else if (["DAY", "DAYS", "DAYS360"].includes(this.functionName)) {
+        // To number:
+        if (["SUM", "PRODUCT", "POWER", "ABS", "ACOS", "CEILINGMATH", "FACT", "FLOOR",
+            "DAY", "DAYS", "DAYS360", "CODE", "FIND", "LEN"].includes(this.functionName)) {
             return NumberValue.Make(result as number);
         }
 
-        return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an Error.
+        // To string:
+        if (["CONCATENATE", "EXACT", "UPPER", "LOWER", "PROPER", "CHAR", "ROMAN", "TEXTJOIN"].includes(this.functionName)) {
+            return TextValue.Make(result as string);
+        }
+
+        return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
     }
+
 
     public override Move(deltaCol: number, deltaRow: number): Expr {
         let newEs: Expr[] = new Array(this.es.length);
