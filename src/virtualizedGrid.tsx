@@ -99,11 +99,15 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 return;
         }
 
-        // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID so we can focus the cell
+        // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID
+        // so we can focus the cell. Also updates top-left corner to show current cell's ID.
         const nextCellID = numberToLetters(nextCol + 1) + (nextRow + 1);
         const nextCell = document.getElementById(nextCellID);
-        if (nextCell) {
+        const headerCorner = document.getElementById("headerCorner");
+
+        if (nextCell && headerCorner) {
             nextCell.focus();
+            headerCorner.textContent = nextCellID;
             event.preventDefault(); // Prevents scrolling until edges are reached
         }
     }
