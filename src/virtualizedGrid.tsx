@@ -59,7 +59,10 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
     </div>
 );
 
-// @ts-ignore
+export function getCell(cellID:string):HTMLElement|null{
+    return document.getElementById(cellID);
+}
+
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
