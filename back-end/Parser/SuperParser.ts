@@ -21,13 +21,4 @@ f!.EnqueueForEvaluation(sheet, 1, 1);
 console.log(JSON.stringify(f!.Eval(sheet, 1, 1)));
 
 
-const d = new SpreadsheetVisitor().ParseCell("= A1", new Workbook(), 1, 2);
-
-sheet.SetCell(d!, 1, 2);
-
-d!.MarkDirty();
-
-d!.EnqueueForEvaluation(sheet, 1, 2);
-
-console.log(JSON.stringify(d!.Eval(sheet, 1, 2)));
 

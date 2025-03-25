@@ -5,12 +5,16 @@ import { A1RARef, A1RefCellAddress, SuperRARef } from "../CellAddressing";
 import { ErrorValue } from "../ErrorValue";
 import { Sheet } from "../Sheet";
 import { SpreadsheetParser } from "./Parser";
-import { Lexer } from "chevrotain";
+import { CstNode, Lexer } from "chevrotain";
 import { SpreadsheetLexer } from "./Lexer";
 import { NumberValue } from "../NumberValue";
 
 /**
- * TODO: Write class description, example and write doctext for methods.
+ * @class
+ * @desc <b>Visitor Class </b>.This class relies on the implementation of the SpreadSheetParser class to generate a CST (Concrete Syntax Tree),
+ * to which is it traversing the tree, and manipulates the outcome.
+ * @todo look there are some issues with multiple statement as of now.
+ * @example new SpreadsheetVisitor().ParseCell("= 10 + 10)", new Workbook(), 1, 1); // Can be used to parse the input "= 10 + 10".
  */
 export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisitorConstructor() {
     private workbook!: Workbook;
@@ -18,12 +22,22 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     private col!: number;
     private row!: number;
 
+
     constructor() {
         super();
 
         this.validateVisitor();
     }
 
+    /**
+     * ParseCell reads a string and inserts the value onto the col and row that is provided.
+     * This method should be the only one that is accessed by outside classes.
+     * @param parseString
+     * @param workbook
+     * @param col
+     * @param row
+     * @constructor
+     */
     public ParseCell(parseString: string, workbook: Workbook, col: number, row: number): Cell | null {
         this.workbook = workbook;
         this.col = col;
@@ -34,16 +48,15 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return this.cell;
     }
 
-    Parse(input: string): void {
+    protected Parse(input: string): void {
         const parser = new SpreadsheetParser();
-        const SpreadsheetLexerx = new Lexer(SpreadsheetLexer.AllTokens);
-        const lexingResult = SpreadsheetLexerx.tokenize(input);
-        parser.input = lexingResult.tokens;
-        const cst = parser.cellContents();
+        const _ = new Lexer(SpreadsheetLexer.AllTokens);
+        parser.input =  _.tokenize(input).tokens;
+        const cst:CstNode = parser.cellContents();
         this.visit(cst);
     }
 
-    powFactor(ctx: any): Expr {
+    protected powFactor(ctx: any): Expr {
         let e2: Expr;
 
         let e = this.visit(ctx["factor"][0]);
@@ -55,8 +68,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return e;
     }
 
-    // Looks correct to me
-    logicalTerm(ctx: any): Expr {
+    protected logicalTerm(ctx: any): Expr {
 
         let e: Expr;
         let e2: Expr;
@@ -79,12 +91,12 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return e;
     }
 
-    Numbar(ctx: any): number {
+   protected number(ctx: any): number {
 
         return parseFloat(ctx["Number"][0].image);
     }
 
-    application(ctx: any): Expr {
+   protected application(ctx: any): Expr {
 
         let s: string;
         let es: Expr[];
@@ -127,7 +139,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return elist;
     }
 
-    addOp(ctx: any): string {
+    protected addOp(ctx: any): string {
 
         let op: string = "";
 
@@ -141,7 +153,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return op;
     }
 
-    logicalOp(ctx: any): string {
+    protected logicalOp(ctx: any): string {
 
         let op: string = "";
         if (ctx.Equals) {
@@ -160,7 +172,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return op;
     }
 
-    mulOp(ctx: any): string {
+    protected mulOp(ctx: any): string {
 
         if (ctx.Multiply) {
             return "PRODUCT";
@@ -169,7 +181,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         }
     }
 
-    term(ctx: any): Expr {
+    protected term(ctx: any): Expr {
 
         let e;
         let e2;
@@ -187,7 +199,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         }
     }
 
-    expression(ctx: any): Expr {
+    protected expression(ctx: any): Expr {
         let e: Expr;
         let e2;
         let op;
@@ -203,7 +215,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return e;
     }
 
-    factor(ctx: any): Expr {
+    protected factor(ctx: any): Expr {
 
 
         let r1, r2;
@@ -245,14 +257,12 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             }
         }
 
-        // If Number
-        if (ctx["Numbar"]) {
-            d = parseInt(ctx["Numbar"][0].children["Number"][0].image);
+        if (ctx["number"]) {
+            d = parseInt(ctx["number"][0].children["Number"][0].image);
 
             e = new NumberConst(d);
         }
 
-        // If Unary Minus (- Factor)
         if (ctx["Minus"]) {
             let innerExpr = this.visit(ctx["factor"][0]);
 
@@ -274,7 +284,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return e;
     }
 
-    raref(ctx: any) {
+    protected raref(ctx: any) {
         let raref;
 
 
@@ -313,25 +323,9 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return raref;
     }
 
-    /**
-     * CellContents is the starting point for the parser.
-     * It recursively calls the expressions,
-     * and when it reaches back to the method
-     * It sets the value of the cell.
-     * @see {SpreadsheetVisitor#expressions}
-     * @param ctx
-     */
-    cellContents(ctx: any): Cell {
-        let e;
-        let sheet = new Sheet(new Workbook(), "TestSheet", 0, 0, false);
+    protected cellContents(ctx: any): Cell {
+        let e:any = this.visit(ctx.expression);
 
-        console.log(JSON.stringify(ctx, null, 1));
-
-        e = this.visit(ctx.expression);
-
-        //console.log("This works in cellContents: ", e);
-
-        // Match the token types
         if (ctx.QuoteCell) {
             this.cell = new QuoteCell(e.image.substring(1));
         } else if (ctx.StringLiteral) {
