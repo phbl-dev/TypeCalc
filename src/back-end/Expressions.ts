@@ -2,11 +2,13 @@ import { Sheet } from "./Sheet";
 import { Value } from "./Value";
 import { Adjusted, FullCellAddress, Interval, RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
 import { Cell } from "./Cells";
-import { Formats, IEquatable } from "./Types";
+import { Formats, IEquatable, ImpossibleException, Applier } from "./Types";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ErrorValue } from "./ErrorValue";
 import { ArrayView } from "./ArrayValue";
+import * as formulajs from '@formulajs/formulajs' // Importing formulajs
+
 
 // An Expr is an expression that may appear in a Formula cell.
 export abstract class Expr {
@@ -19,18 +21,18 @@ export abstract class Expr {
     // Evaluate expression as if at cell address sheet[col, row]
     public abstract Eval(sheet: Sheet, col: number, row: number): Value;
 
-    // Using "protected" instead of "internal"
-    protected abstract VisitorCall(visitor: IExpressionVisitor): void;
+    // Using "public" instead of "internal"
+    public abstract VisitorCall(visitor: IExpressionVisitor): void;
 
     // Insert N new rowcols before rowcol R>=0, when we're at rowcol r
     public abstract InsertRowCols(modSheet: Sheet, thisSheet: boolean, R: number, N: number, r: number, doRows: boolean): Adjusted<Expr>;
 
     // Apply refAct once to each CellRef in expression, and areaAct once to each CellArea
-    protected abstract VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void): void;
+    public abstract VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void): void;
 
     // Increase the support sets of all cells referred from this expression, when
     // the expression appears in the block supported[col..col+cols-1, row..row+rows-1]
-    protected AddToSupportSets(supported: Sheet, col: number, row: number, cols: number, rows: number): void {
+    public AddToSupportSets(supported: Sheet, col: number, row: number, cols: number, rows: number): void {
         this.VisitRefs(
             new RefSet(),
             (cellRef: CellRef) => cellRef.AddToSupport(supported, col, row, cols, rows),
@@ -54,7 +56,7 @@ export abstract class Expr {
             col,
             row, // Remove sheet[col,row] from support set at fca
             (fca: FullCellAddress) => {
-                const cell: Cell = fca.TryGetCell(); // Will be non-null if support correctly added
+                const cell: Cell = fca.tryGetCell()!; // Will be non-null if support correctly added
                 cell.RemoveSupportFor(sheet, col, row);
             },
         );
@@ -94,7 +96,7 @@ abstract class Const extends Expr {
         return new Adjusted<Expr>(this);
     }
 
-    protected override VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void): void {}
+    public override VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void): void {}
 
     public override DependsOn(here: FullCellAddress, dependsOn: (fullCellAddress: FullCellAddress) => void): void {}
 
@@ -104,7 +106,7 @@ abstract class Const extends Expr {
 }
 
 // A NumberConst is a constant number-valued expression.
-class NumberConst extends Const {
+export class NumberConst extends Const {
     public readonly value: NumberValue;
 
     public constructor(d: number) {
@@ -117,7 +119,7 @@ class NumberConst extends Const {
         return this.value;
     }
 
-    protected override VisitorCall(visitor: IExpressionVisitor) {
+    public override VisitorCall(visitor: IExpressionVisitor) {
         visitor.visitNumberConst(this);
     }
 
@@ -126,7 +128,7 @@ class NumberConst extends Const {
     }
 }
 
-class TextConst extends Const {
+export class TextConst extends Const {
     public readonly value: TextValue;
 
     constructor(s: string) {
@@ -138,7 +140,7 @@ class TextConst extends Const {
         return this.value;
     }
 
-    protected override VisitorCall(visitor: IExpressionVisitor) {
+    public override VisitorCall(visitor: IExpressionVisitor) {
         visitor.visitTextConst(this);
     }
 
@@ -158,7 +160,7 @@ class ValueConst extends Const {
         return this.value;
     }
 
-    protected override VisitorCall(visitor: IExpressionVisitor) {
+    public override VisitorCall(visitor: IExpressionVisitor) {
         visitor.visitValueConst(this);
     }
 
@@ -167,7 +169,7 @@ class ValueConst extends Const {
     }
 }
 
-class Error extends Const {
+export class Error extends Const {
     public readonly value: ErrorValue;
     private readonly error: string;
     public static readonly refError: Error = new Error(ErrorValue.refError);
@@ -179,19 +181,218 @@ class Error extends Const {
         } else {
             this.value = msg as ErrorValue;
         }
-        this.error = this.value.ToString();
+        this.error = this.value.toString();
     }
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         return this.value;
     }
 
-    protected override VisitorCall(visitor: IExpressionVisitor) {
+    public override VisitorCall(visitor: IExpressionVisitor) {
         visitor.visitError(this);
     }
 
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
         return this.error;
+    }
+}
+
+/**
+ * A FunCall expression is an operator application such as 1+$A$4 or a function
+ * call such as RAND() or SIN(4*A$7) or SUM(B4:B52; 3) or IF(A1; A2; 1/A1).
+ */
+export class FunCall extends Expr {
+    // "function" represents a function that takes an unknown amount
+    // of arguments (of type unknown) and returns a value of type unknown.
+    // It's a replacement of the previous "Function" type and the purpose
+    // of it is to match formulajs which is not a class but an object
+    // containing various spreadsheet functions:
+    public readonly function: (...args: unknown[]) => unknown;
+    public readonly functionName: string;
+    public es: Expr[];           // Non-null, elements non-null
+
+    // We have to add 'functionName' manually since not all functions in formula.js have a name.
+    private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[], functionName: string) {
+        super();
+        if (typeof name === "function") {
+            this.function = name;
+        } else {
+            this.function = FunCall.getFunctionByName(name);
+        }
+        this.functionName = functionName.toUpperCase();
+        this.es = es;
+    }
+
+    public static getFunctionByName(name: string): (...args: unknown[]) => unknown {
+        if (name in formulajs) {
+            // "typeof formulajs" is "object" and it contains all the spreadsheet functions.
+            // "keyof" that object are function names like "SUM" and "PRODUCT".
+            // "name as" compares the string to the function names. At last, we cast it as the
+            // type of the "function" field:
+            return formulajs[name as keyof typeof formulajs] as (...args: unknown[]) => unknown;
+        }
+        throw new Error(`Function ${name} not found in formulajs`);
+    }
+
+    public static Make(name: string, es: Expr[]): Expr {
+        let func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
+        if (func === null) {
+            throw new Error(`Function ${name} not found in formulajs`); // MakeUnknown was called here previously.
+        }
+
+        for (let i: number = 0; i < es.length; i++) {
+            if (es[i] === null || es[i] === undefined) {
+                es[i] = new Error("#SYNTAX") as unknown as Expr;
+            }
+        }
+
+        if (name === "SPECIALIZE" && es.length > 1) {
+            return new FunCall("SPECIALIZE", [FunCall.Make("CLOSURE", es)], name);
+        } else {
+            return new FunCall(func, es, name);
+        }
+    }
+
+    // Arguments are passed unevaluated to cater for non-strict IF
+    // (Work in progress):
+    public override Eval(sheet: Sheet, col: number, row: number): Value {
+
+        // We use map to call the Eval() function on all the expressions in the array and then extract
+        // the NumberValue from them using ToNumber(). We store the result in an array of object|null:
+        const args: (object|null)[] = this.es.map(expr => NumberValue.ToNumber(expr.Eval(sheet, col, row)));
+
+        // Then we call the function (tied to this instance of FunCall) on each element in the args array
+        // and store the result in a variable called 'result':
+        const result = this.function(...args);
+
+        // To Date (string):
+        if (["DATE", "DATEVALUE", "EDATE", "EMONTH"].includes(this.functionName)) {
+            // We have to cast the result as a Date before calling toString() because the DATE function returns
+            // an object of type Date:
+            return TextValue.Make((result as Date).toString());
+        }
+
+        // To number:
+        if (["SUM", "PRODUCT", "POWER", "ABS", "ACOS", "CEILINGMATH", "FACT", "FLOOR",
+            "DAY", "DAYS", "DAYS360", "CODE", "FIND", "LEN"].includes(this.functionName)) {
+            return NumberValue.Make(result as number);
+        }
+
+        // To string:
+        if (["CONCATENATE", "EXACT", "UPPER", "LOWER", "PROPER", "CHAR", "ROMAN", "TEXTJOIN"].includes(this.functionName)) {
+            return TextValue.Make(result as string);
+        }
+
+        return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
+    }
+
+
+    public override Move(deltaCol: number, deltaRow: number): Expr {
+        let newEs: Expr[] = new Array(this.es.length);
+
+        for (let i: number = 0; i < this.es.length; i++) {
+            newEs[i] = this.es[i].Move(deltaCol, deltaRow);
+        }
+        return new FunCall(this.function, newEs, "null"); //TODO: Fix functionName
+    }
+
+    // Can be copied with sharing if arguments can
+    public override CopyTo(col: number, row: number): Expr {
+        let same: boolean = true;
+        let newEs: Expr[] = new Array(this.es.length);
+
+        for (let i: number = 0; i < this.es.length; i++) {
+            newEs[i] = this.es[i].CopyTo(col, row);
+            same = same && (newEs[i] === this.es[i]); // sets 'same' to false if newEs[i] and this.es[i] are different.
+        }
+
+        if (same) {
+            return this;
+        } else {
+            return new FunCall(this.function, newEs, "null"); //TODO: Fix functionName
+        }
+    }
+
+    public override InsertRowCols(modSheet: Sheet, thisSheet: boolean, R: number, N: number, r: number, doRows: boolean): Adjusted<Expr> {
+        let newEs: Expr[] = new Array(this.es.length);
+        let upper: number = Number.MAX_VALUE;
+        let same: boolean = true;
+
+        for (let i: number = 0; i < this.es.length; i++) {
+            let ae: Adjusted<Expr> = this.es[i].InsertRowCols(modSheet, thisSheet, R, N, r, doRows);
+            upper = Math.min(upper, ae.maxValidRow);
+            same = same && ae.isUnchanged;
+            newEs[i] = ae.type;
+        }
+        return new Adjusted<Expr>(new FunCall(this.function, newEs, "null"), upper, same); //TODO: Fix functionName
+    }
+
+
+    // Show infixed operators as infix and without excess parentheses
+    public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
+        let stringArray: string[] = [];
+        let pre: number = 0; //TODO: Fix fixity
+
+        if (pre === 0) { // Not operator
+            stringArray.push(this.function.name + "(");
+            for (let i: number = 0; i < this.es.length; i++) {
+                if (i > 0) {
+                    stringArray.push(", ");
+                }
+                stringArray.push(this.es[i].Show(col, row, 0, fo));
+            }
+            stringArray.push(")");
+        } else { // Operator.  Assume es.Length is 1 or 2
+            if (this.es.length === 2) {
+                // If precedence lower than context, add parens
+                if (pre < ctxpre) {
+                    stringArray.push("(");
+                }
+                stringArray.push(this.es[0].Show(col, row, pre, fo));
+                stringArray.push(this.function.name);
+                // Only higher precedence right operands avoid parentheses
+                stringArray.push(this.es[1].Show(col, row, pre + 1, fo));
+                if (pre < ctxpre) {
+                    stringArray.push(")");
+                }
+            } else if (this.es.length == 1) {
+                stringArray.push(this.function.name === "NEG" ? "-" : this.function.name);
+                stringArray.push(this.es[0].Show(col, row, pre, fo));
+            } else {
+                throw new ImpossibleException("Operator not unary or binary");
+            }
+        }
+        return stringArray.join(""); // The join() method "creates and returns a new string by concatenating all of the elements in this array".
+    }
+
+
+    override VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void): void {
+        this.es.forEach(e => {
+            e.VisitRefs(refSet, refAct, areaAct);
+        });
+    }
+
+    public override DependsOn(here: FullCellAddress, dependsOn: (fca: FullCellAddress) => void): void {
+        this.es.forEach(e => {
+            e.DependsOn(here, dependsOn);
+        });
+    }
+
+    public override get isVolatile(): boolean {
+        /* IMPLEMENT LATER
+        if (this.function.isVolatile(this.es))
+            return true;
+        this.es.forEach(e => {
+            if (e.isVolatile) {
+                return true;
+            }
+        });
+         */
+        return false;
+    }
+
+    override VisitorCall(visitor: IExpressionVisitor): void {
+        visitor.visitFunCall(this);
     }
 }
 
@@ -201,7 +402,7 @@ interface IExpressionVisitor {
     visitTextConst(textConst: TextConst): void;
     visitValueConst(valueConst: ValueConst): void;
     visitError(expr: Error): void;
-    // visitFunCall(funCall: FunCall): void; Not going to be implemented
+    visitFunCall(funCall: FunCall): void;
     visitCellRef(cellRef: CellRef): void;
     visitCellArea(cellArea: CellArea): void;
 }
@@ -225,7 +426,7 @@ class RefSet {
 }
 
 // Should it inherit from IEquatable<CellArea>?
-class CellRef extends Expr implements IEquatable<CellRef> {
+export class CellRef extends Expr implements IEquatable<CellRef> {
     public readonly raref: SuperRARef;
     public readonly sheet: Sheet;
 
@@ -268,7 +469,6 @@ class CellRef extends Expr implements IEquatable<CellRef> {
             return new Adjusted<Expr>(this);
         }
     }
-    // must be public!
     public AddToSupport(supported: Sheet, col: number, row: number, cols: number, rows: number) {
         const referredSheet = this.sheet ?? supported;
         const ca = this.raref.colRef,
@@ -300,7 +500,7 @@ class CellRef extends Expr implements IEquatable<CellRef> {
         }
     }
 
-    protected override VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void) {
+    public override VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void) {
         if (!refSet.SeenBefore(this)) {
             refAct(this);
         }
@@ -327,7 +527,7 @@ class CellRef extends Expr implements IEquatable<CellRef> {
         return this.sheet == null ? s : this.sheet.getName() + "!" + s;
     }
 
-    protected override VisitorCall(visitor: IExpressionVisitor) {
+    public override VisitorCall(visitor: IExpressionVisitor) {
         visitor.visitCellRef(this);
     }
 
@@ -348,7 +548,7 @@ class CellRef extends Expr implements IEquatable<CellRef> {
 }
 
 // Should it inherit from IEquatable<CellArea>?
-class CellArea extends Expr implements IEquatable<CellArea> {
+export class CellArea extends Expr implements IEquatable<CellArea> {
     private readonly ul: SuperRARef;
     private readonly lr: SuperRARef;
     public readonly sheet: Sheet;
@@ -483,7 +683,7 @@ class CellArea extends Expr implements IEquatable<CellArea> {
     }
 
 
-    protected override VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void) {
+    public override VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void) {
         if(!refSet.SeenBefore(this)) {
             areaAct(this)
         }
@@ -502,7 +702,7 @@ class CellArea extends Expr implements IEquatable<CellArea> {
     }
 
 
-    public GetHashCode() {
+    public GetHashCode():number {
         return this.lr.getHashCode() * 511 + this.ul.getHashCode()
     }
 
@@ -512,7 +712,7 @@ class CellArea extends Expr implements IEquatable<CellArea> {
         return this.sheet == null ? s : this.sheet.getName() + "!" + s;
     }
 
-    protected override VisitorCall(visitor: IExpressionVisitor) {
+    public override VisitorCall(visitor: IExpressionVisitor) {
         visitor.visitCellArea(this);
     }
 }

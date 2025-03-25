@@ -1,5 +1,6 @@
 import { Formats } from "./Types";
 import { Sheet } from "./Sheet";
+import { Value } from "./Value";
 import { Cell } from "./Cells";
 
 //An interval represents a range of numbers from a min to a max, including both
@@ -116,7 +117,7 @@ export class SuperRARef {
     }
 
     //Get the absolute address of reference
-    public address(col: number, row: number): RARefCellAddress {
+    address(col: number, row: number): RARefCellAddress {
         return new RARefCellAddress(this, col, row);
     }
 
@@ -212,10 +213,10 @@ export class SuperRARef {
     equals(that: SuperRARef): boolean {
         return that != null && this.colAbs === that.colAbs && this.colRef === that.colRef && this.rowAbs === that.rowAbs && this.rowRef === that.rowRef;
     }
-    //     //Deprecated?
-    //     getHashCode() {
-    //         return ((this.colAbs ? 1 : 0) + (this.rowAbs ? 2 : 0) + this.colRef * 4) * 37 + this.rowRef;
-    //     }
+
+    getHashCode() {
+        return ((this.colAbs ? 1 : 0) + (this.rowAbs ? 2 : 0) + this.colRef * 4) * 37 + this.rowRef;
+    }
 }
 
 //Signature RARef(String a1Ref, int col, int row) in C# source
@@ -343,10 +344,9 @@ export class SuperCellAddress {
         return false;
     }
 
-    // //Deprecated?
-    // getHashCode(): number {
-    //     return 29 * this.col + this.row;
-    // }
+    getHashCode(): number {
+        return 29 * this.col + this.row;
+    }
 
     toString(): string {
         return this.columnName(this.col) + (this.row + 1);
@@ -413,10 +413,9 @@ export class FullCellAddress {
         return false;
     }
 
-    // //Deprecated?
-    // getHashCode(): number {
-    //     return this.cellAddress.getHashCode() * 29 + this.sheet.getHashCode();
-    // }
+    getHashCode(): number {
+        return this.cellAddress.getHashCode() * 29 + this.sheet.getHashCode();
+    }
 
     //lots of operator overloading here that we can't do in TypeScript. To be considered?
 
@@ -425,12 +424,17 @@ export class FullCellAddress {
         return this.sheet.getName() + "!" + this.cellAddress;
     }
 
-    // //needs cell implementation
-    // eval():Value {
-    //
-    // }
-    TryGetCell(): Cell {
-        throw Error("Not implemented yet");
+    public Eval(): Value | null {
+        const cell = this.sheet.Get(this.cellAddress);
+        if (cell != null) {
+            return cell.Eval(this.sheet, this.cellAddress.col, this.cellAddress.row);
+        }
+        return null;
+    }
+
+
+    public tryGetCell(): Cell | null{
+        return this.sheet.Get(this.cellAddress);
     }
 }
 

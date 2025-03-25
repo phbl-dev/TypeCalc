@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",  // This enables Node-style module resolution
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "outDir": "../dist",
+    "lib": ["esnext"],
+    "types": ["vite/client", "vitest/globals"]
+  },
+  "include": [
+    "./",
+    "./tests"
+  ]
+}

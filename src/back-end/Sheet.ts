@@ -1,15 +1,15 @@
 import { Workbook } from "./Workbook";
-import { Cell, BlankCell } from "./Cells";
+import { Cell, BlankCell, CachedArrayFormula, Formula, ArrayFormula } from "./Cells";
 import { Adjusted, Interval, SuperCellAddress } from "./CellAddressing";
 import { Expr } from "./Expressions";
-import { CachedArrayFormula, Formula, ArrayFormula } from "./Cells/Formula";
+import { ArrayValue } from "./ArrayValue";
 
 /**
  * Creates a new sheet. Default size is 20 columns and 1000 rows.
  */
 export class Sheet {
-    public cols: number = 20;
-    public rows: number = 1000;
+    public cols: number = 2000;
+    public rows: number = 10000;
     private name: string;
     public readonly workbook: Workbook;
     private readonly cells: SheetRep;
@@ -81,6 +81,13 @@ export class Sheet {
     }
 
     /**
+     * Getting the cells field safely for RebuildSupportGraph() in Workbook.ts.
+     */
+    public getCells(): SheetRep {
+        return this.cells;
+    }
+
+    /**
      * Recalculates all cells within this sheet
      * It uses the individual Eval method from the cells.
      * @see  {Cell#Eval}
@@ -106,8 +113,6 @@ export class Sheet {
             }
         }
     }
-
-
 
     /**
      *  Resets all the cells in the sheet.
@@ -284,7 +289,8 @@ export class Sheet {
                             // TS fucking sucks.
                             this.cells.Set(c - N, r, oldCell);
 
-                            this.cells.Set(c - N, r, new BlankCell());
+                            this.cells.Set(c - N, r,  new BlankCell());
+
                         }
                     }
                 }
@@ -340,8 +346,8 @@ export class Sheet {
      * @constructor
      */
     public Get(col: number | SuperCellAddress, row?: number): Cell | null {
-        if (row !== undefined) {
-            return (col as number) < this.cols && row < this.rows ? this.cells.Get(col as number, row) : null;
+        if (row || row === 0) { // if row is 0 it would evaluate to false. Therefore, we add "|| row === 0".
+            return (col as number) < this.cols && row < this.rows ? this.cells!.Get(col as number, row) : null;
         } else {
             col = col as SuperCellAddress;
             return this.cells.Get(col.col, col.row);
@@ -356,15 +362,12 @@ export class Sheet {
      * @constructor
      */
     public Set(col: number | SuperCellAddress, newCell: Cell, row?: number): void {
-        if (row !== undefined) {
+        if (row || row === 0) {
             if (typeof col === "number") {
                 // Ensure col is a number before proceeding
                 if (col < this.cols && row < this.rows) {
-                    let oldCell: Cell | null = this.cells.Get(col, row); // Avoid non-null assertion
-                    if (typeof oldCell == "undefined") {
-                        oldCell = null;
-                    }
-                    if (oldCell !== null && oldCell !== newCell) {
+                    const oldCell: Cell | null = this.cells.Get(col, row); // Avoid non-null assertion
+                    if (oldCell !== null && oldCell !== undefined && oldCell !== newCell) {
                         oldCell.TransferSupportTo(newCell);
                         this.workbook.DecreaseVolatileSet(oldCell, this, col, row);
                         oldCell.RemoveFromSupportSets(this, col, row);
@@ -445,14 +448,14 @@ export class Sheet {
                             (this.Get(col + deltaCol, row + deltaRow) as unknown as Formula).Visited = true;
                         }
                     }
-                    expr.AddToSupportSet(this, col, row, cols, rows);
+                    expr.AddToSupportSets(this, col, row, cols, rows);
                 }
             }
         });
         this.ResetCellState();
     }
 
-    private CheckRow(col: number, row: number, expr: number, size: number): boolean {
+    private CheckRow(col: number, row: number, expr: Expr, size: number): boolean {
         for (let i = 0; i <= size; i++) {
             const fcr: Formula = this.Get(col + i, row) as unknown as Formula;
             if (fcr == null || fcr.Visited || fcr.Expr != expr) {
@@ -462,7 +465,7 @@ export class Sheet {
         return true;
     }
 
-    private CheckCol(col: number, row: number, expr: number, size: number): boolean {
+    private CheckCol(col: number, row: number, expr: Expr, size: number): boolean {
         for (let i = 0; i <= size; i++) {
             const fcr: Formula = this.Get(col, row + i) as unknown as Formula;
             if (fcr == null || fcr.Visited || fcr.Expr != expr) {
@@ -488,6 +491,10 @@ export class Sheet {
 
     public toString(): string {
         return this.name;
+    }
+
+    getHashCode() {
+        return 0;
     }
 }
 
@@ -527,15 +534,15 @@ export class SheetRep {
 
         const index0 = (((c >> (3 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (3 * this.LOGH)) & this.MH);
         this.tile0[index0] ??= new Array(this.W * this.H);
-        const tile1: Cell[][][] = this.tile0[index0];
+        let tile1:Cell[][][] = this.tile0[index0];
 
         const index1 = (((c >> (2 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (2 * this.LOGH)) & this.MH);
         tile1[index1] ??= new Array(this.W * this.H);
-        const tile2: Cell[][] = tile1[index1];
+        let tile2: Cell[][] = tile1[index1];
 
         const index2 = (((c >> this.LOGW) & this.MW) << this.LOGH) | ((r >> this.LOGH) & this.MH);
         tile2[index2] ??= new Array(this.W * this.H);
-        const tile3: Cell[] = tile2[index2];
+        let tile3: Cell[] = tile2[index2];
 
         const index3 = ((c & this.MW) << this.LOGH) | (r & this.MH);
         if (value instanceof Cell) {

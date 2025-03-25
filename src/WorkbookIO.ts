@@ -69,7 +69,7 @@ export class XMLReader {
         for (let i: number = 0; i < sheets.length; i++) {
             //console.log(sheets[i]);
             const sheetName: string = sheets[i].Name;
-            const sheet: Sheet = new Sheet(WorkbookManager.getWorkbook() as Workbook, sheetName, 100, 100, false); //what is up with all these constructors?
+            const sheet: Sheet = new Sheet(WorkbookManager.getWorkbook() as Workbook, sheetName, false); //what is up with all these constructors?
             (WorkbookManager.getWorkbook() as Workbook).AddSheet(sheet);
             //console.log(wb);
             //console.log(wb.get(sheetName))
