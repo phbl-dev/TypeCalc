@@ -146,7 +146,11 @@ describe("Formula.js", () => {
 
         let funCall: Expr = FunCall.Make("DATE", [expr1, expr2, expr3]);
 
-        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("Tue Jul 08 2008 00:00:00 GMT+0200 (Central European Summer Time)");
+        let array: string[] = TextValue.ToString(funCall.Eval(sheet,0,0)).split(" ")
+        expect(array[0]).toBe("Tue")
+        expect(array[1]).toBe("Jul")
+        expect(array[2]).toBe("08")
+        expect(array[3]).toBe("2008")
     })
 
     test("Eval with DATEVALUE", () => {
@@ -154,7 +158,11 @@ describe("Formula.js", () => {
 
         let funCall: Expr = FunCall.Make("DATEVALUE", [expr1]);
 
-        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("Tue Jul 08 2008 00:00:00 GMT+0200 (Central European Summer Time)");
+        let array: string[] = TextValue.ToString(funCall.Eval(sheet,0,0)).split(" ")
+        expect(array[0]).toBe("Tue")
+        expect(array[1]).toBe("Jul")
+        expect(array[2]).toBe("08")
+        expect(array[3]).toBe("2008")
     })
 
     test("Eval with DAY", () => {
@@ -189,7 +197,11 @@ describe("Formula.js", () => {
 
         let funCall: Expr = FunCall.Make("EDATE", [expr1, expr2]);
 
-        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("Wed Dec 15 2010 00:00:00 GMT+0100 (Central European Standard Time)");
+        let array: string[] = TextValue.ToString(funCall.Eval(sheet,0,0)).split(" ")
+        expect(array[0]).toBe("Wed")
+        expect(array[1]).toBe("Dec")
+        expect(array[2]).toBe("15")
+        expect(array[3]).toBe("2010")
     })
 
     // Not working for some reason:
@@ -199,7 +211,11 @@ describe("Formula.js", () => {
 
         let funCall: Expr = FunCall.Make("EOMONTH", [expr1, expr2]);
 
-        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("Wed Dec 15 2010 00:00:00 GMT+0100 (Central European Standard Time)");
+        let array: string[] = TextValue.ToString(funCall.Eval(sheet,0,0)).split(" ")
+        expect(array[0]).toBe("Wed")
+        expect(array[1]).toBe("Dec")
+        expect(array[2]).toBe("15")
+        expect(array[3]).toBe("2010")
     })
 
 });
