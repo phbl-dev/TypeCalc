@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Adds an event listener that acts when the associated button is clicked,
     // which calls the 'newTable()' function.
-    const button = document.getElementById("create") as HTMLButtonElement;
-    button.addEventListener("click", createGrid);
+    const createButton = document.getElementById("create") as HTMLButtonElement;
+    createButton.addEventListener("click", createGrid);
 
     // Alternatively, the same event can also be executed using the 'Enter'-key
     // when standing in the sheetInput field.

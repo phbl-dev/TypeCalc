@@ -54,7 +54,7 @@ header h4 {
 
 /* ------------------------------------------ */
 #root {
-    margin-top: 3%;
+    margin-top: 46px;
     overflow: auto;
     display: flex;
     flex-direction: column;
@@ -110,7 +110,7 @@ header h4 {
 
 /* ------------------------------------------ */
 footer {
-    height: 2.5%;
+    height: 25px;
     width: 100%;
     display: flex;
     align-items: center;
