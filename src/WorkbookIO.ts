@@ -154,6 +154,11 @@ export class WorkbookManager {
 
     static getWorkbook(): Workbook | null {
         console.log("[WorkbookManager] getWorkbook ->", this.instance);
+        if (!this.instance) {
+            this.instance = new Workbook();
+            const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", true);
+            this.instance.AddSheet(baseSheet);
+            }
         return this.instance;
     }
 
@@ -190,7 +195,6 @@ export function ShowWindowInGUI(leftCornerCol: number, rightCornerCol:number, to
     if (sheet) {
         for (let col: number = startCol; col < endCol ; col++) {
             for (let row: number = startRow; row < endRow; row++) {
-                console.log("this happens");
                 const colChar:string = numberToLetters(col);
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
