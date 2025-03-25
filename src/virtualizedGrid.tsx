@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, {useRef } from "react";
 import { FixedSizeGrid as Grid } from "react-window";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -33,7 +33,7 @@ function numberToLetters(n: number) {
  * @param style - Lets the header inherit style from a css style sheet
  * @constructor
  */
-const ColumnHeader = ({ columnIndex, style }) => (
+const ColumnHeader = ({ columnIndex, style }: {columnIndex:number, style:any}) => (
     <div id="columnHeaders"
          style={{
              ...style, // Inherit style from style.css
@@ -49,7 +49,7 @@ const ColumnHeader = ({ columnIndex, style }) => (
  * @param style - Lets the header inherit style from a css style sheet
  * @constructor
  */
-const RowHeader = ({ rowIndex, style }) => (
+const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
     <div id="rowHeaders"
          style={{
              ...style, // Inherit style from style.css
@@ -59,13 +59,14 @@ const RowHeader = ({ rowIndex, style }) => (
     </div>
 );
 
+// @ts-ignore
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
  * @param style - Lets the cell inherit the style from a css style sheet
  * @constructor
  */
-const Cell = ({ columnIndex, rowIndex, style }) => {
+const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: number, style:any}) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
 
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
@@ -77,7 +78,7 @@ const Cell = ({ columnIndex, rowIndex, style }) => {
     }
 
     // Allows us to navigate the cells using the arrow keys
-    const arrowNav = (event) => {
+    const arrowNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
 
