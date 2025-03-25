@@ -118,7 +118,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
-    const [scrollOffset, setScrollOffset] = useState({ left: 0, top: 0 });
+    const [scrollOffset] = useState({ left: 0, top: 0 });
 
     useEffect(() => {
         // Handle file drop events entirely in React
@@ -160,18 +160,12 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
      * @param scrollTop Vertical scrolling value
      */
     function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }) {
-        const left = scrollLeft ?? scrollOffset.left;
-        const top = scrollTop ?? scrollOffset.top;
-
         if (colHeaderRef.current && scrollLeft !== undefined) {
             colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
         }
         if (rowHeaderRef.current && scrollTop !== undefined) {
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
         }
-
-        // setScrollOffset({ left, top });
-        // ShowWindowInGUI(left - 10, left + 30, top - 10, top + 30);
     }
 
     return (

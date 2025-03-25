@@ -118,28 +118,15 @@ export class XMLReader {
                     } else {
                         cellContent = this.parseCellData(cells[f].Data);
                     }
-                    let cellToBeAdded: QuoteCell | NumberCell =
+                    const cellToBeAdded: QuoteCell | NumberCell =
                         typeof cellContent === "number" ? new NumberCell(cellContent as number) : new QuoteCell(cellContent as string);
-                    //console.log(cellToBeAdded.showValue(sheet, colIndex as number, rowIndex));
-                    //This is not the way we want to do it in the end. Needs upgrade when parser works.
                     sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
-                    // let cellToBeAdded:Cell = Cell.Parse(cellContent, workbook, rowIndex, cellIndex);
-                    // console.log("sheetName:", sheetName);
-                    // console.log("rowIndex:", rowIndex);
-                    // console.log("cellIndex:", colIndex);
-                    // console.log("cellContent:", cellContent);
-                    // console.log("contentType:", typeof cellContent);
-                    //pushCellToGUI(colIndex, rowIndex, cellContent);
                 }
-                // sheet.ShowAll((col, row, value) => {
-                //     console.log(`Cell (${col}, ${row}): ${value}`);
-                // });
             }
-            //newTable();
         }
-        console.log("[readFile] Final workbook contents:", WorkbookManager.getWorkbook());
-        //WorkbookManager.notifyUpdate();
     }
+
+    //Essentially a type system for cell data input. Can probably be out-sourced to parser once that works.
     parseCellData(cellData: CellData): string | number | boolean | Date {
         if (!cellData.Type) {
             return cellData["#text"]; // If there's no type, return as-is
@@ -160,6 +147,8 @@ export class XMLReader {
 
 }
 
+//This is an overarching workbook used for all objects in the system.
+//Follows a singleton dogma, since we really never need to have multiple workbooks at the same time.
 export class WorkbookManager {
     private static instance: Workbook | null = null;
 
@@ -183,29 +172,27 @@ export class WorkbookManager {
     }
 }
 
+//This is the method for retrieving cell data for the current view-port in the GUI.
+//Updates on every scroll, meaning that the values are stored only in back-end, and then repeatedly fetched
+//Makes sure that we only load data in the viewport, everything else stays in back-end.
 export function ShowWindowInGUI(leftCornerCol: number, rightCornerCol:number, topCornerRow: number, bottomCornerRow: number):void {
     const wb = WorkbookManager.getWorkbook();
-    console.log("[ShowWindowInGUI] Retrieved workbook:", wb);
-
     if (!wb) {
         console.log("[ShowWindowInGUI] No workbook found!");
         return;
     }
+
     const startCol:number = leftCornerCol;
     const endCol:number = rightCornerCol;
     const startRow:number = topCornerRow;
     const endRow:number = bottomCornerRow;
-    console.log("Calling get");
-    const sheet = wb.get("Sheet1");
-    console.log("[ShowWindowInGUI] Sheet1:", sheet);
-    //console.log(workbook);
-    //console.log(currentSheet);
+    const sheet:Sheet|null = wb.get("Sheet1"); //This needs to be updated
     if (sheet) {
         for (let col: number = startCol; col < endCol ; col++) {
             for (let row: number = startRow; row < endRow; row++) {
                 console.log("this happens");
-                let colName:string = numberToLetters(col);
-                let cellHTML = document.getElementById(colName + row);
+                const colChar:string = numberToLetters(col);
+                const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
                     cellHTML.innerText = sheet.Show(col,row);
                 }
@@ -214,8 +201,7 @@ export function ShowWindowInGUI(leftCornerCol: number, rightCornerCol:number, to
     }
 }
 
-
-
+//Interfaces for different datatypes used in the implementation.
 interface CellData {
     "#text": string | number;
     Type?: "Number" | "String" | "Boolean" | "DateTime";
@@ -229,11 +215,11 @@ interface WorkbookType {
 
 interface WorksheetType {
     Name: string;
-    Table: TableType;
+    Table: TableType; //A WorkSheet SHOULD only have one table (test)
 }
 
 interface TableType {
-    Row: RowType | RowType[];
+    Row: RowType | RowType[]; //Can be a single row or an array of rows
 }
 
 interface RowType {
@@ -247,10 +233,10 @@ interface CellType {
     Data: CellData;
 }
 
-//Handles when files are dropped in the dropzone in the browser
+//Handles when files are dropped in the dropzone in the browser,
+//since React got implemented, this is the whole window.
 export function dropHandler(ev:DragEvent) {
-    let xmlReader:XMLReader = new XMLReader();
-    console.log("File(s) dropped");
+    const xmlReader:XMLReader = new XMLReader();
 
     // Prevent default behavior (Prevent file from being opened)
     ev.preventDefault();
@@ -269,20 +255,14 @@ export function dropHandler(ev:DragEvent) {
             }
             const xmlContent = e.target.result as string;
 
-            //createOverarchingWorkbook();
             xmlReader.readFile(xmlContent);
-            //console.log(overarchingWorkbook);
         };
         reader.readAsText(file);
     }
-    //WorkbookManager.notifyUpdate();
-    console.log("workbook in dropHandler", WorkbookManager.getWorkbook());
 }
 
-//Handles when files are dragged over the drop zone in the browser
+//Handles when files are dragged over the drop zone (entire spreadsheet) in the browser
 export function dragOverHandler(ev:DragEvent) {
-    console.log("File(s) in drop zone");
-
     // Prevent default behavior (Prevent file from being opened)
     ev.preventDefault();
 }
@@ -291,100 +271,3 @@ export function pushCellToGUI(col:number, row:number, value: string | number | b
     const cellID = `${numberToLetters(col)}${row}`;
     localStorage.setItem(cellID, JSON.stringify(value));
 }
-
-// const xmltest = new XMLReader();
-// xmltest.readFile("../extra_files/Testfile for Thesis.xml");
-
-
-// export class XMLSSIO extends IOFormat {
-//     private static readonly MINROWS: number = 10;
-//     private static readonly MINCOLS: number = 10;
-//
-//     readonly formats:Formats;
-//
-//     constructor() {
-//         super("xml", "XMLSS");
-//         this.formats = new Formats();
-//         this.formats.setRefFmt("R1C1");
-//     }
-//
-//     public parseRow(
-//         rowXml: string,
-//         sheet: Sheet,
-//         row: number,
-//         cellParsingCache: Map<string, Cell>
-//     ): number {
-//         let cellCount:number = 0;
-//         let col:number = 0;
-//
-//         const parser = new XMLParser({ ignoreAttributes: false });
-//         const rowData = parser.parse(rowXml); // Parse XML row into JS object
-//
-//         if (!rowData.Row || !rowData.Row.Cell) return 0;
-//
-//         const cells = Array.isArray(rowData.Row.Cell) ? rowData.Row.Cell : [rowData.Row.Cell];
-//
-//         for (const cellNode of cells) {
-//             let colIndexStr:string = cellNode['@_ss:Index'];
-//             //let arrayRangeStr = cellNode['@_ss:ArrayRange'];
-//             //let formulaStr = cellNode['@_ss:Formula'];
-//             let typeStr = "";
-//             let dataVal = "";
-//
-//             if (colIndexStr !== undefined) {
-//                 const parsedCol = parseInt(colIndexStr, 10);
-//                 col = isNaN(parsedCol) ? 0 : parsedCol;
-//             } else {
-//                 col++;
-//             }
-//
-//             cellCount++;
-//
-//             // Prevent overwriting array formula results
-//             if (sheet.getCell(col - 1, row - 1)) continue;
-//
-//             // Extract Data if present
-//             if (cellNode.Data) {
-//                 typeStr = cellNode.Data['@_ss:Type'] || "";
-//                 dataVal = cellNode.Data['#text'] || "";
-//             }
-//
-//             let cellString = formulaStr ? formulaStr : dataVal;
-//
-//             // Ensure string values are formatted correctly
-//             if (!formulaStr && typeStr === "String") {
-//                 dataVal = "'" + dataVal;
-//             }
-//
-//             if (!cellString) continue; // Skip blank cells
-//
-//             let cell: Cell;
-//             if (cellParsingCache.has(cellString)) {
-//                 cell = cellParsingCache.get(cellString)!.cloneCell(col - 1, row - 1);
-//             } else {
-//                 cell = Cell.Parse(cellString, this.wb, col, row);
-//                 if (!cell) {
-//                     console.warn(`BAD: Null cell from "${cellString}"`);
-//                 } else {
-//                     cellParsingCache.set(cellString, cell);
-//                 }
-//             }
-//
-//             // Handle array formulas WE WAIT WITH THIS
-//             // if (arrayRangeStr && cell instanceof Formula) {
-//             //     const split = arrayRangeStr.split(":");
-//             //     const raref1 = new RARef(split[0]);
-//             //     const raref2 = split.length === 1 ? new RARef(split[0]) : new RARef(split[1]);
-//             //
-//             //     if (raref1 && raref2) {
-//             //         const ulCa = raref1.addr(col - 1, row - 1);
-//             //         const lrCa = raref2.addr(col - 1, row - 1);
-//             //         sheet.SetArrayFormula(cell, col - 1, row - 1, ulCa, lrCa);
-//             //     }
-//             // } else {
-//             //     sheet.SetCell(cell, col - 1, row - 1);
-//             // }
-//         }
-//         return cellCount;
-//     }
-// }
