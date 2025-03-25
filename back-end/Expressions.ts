@@ -258,8 +258,20 @@ export class FunCall extends Expr {
     public override Eval(sheet: Sheet, col: number, row: number): Value {
 
         // We use map to call the Eval() function on all the expressions in the array and then extract
-        // the NumberValue from them using ToNumber(). We store the result in an array of object|null:
-        const args: (object|null)[] = this.es.map(expr => NumberValue.ToNumber(expr.Eval(sheet, col, row)));
+        // the number from them using ToNumber() if the value is an instance of NumberValue. Otherwise,
+        // if the expr holds a TextValue we extract the string from it using ToString(). We store the
+        // result in an array of object|null:
+        const args: (object | null | undefined | string)[] = this.es.map(expr => {
+            const value = expr.Eval(sheet, col, row);
+
+            if (value instanceof NumberValue) {
+                return NumberValue.ToNumber(value)
+            } else if (value instanceof TextValue) {
+                return TextValue.ToString(value)
+            } else {
+                return null;
+            }
+        });
 
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
@@ -279,7 +291,7 @@ export class FunCall extends Expr {
         }
 
         // To string:
-        if (["CONCATENATE", "EXACT", "UPPER", "LOWER", "PROPER", "CHAR", "ROMAN", "TEXTJOIN"].includes(this.functionName)) {
+        if (["CONCATENATE", "EXACT", "UPPER", "LOWER", "PROPER", "CHAR", "ROMAN", "TEXTJOIN", "AND"].includes(this.functionName)) {
             return TextValue.Make(result as string);
         }
 
