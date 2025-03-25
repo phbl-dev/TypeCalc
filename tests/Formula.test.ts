@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 
-import { Cell, Formula, NumberCell } from "../src/Cells";
-import { Workbook } from "../src/Workbook";
-import { Expr, FunCall, NumberConst } from "../src/Expressions";
-import { Sheet } from "../src/Sheet";
-import { NumberValue } from "../src/NumberValue";
+import { Cell, Formula, NumberCell } from "../back-end/Cells";
+import { Workbook } from "../back-end/Workbook";
+import { Expr, FunCall, NumberConst } from "../back-end/Expressions";
+import { Sheet } from "../back-end/Sheet";
+import { NumberValue } from "../back-end/NumberValue";
 
 describe("Formula", () => {
     let workbook: Workbook;

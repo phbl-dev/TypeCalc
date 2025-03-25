@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { Adjusted, SuperRARef } from "../src/CellAddressing";
+import { Adjusted, SuperRARef } from "../back-end/CellAddressing";
 
 //these tests are strange, we will be testing them more in-depth in the specific types.
 describe("Adjusted<Type> Tests", () => {

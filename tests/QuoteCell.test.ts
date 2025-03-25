@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { Value } from "../src/Value";
-import { Formats } from "../src/Types";
-import { Cell, QuoteCell } from "../src/Cells";
-import { Workbook } from "../src/Workbook";
-import { Sheet } from "../src/Sheet";
+import { Value } from "../back-end/Value";
+import { Formats } from "../back-end/Types";
+import { Cell, QuoteCell } from "../back-end/Cells";
+import { Workbook } from "../back-end/Workbook";
+import { Sheet } from "../back-end/Sheet";
 
 describe ("QuoteCell", () => {
     let quoteCell: QuoteCell;

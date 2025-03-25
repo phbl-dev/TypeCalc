@@ -1,12 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as formulajs from '@formulajs/formulajs'
-import { Expr, FunCall, NumberConst, TextConst } from "../src/Expressions";
-import { Sheet } from "../src/Sheet";
-import { Workbook } from "../src/Workbook";
-import { Cell } from "gridjs";
-import { Formula, NumberCell } from "../src/Cells";
-import { NumberValue } from "../src/NumberValue";
-import { TextValue } from "../src/TextValue"; // Importing formulajs
+import { Expr, FunCall, NumberConst, TextConst } from "../back-end/Expressions";
+import { Sheet } from "../back-end/Sheet";
+import { Workbook } from "../back-end/Workbook";
+import { NumberValue } from "../back-end/NumberValue";
+import { TextValue } from "../back-end/TextValue"; // Importing formulajs
 
 
 describe("Formula.js", () => {

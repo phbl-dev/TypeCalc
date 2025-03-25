@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { BlankCell } from "../src/Cells";
-import { Sheet } from "../src/Sheet";
-import { Formats } from "../src/Types";
-import { Workbook } from "../src/Workbook";
+import { BlankCell } from "../back-end/Cells";
+import { Sheet } from "../back-end/Sheet";
+import { Formats } from "../back-end/Types";
+import { Workbook } from "../back-end/Workbook";
 
 describe("BlankCell", () => {
     let blankCell: BlankCell;

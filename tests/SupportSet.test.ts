@@ -1,9 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
-import { Interval, SupportArea, SupportSet } from "../src/CellAddressing";
-import { Sheet } from "../src/Sheet";
+import { Interval, SupportArea, SupportSet } from "../back-end/CellAddressing";
+import { Sheet } from "../back-end/Sheet";
+import {Workbook} from "../back-end/Workbook";
 
 describe("Support Set tests", () => {
-    const testSheet: Sheet = new Sheet("testSheet");
+    const testSheet: Sheet = new Sheet(new Workbook(),"testSheet",false);
     const mainCellCol = 0;
     const mainCellRow = 1;
 

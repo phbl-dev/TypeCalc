@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { NumberValue } from "../src/NumberValue";
-import { ErrorValue } from "../src/ErrorValue";
-import { ObjectValue } from "../src/ObjectValue";
-import { Value } from "../src/Value";
+import { NumberValue } from "../back-end/NumberValue";
+import { ErrorValue } from "../back-end/ErrorValue";
+import { ObjectValue } from "../back-end/ObjectValue";
+import { Value } from "../back-end/Value";
 
 describe("NumberValue can be Instantiated properly", () => {
   test("NumberValue can be instantiated from a number", () => {
