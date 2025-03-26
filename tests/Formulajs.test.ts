@@ -91,6 +91,7 @@ describe("Formula.js", () => {
         expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(2.0943951023931957);
     });
 
+    // TODO
     test.skip("Eval with AGGREGATE", () => {
         let func: (...args: unknown[]) => unknown;
         func = FunCall.getFunctionByName("AGGREGATE");
@@ -216,7 +217,7 @@ describe("Formula.js", () => {
         expect(array[3]).toBe("2010")
     })
 
-    // Not working for some reason:
+    //TODO: Not working for some reason:
     test.skip("Eval with EOMONTH", () => {
         let expr1: Expr = new TextConst('1/1/11');
         let expr2: Expr = new NumberConst(-3);
@@ -341,5 +342,16 @@ describe("Formula.js", () => {
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("C");
         expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe("CDXCIX");
+    });
+
+    //TODO: Doesn't work because we don't have "BooleanConst"
+    test.skip("Eval with AND", () => {
+        console.log(formulajs.AND(false, true))
+        let expr1: Expr = new TextConst("false");
+        let expr2: Expr = new TextConst("true");
+
+        let funCall: Expr = FunCall.Make("AND", [expr1, expr2]);
+
+        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("false");
     });
 });
