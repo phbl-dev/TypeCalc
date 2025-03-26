@@ -198,6 +198,44 @@ export class Error extends Const {
 }
 
 /**
+ * The ExprArray class is a helper class that we made for storing expressions in arrays.
+ * This is necessary because formula.js has functions that uses arrays as arguments fx:
+ * - AGGREGATE(9, 4, [-5,15], [32,'Hello World!'])
+ *
+ * In this way, FunCall expressions can end up holding nested arrays because functions
+ * like AGGREGATE takes arrays as arguments. And ExprArray is then the type we use for
+ * these nested arrays.
+ */
+export class ExprArray extends Const {
+    public readonly es: Expr[];
+
+    private constructor(es: Expr[]) {
+        super();
+        this.es = es;
+    }
+
+    public static MakeExprArray(es: Expr[]): Expr {
+        return new ExprArray(es);
+    }
+
+    public GetExprArray(): Expr[] {
+        return this.es;
+    }
+
+    Eval(sheet: Sheet, col: number, row: number): Value {
+        throw new Error("Not implemented");
+    }
+
+    Show(col: number, row: number, ctxpre: number, fo: Formats): string {
+        throw new Error("Not implemented");
+    }
+
+    VisitorCall(visitor: IExpressionVisitor): void {
+        throw new Error("Not implemented");
+    }
+}
+
+/**
  * A FunCall expression is an operator application such as 1+$A$4 or a function
  * call such as RAND() or SIN(4*A$7) or SUM(B4:B52; 3) or IF(A1; A2; 1/A1).
  */
@@ -208,18 +246,15 @@ export class FunCall extends Expr {
     // of it is to match formulajs which is not a class but an object
     // containing various spreadsheet functions:
     public readonly function: (...args: unknown[]) => unknown;
-    public readonly functionName: string;
     public es: Expr[];           // Non-null, elements non-null
 
-    // We have to add 'functionName' manually since not all functions in formula.js have a name.
-    private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[], functionName: string) {
+    private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[]) {
         super();
         if (typeof name === "function") {
             this.function = name;
         } else {
             this.function = FunCall.getFunctionByName(name);
         }
-        this.functionName = functionName.toUpperCase();
         this.es = es;
     }
 
@@ -247,57 +282,83 @@ export class FunCall extends Expr {
         }
 
         if (name === "SPECIALIZE" && es.length > 1) {
-            return new FunCall("SPECIALIZE", [FunCall.Make("CLOSURE", es)], name);
+            return new FunCall("SPECIALIZE", [FunCall.Make("CLOSURE", es)]);
         } else {
-            return new FunCall(func, es, name);
+            return new FunCall(func, es);
         }
     }
 
     // Arguments are passed unevaluated to cater for non-strict IF
     // (Work in progress):
     public override Eval(sheet: Sheet, col: number, row: number): Value {
-
-        // We use map to call the Eval() function on all the expressions in the array and then extract
-        // the number from them using ToNumber() if the value is an instance of NumberValue. Otherwise,
-        // if the expr holds a TextValue we extract the string from it using ToString(). We store the
-        // result in an array of object|null:
-        const args: (object | null | undefined | string)[] = this.es.map(expr => {
-            const value = expr.Eval(sheet, col, row);
-
-            if (value instanceof NumberValue) {
-                return NumberValue.ToNumber(value)
-            } else if (value instanceof TextValue) {
-                return TextValue.ToString(value)
-            } else {
-                return null;
-            }
-        });
+        const args = FunCall.extracted(sheet, col, row, this.es);
 
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
         const result = this.function(...args);
 
-        // To Date (string):
-        if (["DATE", "DATEVALUE", "EDATE", "EMONTH"].includes(this.functionName)) {
+        // If the return type is Date:
+        if (result instanceof Date) {
             // We have to cast the result as a Date before calling toString() because the DATE function returns
             // an object of type Date:
             return TextValue.Make((result as Date).toString());
         }
 
-        // To number:
-        if (["SUM", "PRODUCT", "POWER", "ABS", "ACOS", "CEILINGMATH", "FACT", "FLOOR",
-            "DAY", "DAYS", "DAYS360", "CODE", "FIND", "LEN"].includes(this.functionName)) {
+        // If the return type is number:
+        if (typeof result === "number") {
             return NumberValue.Make(result as number);
         }
 
-        // To string:
-        if (["CONCATENATE", "EXACT", "UPPER", "LOWER", "PROPER", "CHAR", "ROMAN", "TEXTJOIN", "AND"].includes(this.functionName)) {
+        // If the return type is string:
+        if (typeof result === "string") {
             return TextValue.Make(result as string);
+        }
+
+        // If the return type is boolean:
+        if (typeof result === "boolean") {
+            return TextValue.Make((result as boolean).toString());
         }
 
         return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
     }
 
+    /**
+     * extracted() is a helper method we made for Eval(). Its purpose is to return an array of the
+     * expression values (in their primitive form). We use map() to call the Eval() function on all
+     * the expressions in the es-array.
+     * - If the expr is an instance of ExprArray then we are dealing with a nested array. Therefore,
+     * we call extracted recursively on this expr and return the resulting array from this call.
+     * - If the value is an instance of NumberValue we extract the number from them using ToNumber().
+     * - If the expr holds a TextValue we extract the string from it using ToString().
+     * - Otherwise, we return null.
+     *
+     * We store the result in an array called args of (string | number | object | null | undefined)[].
+     * @param sheet
+     * @param col
+     * @param row
+     * @param es
+     * @public
+     */
+    public static extracted(sheet: Sheet, col: number, row: number, es: Expr[]) {
+
+        const args: (string | number | object | null | undefined)[] = es.map(expr => {
+
+            if (expr instanceof ExprArray) {
+                return FunCall.extracted(sheet, col, row, expr.GetExprArray());
+            }
+            const value = expr.Eval(sheet, col, row);
+
+            if (value instanceof NumberValue) {
+                return NumberValue.ToNumber(value)
+            }
+            if (value instanceof TextValue) {
+                return TextValue.ToString(value)
+            }
+            return null;
+
+        });
+        return args;
+    }
 
     public override Move(deltaCol: number, deltaRow: number): Expr {
         let newEs: Expr[] = new Array(this.es.length);
@@ -305,7 +366,7 @@ export class FunCall extends Expr {
         for (let i: number = 0; i < this.es.length; i++) {
             newEs[i] = this.es[i].Move(deltaCol, deltaRow);
         }
-        return new FunCall(this.function, newEs, "null"); //TODO: Fix functionName
+        return new FunCall(this.function, newEs);
     }
 
     // Can be copied with sharing if arguments can
@@ -321,7 +382,7 @@ export class FunCall extends Expr {
         if (same) {
             return this;
         } else {
-            return new FunCall(this.function, newEs, "null"); //TODO: Fix functionName
+            return new FunCall(this.function, newEs);
         }
     }
 
@@ -336,7 +397,7 @@ export class FunCall extends Expr {
             same = same && ae.isUnchanged;
             newEs[i] = ae.type;
         }
-        return new Adjusted<Expr>(new FunCall(this.function, newEs, "null"), upper, same); //TODO: Fix functionName
+        return new Adjusted<Expr>(new FunCall(this.function, newEs), upper, same);
     }
 
 
