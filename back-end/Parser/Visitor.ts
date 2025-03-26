@@ -8,6 +8,7 @@ import { SpreadsheetParser } from "./Parser";
 import { CstNode, Lexer } from "chevrotain";
 import { SpreadsheetLexer } from "./Lexer";
 import { NumberValue } from "../NumberValue";
+import { json } from "node:stream/consumers";
 
 /**
  * @class
@@ -79,7 +80,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx["addOp"]) {
             op = this.visit(ctx["addOp"]);
 
-            if (op === "+") {
+            if (op === "+" || op === '-'  ) {
                 op = "SUM";
             }
 
@@ -217,23 +218,23 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     protected factor(ctx: any): Expr {
 
+        console.log(JSON.stringify(ctx, null, 2));
 
         let r1, r2;
-        let s1: Sheet | null = null;
+        let s1 = null;
         let d: number;
         let sheetError: boolean = false;
         let e = null;
 
         if (ctx["application"]) {
             e = this.visit(ctx["application"]);
+        }
 
-
-            if (ctx["sheetref"]) {
-                let sheetName = ctx["sheetref"][0].image;
-                s1 = this.workbook.get(sheetName.substring(0, sheetName.length - 1));
-                if (s1 === null) {
-                    sheetError = true;
-                }
+        if (ctx["SheetRef"]) {
+            let sheetName = ctx["SheetRef"][0].image;
+            s1 = this.workbook.get(sheetName.substring(0, sheetName.length - 1));
+            if (s1 === null) {
+                sheetError = true;
             }
         }
         if (ctx["raref"]) {
@@ -243,7 +244,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             if (sheetError) {
                 e = new Error(ErrorValue.refError);
             } else {
-                e = new CellRef(s1 as unknown as Sheet, r1 as RARefCellAddress);
+                e = new CellRef(s1 as unknown as Sheet, r1);
             }
 
             if (ctx["raref"][1]) {
@@ -258,18 +259,20 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         }
 
         if (ctx["number"]) {
+
             d = parseInt(ctx["number"][0].children["Number"][0].image);
 
             e = new NumberConst(d);
         }
 
         if (ctx["Minus"]) {
-            let innerExpr = this.visit(ctx["factor"][0]);
+
+            let innerExpr = this.visit(ctx["factor"]);
 
             if (innerExpr instanceof NumberConst) {
                 e = new NumberConst(-innerExpr.value.value);
             } else {
-                e = new NumberConst(-innerExpr.value.value);
+                e = FunCall.Make("PRODUCT", [new NumberConst(-1),innerExpr]);
             }
         }
 
@@ -323,7 +326,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected cellContents(ctx: any): Cell {
-        console.log(JSON.stringify(ctx, null, 1));
 
         let e:any = this.visit(ctx.expression);
 

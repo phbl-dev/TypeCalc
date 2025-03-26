@@ -409,8 +409,8 @@ interface IExpressionVisitor {
 }
 
 class RefSet {
-    private readonly cellRefsSeen = new Set<CellRef>();
-    private readonly cellAreasSeen = new Set<CellArea>();
+    private readonly cellRefsSeen: Set<CellRef> = new Set<CellRef>();
+    private readonly cellAreasSeen: Set<CellArea> = new Set<CellArea>();
 
     public Clear() {
         this.cellRefsSeen.clear();
@@ -596,10 +596,21 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
         if (fca instanceof FullCellAddress) {
             return this.MakeArrayView(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
         } else {
+
+
             const ulCa = this.ul.address(col as number,row as number);
+
             const lrCa = this.lr.address(col as number,row as number);
-            // In the original version, there is a unused nested for-loop?
-            return ArrayView.Make(ulCa, lrCa, this.sheet ?? (fca as Sheet));
+
+            const view = ArrayView.Make(ulCa,lrCa, this.sheet ?? fca as Sheet)
+
+            for (let i = 0; i < view.Cols; i++) {
+                for (let j = 0; j < view.Rows; j++) {
+                    //Do nothing
+                }
+            }
+
+            return view
         }
     }
 
