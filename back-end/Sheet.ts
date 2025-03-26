@@ -325,6 +325,8 @@ export class Sheet {
     }
 
     public ShowValue(col: number, row: number): string {
+        console.log("Entered into this")
+
         if (0 <= col && col < this.Cols && 0 <= row && row <= this.Rows) {
             if (this.cells != null) {
                 const cell: Cell = this.cells.Get(col, row)!;

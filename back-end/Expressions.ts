@@ -438,8 +438,11 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
     }
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
-        const ca: RARefCellAddress = this.raref.address(col, row);
-        const cell: Cell | null = (this.sheet ?? sheet).Get(ca.col, ca.row);
+        console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
+        const ca: RARefCellAddress = this.raref.address(col, row);  // col = 0, row = 1
+        console.log(`Found values, col: ${col}, row: ${row}`);
+        const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef); // ca.col = 0, ca.row = 0
+        console.log(`Cell return ${cell}`);
         return cell?.Eval(sheet, ca.col, ca.row) as Value;
     }
 
