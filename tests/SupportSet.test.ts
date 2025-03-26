@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
-import { Interval, SupportArea, SupportSet } from "../back-end/CellAddressing";
-import { Sheet } from "../back-end/Sheet";
-import {Workbook} from "../back-end/Workbook";
+import { Interval, SupportArea, SupportSet } from "../src/back-end/CellAddressing";
+import { Sheet } from "../src/back-end/Sheet";
+import {Workbook} from "../src/back-end/Workbook";
 
 describe("Support Set tests", () => {
     const testSheet: Sheet = new Sheet(new Workbook(),"testSheet",false);

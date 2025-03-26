@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { Workbook } from "../back-end/Workbook";
-import { Sheet, SheetRep } from "../back-end/Sheet";
-import { NumberCell, TextCell } from "../back-end/Cells";
-import { NumberValue } from "../back-end/NumberValue";
-import { FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "../back-end/CellAddressing";
-import { TextValue } from "../back-end/TextValue";
+import { Workbook } from "../src/back-end/Workbook";
+import { Sheet, SheetRep } from "../src/back-end/Sheet";
+import { NumberCell, TextCell } from "../src/back-end/Cells";
+import { NumberValue } from "../src/back-end/NumberValue";
+import { FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "../src/back-end/CellAddressing";
+import { TextValue } from "../src/back-end/TextValue";
 
 
 describe("Workbook", () => {

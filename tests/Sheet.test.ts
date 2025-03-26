@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { Sheet } from "../back-end/Sheet";
-import { Workbook } from "../back-end/Workbook";
-import { SuperCellAddress } from "../back-end/CellAddressing";
-import { BlankCell, NumberCell } from "../back-end/Cells";
+import { Sheet } from "../src/back-end/Sheet";
+import { Workbook } from "../src/back-end/Workbook";
+import { SuperCellAddress } from "../src/back-end/CellAddressing";
+import { BlankCell, NumberCell } from "../src/back-end/Cells";
 
 describe("Sheet Testing", () => {
   let sheet: Sheet;

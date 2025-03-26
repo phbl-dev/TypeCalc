@@ -5,7 +5,7 @@ import {
     RARefCellAddress,
     SuperCellAddress,
     SuperRARef,
-} from "../back-end/CellAddressing";
+} from "../src/back-end/CellAddressing";
 
 describe("Cell Addressing tests", () => {
     test("A1 Cell Address construction", () => {
