@@ -1,7 +1,7 @@
 import { Workbook } from "../Workbook";
 import { Cell, Formula, NumberCell, QuoteCell, TextCell } from "../Cells";
 import { CellArea, CellRef, Error, Expr, FunCall, NumberConst, TextConst } from "../Expressions";
-import { A1RARef, A1RefCellAddress, R1C1RARef, SuperRARef } from "../CellAddressing";
+import { A1RARef, A1RefCellAddress, R1C1RARef, RARefCellAddress, SuperRARef } from "../CellAddressing";
 import { ErrorValue } from "../ErrorValue";
 import { Sheet } from "../Sheet";
 import { SpreadsheetParser } from "./Parser";
@@ -243,7 +243,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             if (sheetError) {
                 e = new Error(ErrorValue.refError);
             } else {
-                e = new CellRef(s1 as unknown as Sheet, r1 as SuperRARef);
+                e = new CellRef(s1 as unknown as Sheet, r1 as RARefCellAddress);
             }
 
             if (ctx["raref"][1]) {
@@ -290,8 +290,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         if (ctx["A1Ref"]) {
             let token = ctx["A1Ref"][0].image
-            console.log(token)
-            raref = new A1RARef(token, this.col, this.row);
+            raref = new A1RARef(token, 0,0);
         } else if (ctx["XMLSSRARef11"]) {
             let token = ctx["XMLSSRARef11"][0];
             raref = new R1C1RARef(token.image);
@@ -320,7 +319,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             let token = ctx["XMLSSRARef33"][0];
             raref = new R1C1RARef(token.image);
         }
-        console.log("raref", raref);
         return raref;
     }
 
