@@ -472,12 +472,12 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
     }
     public AddToSupport(supported: Sheet, col: number, row: number, cols: number, rows: number) {
         const referredSheet = this.sheet ?? supported;
-        const ca = this.raref.colRef,
-            ra = this.raref.rowRef;
-        const r1 = row,
-            r2 = row - 1,
-            c1 = col,
-            c2 = col + cols - 1;
+        const ca:number = this.raref.colRef,
+            ra:number = this.raref.rowRef;
+        const r1:number = row,
+            r2:number = row - 1,
+            c1:number = col,
+            c2:number = col + cols - 1;
         let referredCols: Interval, referredRows: Interval;
         let supportedCols: (arg: number) => Interval;
         let supportedRows: (arg: number) => Interval;
@@ -538,14 +538,22 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
 
         if (abs) {
             referred = new Interval(ra, ra);
-            supported = (_r) => new Interval(r1, r2); // Accepts `_r` even if unused
+            supported = (_r) => new Interval(Math.min(r1, r2), Math.max(r1, r2)); // Ensure valid order
         } else {
-            referred = new Interval(r1 + ra, r2 + ra);
-            supported = (r) => new Interval(r - ra, r - ra);
+            const minRef = Math.min(r1 + ra, r2 + ra);
+            const maxRef = Math.max(r1 + ra, r2 + ra);
+            referred = new Interval(minRef, maxRef);
+
+            supported = (r) => {
+                const minSup = Math.min(r - ra, r - ra);
+                const maxSup = Math.max(r - ra, r - ra);
+                return new Interval(minSup, maxSup);
+            };
         }
 
-        return [referred, supported]; // Correct tuple return
+        return [referred, supported];
     }
+
 }
 
 // Should it inherit from IEquatable<CellArea>?
