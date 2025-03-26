@@ -3,6 +3,8 @@ import { SpreadsheetLexer } from "./Lexer";
 
 /**
  * @class
+ * @remarks when testing, It is highly useful to look at the JSON.stringify command.
+ * This provides a good insight into what goes on in the tree.
  * @desc <b> Parser class </b> The parser class follows the parsing rules laid out by the Spreadsheet.ATG file from CoreCalc
  * The rules of parsing of tokens are used subsequently to manipulate cellContents in the visitor class.
  * It parses the tokens, and returns them in a CST (Concrete Syntax tree).
@@ -10,7 +12,7 @@ import { SpreadsheetLexer } from "./Lexer";
  *
  * If the goal is to manipulate the CST, please use the Visitor class.
  * If you are looking for documentation, please refer to
- * [Chevrotain Parser Documention ](https://chevrotain.io/docs/tutorial/step2_parsing.html#first-rule)
+ * [Chevrotain Parser Documentation ](https://chevrotain.io/docs/tutorial/step2_parsing.html#first-rule)
  */
 export class SpreadsheetParser extends CstParser {
     // @ts-ignore
@@ -18,7 +20,7 @@ export class SpreadsheetParser extends CstParser {
     constructor() {
         super(SpreadsheetLexer.AllTokens);
 
-        const $ = this;
+        const $:this = this;
 
         $.RULE("addOp", addOp);
         $.RULE("logicalOp", logicalOp);
@@ -32,15 +34,9 @@ export class SpreadsheetParser extends CstParser {
         $.RULE("raref", Raref);
         $.RULE("exprs1", exprs1);
         $.RULE("cellContents", cellContents);
-        $.RULE("Numbar", NUMBER);
+        $.RULE("number", NUMBER);
         $.RULE("Name", Name);
 
-        /**
-         * addOp is used to parse the arithmetic operations such as '+', '-', and '&'
-         * It is part of the SpreadsheetParser function group.
-         * Compared to other functions below, this only relies on the Lexer Tokens from the SpreadsheetLexer
-         * @example "+" // would designate + as a addOp-type
-         */
         function addOp() {
             $.OR([
                 {
@@ -66,11 +62,6 @@ export class SpreadsheetParser extends CstParser {
             $.CONSUME(SpreadsheetLexer.Identifier);
         }
 
-        /**
-         * logicalOp is used to parse logical operators, such as '=', '<>','<' and so on.
-         * It is part of  the SpreadsheetParser function group.
-         * @see {addOp} for a similar method
-         */
         function logicalOp() {
             $.OR([
                 {
@@ -106,12 +97,6 @@ export class SpreadsheetParser extends CstParser {
             ]);
         }
 
-        /**
-         * Parses and evaluates a logical expression.
-         * It initially reads a logical term (string), and
-         * then it combines it recursively with the logical operators
-         * In the end, it returns a singular expression of type Expr
-         * */
         function expression() {
             $.SUBRULE($.logicalTerm);
             $.MANY(() => {
@@ -120,10 +105,6 @@ export class SpreadsheetParser extends CstParser {
             });
         }
 
-        /**
-         * Parses and evaluates a logical term
-         * Functionality very close to {@link expression}
-         */
         function logicalTerm() {
             $.SUBRULE($.term);
             $.MANY(() => {
@@ -169,7 +150,7 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                        $.SUBRULE($.Numbar);
+                        $.SUBRULE($.number);
                     },
                 },
 
@@ -187,8 +168,6 @@ export class SpreadsheetParser extends CstParser {
                 },
             ]);
         }
-
-        // DONE
         function term() {
             $.SUBRULE($.powFactor);
             $.MANY(() => {
@@ -221,65 +200,65 @@ export class SpreadsheetParser extends CstParser {
         function application() {
             $.CONSUME(SpreadsheetLexer.Identifier);
 
-            $.CONSUME(SpreadsheetLexer.LParen); // Consume '('
+            $.CONSUME(SpreadsheetLexer.LParen);
 
             $.OPTION(() => {
                 $.SUBRULE($.exprs1);
             });
 
-            $.CONSUME(SpreadsheetLexer.RParen); // Consume ')'
+            $.CONSUME(SpreadsheetLexer.RParen);
         }
 
         function Raref() {
             $.OR([
                 {
                     ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.A1Ref);
+                       $.CONSUME(SpreadsheetLexer.A1Ref);
                     },
                 },
                 {
                     ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.XMLSSRARef11);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef11);
                     },
                 },
                 {
                     ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.XMLSSRARef12);
+                         $.CONSUME(SpreadsheetLexer.XMLSSRARef12);
+                    }
+                },
+                {
+                    ALT: () => {
+                         $.CONSUME(SpreadsheetLexer.XMLSSRARef13);
                     },
                 },
                 {
                     ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.XMLSSRARef13);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef21);
                     },
                 },
                 {
                     ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.XMLSSRARef21);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef22);
                     },
                 },
                 {
                     ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.XMLSSRARef22);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef23);
                     },
                 },
                 {
                     ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.XMLSSRARef23);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef31);
                     },
                 },
                 {
                     ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.XMLSSRARef31);
+                       $.CONSUME(SpreadsheetLexer.XMLSSRARef32);
                     },
                 },
                 {
                     ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.XMLSSRARef32);
-                    },
-                },
-                {
-                    ALT: () => {
-                        const token = $.CONSUME(SpreadsheetLexer.XMLSSRARef33);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef33);
                     },
                 },
             ]);
@@ -305,16 +284,12 @@ export class SpreadsheetParser extends CstParser {
             });
         }
 
-        /**
-         * CellContents reads the input from a cell, and parses it into an expression
-         * @example ="A1+B2" // Will be parsed as "=", "A1", "B1"
-         */
         function cellContents() {
             $.OR([
                 {
                     ALT: () => {
                         $.CONSUME(SpreadsheetLexer.Equals);
-                        $.SUBRULE($.expression); // Expression on the right side
+                        $.SUBRULE($.expression);
                     },
                 },
                 {
@@ -335,20 +310,20 @@ export class SpreadsheetParser extends CstParser {
                 {
                     ALT: () => {
                         $.CONSUME(SpreadsheetLexer.NUMBER);
-                        $.SUBRULE($.Numbar);
+                        $.SUBRULE($.number);
                     },
                 },
                 {
                     ALT: () => {
                         $.CONSUME(SpreadsheetLexer.Minus);
-                        $.SUBRULE2($.Numbar);
+                        $.SUBRULE2($.number);
                     },
                 },
             ]);
             return;
         }
         function NUMBER() {
-            let t = $.CONSUME(SpreadsheetLexer.NUMBER);
+            $.CONSUME(SpreadsheetLexer.NUMBER);
         }
 
         $.performSelfAnalysis();

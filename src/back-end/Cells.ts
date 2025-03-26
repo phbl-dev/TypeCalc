@@ -463,11 +463,12 @@ export class Formula extends Cell {
                 break;
             case CellState.Computing:
                 console.log("Computing");
-
+                /**
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
                 throw new Error(msg); // Culprit should be added to this.
-
+                    */
+                break;
             case CellState.Dirty:
                 console.log("Dirty");
                 break;  // Added to prevent fallthrough

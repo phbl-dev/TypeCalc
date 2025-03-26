@@ -55,6 +55,7 @@ export class SpreadsheetLexer {
      * and if XMLSSRARef11 is defined first it will ignore XMLSSRARef12
      */
     static AllTokens: TokenType[] = [
+
         SpreadsheetLexer.A1Ref,
         SpreadsheetLexer.XMLSSRARef33,
         SpreadsheetLexer.XMLSSRARef32,
@@ -65,11 +66,14 @@ export class SpreadsheetLexer {
         SpreadsheetLexer.XMLSSRARef13,
         SpreadsheetLexer.XMLSSRARef12,
         SpreadsheetLexer.XMLSSRARef11,
+        SpreadsheetLexer.SheetRef,
+
+        SpreadsheetLexer.Identifier,
+
         SpreadsheetLexer.WhiteSpace,
         SpreadsheetLexer.Datetime,
 
         SpreadsheetLexer.NUMBER,
-        SpreadsheetLexer.Identifier,
         SpreadsheetLexer.StringLiteral,
         SpreadsheetLexer.QuoteCell,
         SpreadsheetLexer.LessThanOrEqual,
@@ -88,6 +92,5 @@ export class SpreadsheetLexer {
         SpreadsheetLexer.Divide,
         SpreadsheetLexer.Power,
         SpreadsheetLexer.Equals,
-        SpreadsheetLexer.SheetRef,
     ];
 }
