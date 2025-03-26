@@ -4,9 +4,9 @@ import {
     FullCellAddress,
     RARefCellAddress,
     SuperRARef,
-} from "../back-end/CellAddressing";
-import { Sheet } from "../back-end/Sheet";
-import { Workbook } from "../back-end/Workbook";
+} from "../src/back-end/CellAddressing";
+import { Sheet } from "../src/back-end/Sheet";
+import { Workbook } from "../src/back-end/Workbook";
 
 describe("Full Cell Addressing tests", () => {
     test("A1 Full Cell Address construction", () => {

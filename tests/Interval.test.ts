@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { Interval } from "../back-end/CellAddressing";
+import { Interval } from "../src/back-end/CellAddressing";
 
 describe("Interval Tests", () => {
     test("Wrong interval throws error", () => {

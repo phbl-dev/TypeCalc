@@ -1,9 +1,9 @@
 import {describe, expect, test } from "vitest";
-import { NumberCell, Cell } from "../back-end/Cells";
-import { Sheet } from "../back-end/Sheet";
-import { Workbook } from "../back-end/Workbook";
-import { Value } from "../back-end/Value";
-import { Formats } from "../back-end/Types";
+import { NumberCell, Cell } from "../src/back-end/Cells";
+import { Sheet } from "../src/back-end/Sheet";
+import { Workbook } from "../src/back-end/Workbook";
+import { Value } from "../src/back-end/Value";
+import { Formats } from "../src/back-end/Types";
 
 describe ("NumberCell", () => {
     const numberCell: NumberCell = new NumberCell(10);

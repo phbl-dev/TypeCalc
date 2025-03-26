@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { HashBag } from "../back-end/Types";
+import { HashBag } from "../src/back-end/Types";
 
 describe("HashBag", () => {
     let hb: HashBag<string>;

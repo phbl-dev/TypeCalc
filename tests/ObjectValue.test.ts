@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ObjectValue } from "../back-end/ObjectValue";
+import { ObjectValue } from "../src/back-end/ObjectValue";
 
 describe("ObjectValue", () => {
   const obj = new ObjectValue({ object: "test" });

@@ -1,0 +1,124 @@
+* {
+    scrollbar-width: none;
+    margin: 0;
+    white-space: normal;
+    font-family: Arial, sans-serif;
+}
+
+*::-webkit-scrollbar :not(#gridBody){
+    display: none;
+}
+
+header {
+    display: flex;
+    align-items: center;
+    column-gap: 5px;
+    background-color: darkslategrey;
+    position: fixed;
+    z-index: 5;
+    top: 0;
+    height: 46px;
+    width: 100%;
+    padding-left: 5px;
+    border-bottom: 1px solid black;
+}
+
+button {
+    background: lightgray;
+    color: black;
+    border: solid black 1px;
+    border-radius: 5px;
+    height: 30px;
+}
+button:hover {background-color: rgba(0, 100, 50, 1);}
+
+input {
+    height: 25px;
+    width: 100px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+header h4 {
+    margin-right: 10px;
+    margin-left: auto;
+    color: white;
+}
+
+#drop_zone {
+    border: 5px solid blue;
+    width: 200px;
+    height: 100px;
+}
+
+
+/* ------------------------------------------ */
+#root {
+    margin-top: 46px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#headerCorner {
+    background: #3b3b3b;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+#columnHeaders {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background-color: grey;
+    color: white;
+    font-weight: bold;
+    border: 1px solid white;
+    z-index: 2;
+}
+
+#rowHeaders {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: grey;
+    color: white;
+    font-weight: bold;
+    z-index: 2;
+    border: 1px solid white;
+}
+
+.gridBody {
+    display: flex;
+}
+
+.Cell {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    border: white 1px solid;
+    font-size: small;
+    text-indent: 5px;
+    z-index: 1;
+}
+
+/* ------------------------------------------ */
+footer {
+    height: 25px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding-left: 5px;
+    column-gap: 0;
+    background-color: darkslategrey;
+    position: fixed;
+    bottom: 0;
+    z-index: 2;
+    border-top: 1px solid black;
+}

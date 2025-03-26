@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { Cell } from "../back-end/Cells";
-import { Sheet } from "../back-end/Sheet";
+import { Cell } from "../src/back-end/Cells";
+import { Sheet } from "../src/back-end/Sheet";
 // import { Expr } from "../Expressions"; // This should be imported when it's done
-import { SupportSet, Interval } from "../back-end/CellAddressing";
-import { Value } from "../back-end/Value";
+import { SupportSet, Interval } from "../src/back-end/CellAddressing";
+import { Value } from "../src/back-end/Value";
 // import { Formats } from "../src/Types";
-import { NumberValue } from "../back-end/NumberValue";
-import { Workbook } from "../back-end/Workbook";
+import { NumberValue } from "../src/back-end/NumberValue";
+import { Workbook } from "../src/back-end/Workbook";
 
 class TestCell extends Cell {
     constructor() {
