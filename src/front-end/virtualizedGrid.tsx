@@ -139,6 +139,30 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     );
 };
 
+const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet }) => {
+    return (
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+            {sheetNames.map((name) => (
+                <button
+                    key={name}
+                    onClick={() => setActiveSheet(name)}
+                    style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #ccc',
+                        backgroundColor: activeSheet === name ? '#007bff' : '#f0f0f0',
+                        color: activeSheet === name ? 'white' : 'black',
+                        fontWeight: activeSheet === name ? 'bold' : 'normal',
+                        cursor: 'pointer',
+                    }}
+                >
+                    {name}
+                </button>
+            ))}
+        </div>
+    );
+};
+
 // function updateCell(cellID:string, cellValue:string):void {
 //
 // }
@@ -163,8 +187,9 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
-    const [scrollOffset] = useState({ left: 0, top: 0 });
-    const activeSheet:string = "Sheet1"; //start-value for no sheet
+    let [scrollOffset] = useState({ left: 0, top: 0 });
+    let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
+    let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
     useEffect(() => {
         // Handle file drop events entirely in React
@@ -180,7 +205,11 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
 
                     try {
                         await xmlReader.readFile(content); // Assumes it modifies the current workbook
+
                         console.log("[React Drop Handler] File loaded. Updating UI...");
+                        sheetNames = WorkbookManager.getSheetNames();
+                        setSheetNames(sheetNames);
+                        setActiveSheet(sheetNames[0]);
                         ShowWindowInGUI(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
                     } catch (error) {
                         console.error("Error during load:", error);
@@ -203,6 +232,19 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
         };
     }, [scrollOffset]);
 
+    useEffect(() => {
+        if (activeSheet) {
+            ShowWindowInGUI(
+                activeSheet,
+                scrollOffset.left,
+                scrollOffset.left + 30,
+                scrollOffset.top,
+                scrollOffset.top + 30
+            );
+        }
+    }, [activeSheet]);
+
+
     /** Synchronizes scrolling between the grid body and the headers so that it works
      * like one, big grid. Does not currently synchronize scrolling done on the headers.
      *
@@ -221,6 +263,11 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
     return (
         // Container that wraps around all parts of the sheet
         <div id="sheet">
+            <SheetSelector
+                sheetNames={sheetNames}
+                activeSheet={activeSheet}
+                setActiveSheet={setActiveSheet}
+            />
             {/* Header row as a 1-row grid */}
             <div style={{ display: "flex" }}>
                 {/* Top-left corner */}
@@ -232,6 +279,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                 >
                     {"#"}
                 </div>
+
                 {/* Column headers as a grid */}
                 <Grid
                     ref={colHeaderRef}

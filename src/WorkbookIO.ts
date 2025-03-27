@@ -113,7 +113,7 @@ export class WorkbookManager {
     private static instance: Workbook | null = null;
 
     static getWorkbook(): Workbook | null {
-        console.log("[WorkbookManager] getWorkbook ->", this.instance);
+        //console.log("[WorkbookManager] getWorkbook ->", this.instance);
         if (!this.instance) {
             this.instance = new Workbook();
             const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", true);
@@ -127,16 +127,16 @@ export class WorkbookManager {
         this.instance = new Workbook();
     }
 
-    static getSheets(){
+    static getSheetNames():string[] {
         if (!this.instance) {
             console.error("[WorkbookManager] getSheets() can't see a workbook.");
-            return;
+            return [];
         }
-        console.log("number of sheets = " + this.instance.GetSheets().length)
         let sheetNames: string[] = [];
         this.instance.GetSheets().forEach((sheet: Sheet) => {
-            console.log(sheet.getName())
+            sheetNames.push(sheet.getName());
         })
+        return sheetNames;
     }
 
     static setWorkbook(wb: Workbook): void {
