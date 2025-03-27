@@ -73,9 +73,9 @@ export class NumberValue extends Value {
      * @param v - the value to be parsed
      * @constructor
      */
-    public static ToNumber(v: Value): object | null {
+    public static ToNumber(v: Value): number | null {
         const nv = v as NumberValue;
-        return nv != null ? (nv.value as unknown as object) : null;
+        return nv != null ? (nv.value as unknown as number) : null;
     }
 
     /**
@@ -97,8 +97,8 @@ export class NumberValue extends Value {
     private static readonly daysPerTick = 1000 * 60 * 60 * 24;
 
     // Cannot be tested. Uses the current date.
-    public static DoubleFromDateTimeTicks(ticks: number): number {
-        return (ticks - this.basedate) * this.daysPerTick;
+    public static DoubleFromDateTimeTicks(ticks: number | bigint): number {
+        return (ticks as number - this.basedate) * this.daysPerTick;
     }
 
     // tested internally.

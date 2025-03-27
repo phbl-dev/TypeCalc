@@ -7,26 +7,32 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "dependencies": {
+    "@formulajs/formulajs": "^4.4.11",
     "fast-xml-parser": "^5.0.9",
+    "formulajs": "^1.0.8",
     "jquery": "^3.7.1",
     "jquery-scrollsync": "^1.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-virtualized": "^9.22.6",
     "react-window": "^1.8.11",
-    "scryll": "^0.1.5"
+    "scryll": "^0.1.5",
+    "vitest": "^3.0.9"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/jquery": "^3.5.32",
+    "@types/node": "^22.13.13",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@types/react-virtualized": "^9.22.2",
     "@types/react-window": "^1.8.8",
     "@vitejs/plugin-react": "^4.3.4",
+    "chevrotain": "^11.0.3",
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",

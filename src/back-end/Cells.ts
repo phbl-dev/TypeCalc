@@ -1,13 +1,18 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
 import { Sheet } from "./Sheet";
 import { Value } from "./Value";
-import { Adjusted, FullCellAddress, Interval, SupportSet } from "./CellAddressing";
-import { Expr } from "./Expressions"; // This should be imported when it's done
+import { Adjusted, FullCellAddress, Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
+import { Error, Expr, NumberConst } from "./Expressions"; // This should be imported when it's done
 import { Formats } from "./Types";
 import { Workbook } from "./Workbook"; // This should be imported when it's done
-//import { Parser } from "./Parser"; // This should be imported when it's done
+import { SpreadsheetVisitor} from "./Parser/Visitor";
 import { NumberValue } from "./NumberValue";
-import { TextValue } from "./TextValue"; // This should be imported when it's done
+import { TextValue } from "./TextValue";
+import { ArrayValue } from "./ArrayValue";
+import { ErrorValue } from "./ErrorValue";
+import { N } from "@formulajs/formulajs";
+
+
 
 export enum CellState {
     Dirty,
@@ -87,7 +92,7 @@ export abstract class Cell {
     // Mark the cell dirty, for subsequent evaluation
     public abstract MarkDirty(): void;
 
-    public MarkCellDirty(sheet: Sheet, col: number, row: number): void {
+    public static MarkCellDirty(sheet: Sheet, col: number, row: number): void {
         const cell: Cell | null = sheet.Get(col, row); // get doesn't exist yet in Sheet class
         if (cell != null) {
             cell.MarkDirty();
@@ -142,24 +147,12 @@ export abstract class Cell {
     And then parses the text argument into a Cell object and returns this Cell.
      */
     public static Parse(text: string, workbook: Workbook, col: number, row: number): Cell | null {
-        if (text.trim().length > 0) {
-            // Check that the text is not just whitespace
-            const regex = /\S+/g; // Match non-whitespace sequences (tokens). "\S+" matches a sequence of one or more characters that are not whitespace.
-            // "g" ensures that we don't stop after having found the first match for "\S+", but that we continue through the entire length of the string.
+        if (text) {
 
-            const tokens: string[] = []; // Initializing an empty array for the tokens.
-            let match: RegExpExecArray | null; // Initializing a match variable for holding the result of the regex execution. This will be stored as an array.
 
-            // In the while loop we store the array returned by regex.exec(text) in match. Only one token will be stored for each iteration,
-            // since exec() only returns one match at a time. Therefore, match[0] will always hold the most recent token that
-            // the was found by exec(). We push match[0] onto the tokens array to get a full array of all the matches.
-            // When there are no more tokens, then (match = regex.exec(text)) == null and the while loop ends.
-            while ((match = regex.exec(text)) !== null) {
-                tokens.push(match[0]);
-            }
-
-            const parser: Parser = new Parser(tokens); // We create a new Parser and give it the tokens array.
-            return parser.parseCell(workbook, col, row); // We call the parseCell() method to return a readable Cell.
+            const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
+            console.log("this is what is being returned from Cell: ", parser.ParseCell(text,workbook, col, row))
+            return parser.ParseCell(text,workbook, col, row); // We call the parseCell() method to return a readable Cell.
         } else return null;
     }
 
@@ -230,7 +223,7 @@ export abstract class Cell {
     The abstract DependsOn() method is used to register the dependency of a current cell (here) and
     the other cells that it depends on (dependsOn).
      */
-    public abstract DependsOn(here: FullCellAddress, dependsOn: (act: (arg0: FullCellAddress) => void) => void): void;
+    public abstract DependsOn(here: FullCellAddress, dependsOn: (fullCellAddr: FullCellAddress) => void): void;
 }
 // A ConstCell is a cell that contains a constant only.
 // In contrast to general cells, it is immutable and can be shared
@@ -244,7 +237,7 @@ export abstract class ConstCell extends Cell {
     public override ForEachReferred(sheet: Sheet, col: number, row: number, act: (addr: FullCellAddress) => void) {}
 
     public override MarkDirty(): void {
-        this.ForEachSupported(this.MarkCellDirty);
+        this.ForEachSupported(ConstCell.MarkCellDirty);
     }
 
     public override EnqueueForEvaluation(sheet: Sheet, col: number, row: number) {
@@ -271,7 +264,7 @@ export abstract class ConstCell extends Cell {
 
     public override Reset(): void {}
 
-    public override DependsOn(here: FullCellAddress, dependsOn: (act: (arg0: FullCellAddress) => void) => void) {}
+    public override DependsOn(here: FullCellAddress, dependsOn: (fullCellAddr: FullCellAddress) => void): void {}
 }
 
 /*
@@ -298,6 +291,12 @@ export class BlankCell extends ConstCell {
 
         return new BlankCell();
     }
+
+    Reset(): void {
+        throw new Error("Method not implemented.");
+    }
+
+
 }
 
 export class NumberCell extends ConstCell {
@@ -333,7 +332,14 @@ export class NumberCell extends ConstCell {
     public override CloneCell(col: number, row: number): Cell {
         return new NumberCell(this);
     }
+
+    // We have to implement these methods from the ConstCell as well:
+    Reset(): void {
+        throw new Error("Method not implemented.");
+    }
+
 }
+
 
 export class QuoteCell extends ConstCell {
     public readonly value: TextValue;
@@ -359,6 +365,11 @@ export class QuoteCell extends ConstCell {
 
     public override CloneCell(col: number, row: number): Cell {
         return new QuoteCell(this);
+    }
+
+    // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
+    Reset(): void {
+        throw new Error("Method not implemented.");
     }
 
 }
@@ -389,5 +400,425 @@ export class TextCell extends ConstCell {
         return new TextCell(this);
     }
 
+    // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
+    Reset(): void {
+        throw new Error("Method not implemented.");
+    }
 
+}
+
+/**
+ * @file This file contains the Formula, ArrayFormula, and CachedArrayFormula classes
+ * These classes are subclasses of cells, and are essentially ways of handling cell formulas,
+ * both individually and as part of an array
+ */
+
+/**
+ * A Formula is a non-null caching expression contained in a single cell
+ * It extends upon the cell abstract class.
+ */
+export class Formula extends Cell {
+    public readonly workbook: Workbook;
+    private e: Expr;
+    public state: CellState;
+    private v: Value | undefined = undefined;
+
+    constructor(workbook: Workbook, e: Expr) {
+        super();
+        this.workbook = workbook;
+        this.e = e;
+        this.state = CellState.Uptodate;
+    }
+
+    public static Make(workbook: Workbook, e: Expr): Formula | null {
+        if (e == null) {
+            return null;
+        } else {
+            return new Formula(workbook, e);
+        }
+    }
+
+    /**
+     * TODO: This is an issue with this current implementation
+     * Moves a single cell containing a formula
+     * The values that are used in this method is the delta values,
+     * as such we need have the offset between the original formula and it new location.
+     *
+     */
+    public override MoveContents(deltaCol: number, deltaRow: number): Cell {
+        return new Formula(this.workbook, this.e.Move(deltaCol, deltaRow));
+    }
+
+    /**
+     * Evaluates the cell's expression and caches it value.
+     * @param sheet - sheet the cell is on
+     * @param col - its X col
+     * @param row - its Y row
+     * @constructor
+     */
+    public override Eval(sheet: Sheet, col: number, row: number): Value {
+        switch (this.state) {
+            case CellState.Uptodate:
+                console.log("Uptodate");
+                break;
+            case CellState.Computing:
+                console.log("Computing");
+                /**
+                const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
+                const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
+                throw new Error(msg); // Culprit should be added to this.
+                    */
+                break;
+            case CellState.Dirty:
+                console.log("Dirty");
+                break;  // Added to prevent fallthrough
+
+            case CellState.Enqueued:
+                console.log("Enqueued");
+                this.state = CellState.Computing;
+                this.v = this.e.Eval(sheet, col, row);
+                if (this.workbook.UseSupportSets) {
+                    this.ForEachSupported(this.EnqueueForEvaluation);
+                    break;
+                }
+                break
+        }
+        return this.v as Value;
+    }
+
+    /**
+     * This inserts a new row or column depending on the doRows value.
+     * This command is relevant when a new column is created near an existing formula.
+     * @param adjusted
+     * @param modSheet
+     * @param thisSheet
+     * @param R
+     * @param N
+     * @param r
+     * @param doRows
+     * @constructor
+     */
+    public override InsertRowCols(adjusted: Map<Expr, Adjusted<Expr>>, modSheet: Sheet, thisSheet: boolean, R: number, N: number, r: number, doRows: boolean) {
+        let ae: Adjusted<Expr>;
+        if (adjusted.has(this.e) && r < adjusted.get(this.e)!.maxValidRow) {
+            ae = adjusted.get(this.e)!;
+        } else {
+            ae = this.e.InsertRowCols(modSheet, thisSheet, R, N, r, doRows);
+            console.log("Making new adjusted at rowcol " + r + "; upper = " + ae.maxValidRow);
+            if (ae.isUnchanged) {
+                ae = new Adjusted<Expr>(this.e, ae.maxValidRow, ae.isUnchanged);
+                console.log("Reusing expression");
+            }
+            adjusted.set(this.e, ae)
+        }
+        this.e = ae.type;
+    }
+
+    /**
+     * Returns the cached value that is the result of this formula
+     * @constructor
+     */
+    public get Cached(): Value {
+        return this.v as Value;
+    }
+
+    /**
+     * Marks a formula cell dirty
+     * Not much to comment on
+     * @constructor
+     */
+    public override MarkDirty() {
+        if (this.state != CellState.Dirty) {
+            this.state = CellState.Dirty;
+            this.ForEachSupported(this.MarkDirty);
+        }
+    }
+
+    /**
+     * Adds the current formula cell to the evaluation queue structure in workbook
+     * @param sheet
+     * @param col
+     * @param row
+     * @constructor
+     */
+
+    public override EnqueueForEvaluation(sheet: Sheet, col: number, row: number) {
+        if (this.state == CellState.Dirty) {
+            this.state = CellState.Enqueued;
+            sheet.workbook.AddToQueue(sheet, col, row);
+        }
+    }
+
+    public override AddToSupportSets(supported: Sheet, col: number, row: number, cols: number, rows: number) {
+        this.e.AddToSupportSets(supported, col,row, rows, cols);
+    }
+
+    public override RemoveFromSupportSets(sheet: Sheet, col: number, row: number) {
+        this.e.RemoveFromSupportSets(sheet, col, row);
+    }
+
+    /**
+     * Sets the formula cell to be in a dirty state!
+     * @constructor
+     */
+    public override Reset() {
+        this.state = CellState.Dirty;
+    }
+
+    public override ForEachReferred(sheet: Sheet, col: number, row: number, act: (addr: FullCellAddress) => void) {
+        this.e.ForEachReferred(sheet, col, row, act);
+    }
+
+    /**
+     * Clone this cell formula onto another cell
+     * @param col
+     * @param row
+     * @constructor
+     */
+    public override CloneCell(col: number, row: number): Cell {
+        return new Formula(this.workbook, this.e.CopyTo(col, row));
+    }
+
+    /**
+     * Returns whether the formula contains any volatile values
+     * @constructor
+     */
+    public override IsVolatile(): boolean {
+        return this.e.isVolatile;
+    }
+
+    public override (here: FullCellAddress, dependsOn: (fullCellAddr: FullCellAddress) => void): void {
+        this.e.DependsOn(here, dependsOn);
+    }
+    // this does not need parameters?
+    public override showValue(): string {
+        return this.v != null ? this.v.toString() : "";
+    }
+
+    /**
+     * Displays the value of the formula cell
+     * @param col
+     * @param row
+     * @param fo
+     * @constructor
+     */
+    public override Show(col: number, row: number, fo: Formats): string {
+        return "=" + this.e.Show(col, row, 0, fo);
+    }
+
+    public get Expr(): Expr {
+        return this.e;
+    }
+
+    public set Visited(value: boolean) {
+        this.state = value ? CellState.Uptodate : CellState.Dirty;
+    }
+    public get Visited(): boolean {
+        return this.state == CellState.Uptodate;
+    }
+
+    DependsOn(here: FullCellAddress, dependsOn: (fullCellAddr: FullCellAddress) => void): void {
+        this.e.DependsOn(here, dependsOn);
+    }
+}
+
+export class ArrayFormula extends Cell {
+    public readonly caf: CachedArrayFormula;
+    private readonly ca: SuperCellAddress;
+
+    constructor(caf: CachedArrayFormula, ca: SuperCellAddress);
+    constructor(caf: CachedArrayFormula, col: number, row: number);
+
+    constructor(caf: CachedArrayFormula, col: number | SuperCellAddress, row?: number) {
+        super();
+        this.caf = caf;
+        if (row) {
+            this.ca = new SuperCellAddress(col as number, row);
+        } else {
+            this.ca = col as SuperCellAddress;
+        }
+    }
+
+    public override Eval(sheet: Sheet, col: number, row: number): Value | null {
+        const v: Value = this.caf.Eval();
+        if (v instanceof ArrayValue) {
+            return (v as ArrayValue).get(this.ca);
+        } else if (v instanceof ErrorValue) {
+            return v;
+        } else {
+            return ErrorValue.Make("#ERR: Not Array");
+        }
+    }
+
+    public Contains(col: number, row: number): boolean {
+        return this.caf.ulCa.col <= col && col <= this.caf.lrCa.col && this.caf.ulCa.row <= row && row <= this.caf.lrCa.row;
+    }
+
+    // TODO: contains an issue that can be looked into!
+    public override MoveContents(deltaCol: number, deltaRow: number): Cell {
+        return new ArrayFormula(this.caf.MoveContents(deltaCol, deltaRow), this.ca);
+    }
+
+    // TODO: This is not implemented at all in the sestoft version!
+    public override InsertRowCols(
+        adjusted: Map<Expr, Adjusted<Expr>>,
+        modSheet: Sheet,
+        thisSheet: boolean,
+        R: number,
+        N: number,
+        r: number,
+        doRows: boolean,
+    ): void {
+        throw new Error("Not implemented :)");
+    }
+
+    public override showValue(sheet: Sheet, col: number, row: number): string {
+        const v: Value = this.caf.CachedArray;
+        if (v instanceof ArrayValue) {
+            const element: Value = (v as ArrayValue).get(this.ca);
+            return element != null ? element.toString() : "";
+        } else if (v instanceof ErrorValue) {
+            return v.ToString();
+        } else {
+            return ErrorValue.Make("#ERR: Not array").toString();
+        }
+    }
+
+    public override MarkDirty(): void {
+        switch (this.caf.formula.state) {
+            case CellState.Uptodate:
+                this.caf.formula.MarkDirty();
+                this.ForEachSupported(this.MarkDirty); // weird recursion?
+                break;
+            case CellState.Dirty:
+                this.ForEachSupported(this.MarkDirty);
+                break;
+        }
+    }
+
+    public override EnqueueForEvaluation(sheet: Sheet, col: number, row: number): void {
+        switch (this.caf.formula.state) {
+            case CellState.Dirty:
+                this.caf.Eval();
+                this.ForEachSupported(this.EnqueueForEvaluation);
+                break;
+            case CellState.Uptodate:
+                this.ForEachSupported(this.EnqueueForEvaluation);
+                break;
+        }
+    }
+
+    public override Reset(): void {
+        this.caf.formula.Reset();
+    }
+
+    public override ResetSupportSet() {
+        this.caf.ResetSupportSet();
+        super.ResetSupportSet();
+    }
+
+    public override AddToSupportSets(supported: Sheet, col: number, row: number, cols: number, rows: number): void {
+        this.caf.UpdateSupport(supported);
+    }
+
+    public override RemoveFromSupportSets(sheet: Sheet, col: number, row: number): void {
+        this.caf.RemoveFromSupportSet(sheet, col, row);
+    }
+
+    public override ForEachReferred(sheet: Sheet, col: number, row: number, act: (addr: FullCellAddress) => void): void {
+        this.caf.ForEachReferred(act);
+    }
+
+    /**
+     * TODO: IMPLEMENT THIS
+     * @param col
+     * @param row
+     * @constructor
+     */
+    public override CloneCell(col: number, row: number): Cell {
+        throw new Error("NotImplementedException");
+    }
+
+    public override IsVolatile(): boolean {
+        return this.caf.formula.IsVolatile();
+    }
+
+    public override DependsOn(here: FullCellAddress, dependsOn: (fullCellAddr: FullCellAddress) => void): void {
+        this.caf.formula.DependsOn(here, dependsOn);
+    }
+
+    public override Show(col: number, row: number, fo: Formats): string {
+        return "{" + this.caf.Show(this.caf.formulaCol, this.caf.formulaRow, fo) + "}";
+    }
+}
+
+export class CachedArrayFormula {
+    public readonly formula: Formula;
+    public readonly sheet: Sheet;
+    public readonly formulaCol: number;
+    public readonly formulaRow: number;
+    public readonly ulCa: SuperCellAddress;
+    public readonly lrCa: SuperCellAddress;
+    private supportAdded: boolean;
+    private supportRemoved: boolean;
+
+    constructor(formula: Formula, sheet: Sheet, formulaCol: number, formulaRow: number, ulCa: SuperCellAddress, lrCa: SuperCellAddress) {
+        this.formula = formula;
+        this.sheet = sheet;
+        this.formulaCol = formulaCol;
+        this.formulaRow = formulaRow;
+        this.ulCa = ulCa;
+        this.lrCa = lrCa;
+        this.supportAdded = this.supportRemoved = false;
+    }
+
+    /**
+     * Uses the formulas evaluation function to return a value
+     * @see formula#Eval
+     * @constructor
+     */
+    public Eval(): Value {
+        return this.formula.Eval(this.sheet, this.formulaCol, this.formulaRow);
+    }
+
+    public MoveContents(deltaCol: number, deltaRow: number): CachedArrayFormula {
+        return new CachedArrayFormula(
+            this.formula.MoveContents(deltaCol, deltaRow) as Formula,
+            this.sheet,
+            this.formulaCol,
+            this.formulaCol,
+            this.ulCa,
+            this.lrCa,
+        );
+    }
+
+    public get CachedArray(): Value {
+        return this.formula.Cached;
+    }
+
+    public ResetSupportSet(): void {
+        this.supportAdded = false;
+    }
+
+    public UpdateSupport(supported: Sheet) {
+        if (!this.supportAdded) {
+            this.formula.AddToSupportSets(supported, this.formulaCol, this.formulaRow, 1, 1);
+            this.supportAdded = true;
+        }
+    }
+
+    public RemoveFromSupportSet(sheet: Sheet, col: number, row: number) {
+        if (!this.supportRemoved) {
+            this.formula.RemoveFromSupportSets(sheet, col, row);
+            this.supportRemoved = true;
+        }
+    }
+
+    public ForEachReferred(act: (addr: FullCellAddress) => void): void {
+        this.formula.ForEachReferred(this.sheet, this.formulaCol, this.formulaRow, act);
+    }
+
+    public Show(col: number, row: number, fo: Formats): string {
+        return this.formula.Show(col, row, fo);
+    }
 }

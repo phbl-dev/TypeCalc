@@ -1,48 +1,11 @@
 /*
-  An IOFormat determines how to read a given XML file containing a
-  spreadsheet workbook.
   Currently, only Excel 2003 XMLSS format is supported.
  */
-
 import { XMLParser } from "fast-xml-parser";
 import {Workbook} from "./back-end/Workbook";
 import {Sheet} from "./back-end/Sheet";
 import {NumberCell, QuoteCell} from "./back-end/Cells";
 import {numberToLetters} from "./front-end/virtualizedGrid.tsx";
-
-
-// //Abstract class primarily AI-generated, though I checked the buffer methods in the node.js documentation
-// //If any issues look at this again.
-// abstract class IOFormat {
-//     protected fileExtension: string;
-//     protected description: string;
-//
-//     constructor(fileExtension: string, description: string) {
-//         this.fileExtension = fileExtension;
-//         this.description = description;
-//     }
-//
-//     public abstract read(filename: string): Workbook;
-//
-//     //TypeScript uses Buffer for fixed-length byte sequences. The buffer.from() method
-//     //takes the length from the string implicitly.
-//     public static makeStream(s: string): Buffer {
-//         const buffer:Buffer = Buffer.from(s, 'utf-8');
-//         return buffer;
-//     }
-//
-//     public getFilter(): string {
-//         return `${this.description} (*.${this.fileExtension})|*.${this.fileExtension}`;
-//     }
-//
-//     public validExtension(ext: string): boolean {
-//         return this.fileExtension === ext;
-//     }
-// }
-
-//This is not how we want to do it, but the links right now are messy
-
-
 
 //The XMLReader is used to read an XML file via the method readFile(xml_filename)
 /*More in-depth explanation is as follows:
@@ -53,26 +16,22 @@ export class XMLReader {
     constructor() {}
 
     readFile(xmlString: string): void {
-        // console.log(xmlString);
-        //createOverarchingWorkbook();
-
         const parser: XMLParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "", removeNSPrefix: true }); // attributeNamePrefix: "", removeNSPrefix: true
         const parsedData: WorkbookType = parser.parse(xmlString);
-        const sheets: WorksheetType[] = parsedData.Workbook.Worksheet;
-
-        // let sheets: WorksheetType[] = [];
-        // if (Array.isArray(parsedData.Workbook.Worksheet)) {
-        //     sheets = parsedData.Workbook.Worksheet;
-        // }
-        // else { sheets.push(parsedData.Workbook.Worksheet) }
+        let sheets: WorksheetType[] = []
+        const parsedSheets:WorksheetType|WorksheetType[] = parsedData.Workbook.Worksheet;
+        if (Array.isArray(parsedSheets)) {
+            sheets = parsedSheets;
+        }
+        else {
+            sheets.push(parsedSheets);
+        }
 
         for (let i: number = 0; i < sheets.length; i++) {
-            //console.log(sheets[i]);
             const sheetName: string = sheets[i].Name;
-            const sheet: Sheet = new Sheet(WorkbookManager.getWorkbook() as Workbook, sheetName, 100, 100, false); //what is up with all these constructors?
+            const sheet: Sheet = new Sheet(WorkbookManager.getWorkbook() as Workbook, sheetName, false); //what is up with all these constructors?
             (WorkbookManager.getWorkbook() as Workbook).AddSheet(sheet);
-            //console.log(wb);
-            //console.log(wb.get(sheetName))
+
             let rows: RowType[] = [];
             if (Array.isArray(sheets[i].Table.Row)) {
                 rows = sheets[i].Table.Row as RowType[];
@@ -80,33 +39,28 @@ export class XMLReader {
             else {
                 rows.push(sheets[i].Table.Row as RowType);
             }
-            //console.log(rows);
+
             let rowIndex: number = 0; //starts from 1 in XMLSS
             for (let g: number = 0; g < rows.length; g++) {
-                //console.log(rows[g]);
                 let cells: CellType[] = [];
-                //console.log(rows[g]);
                 if (!rows[g].Index) {
                     rowIndex++;
                 } else {
                     rowIndex = rows[g].Index as number;
                 }
-                //console.log(rows[g].Cell);
+
                 if (Array.isArray(rows[g].Cell)) {
                     cells = rows[g].Cell as CellType[];
                 } else {
                     cells.push(rows[g].Cell as CellType);
                 }
-                //const cells = rows[g].Cell;
                 let colIndex: number = 0;
-                //console.log(cells)
-                //console.log(cells);
+
                 for (let f: number = 0; f < cells.length; f++) {
                     if (!cells[f]){
                         continue;
                     }
-                    //console.log(f);
-                    //console.log(cells[f]);
+
                     let cellContent: string | number | boolean | Date;
                     if (!cells[f].Index) {
                         colIndex++;
@@ -154,6 +108,11 @@ export class WorkbookManager {
 
     static getWorkbook(): Workbook | null {
         console.log("[WorkbookManager] getWorkbook ->", this.instance);
+        if (!this.instance) {
+            this.instance = new Workbook();
+            const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", true);
+            this.instance.AddSheet(baseSheet);
+            }
         return this.instance;
     }
 
@@ -190,7 +149,6 @@ export function ShowWindowInGUI(leftCornerCol: number, rightCornerCol:number, to
     if (sheet) {
         for (let col: number = startCol; col < endCol ; col++) {
             for (let row: number = startRow; row < endRow; row++) {
-                console.log("this happens");
                 const colChar:string = numberToLetters(col);
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {

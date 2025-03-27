@@ -1,6 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import { FixedSizeGrid as Grid } from "react-window";
-import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO.ts";
+import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
+import {NumberCell, QuoteCell} from "../back-end/Cells";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -116,6 +117,12 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+    const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
+        const cellToBeAdded: QuoteCell | NumberCell =
+            typeof content === "number" ? new NumberCell(content as number) : new QuoteCell(content as string);
+        WorkbookManager.getWorkbook()?.get("Sheet1")?.SetCell(cellToBeAdded, columnIndex + 1, rowIndex + 1);
+    }
+
     return (
         <div className="Cell" contentEditable={true} id={ID}
              style={{
@@ -124,6 +131,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onMouseMove={handleHover} // Gets the cellID when moving the mouse
              onKeyDown={arrowNav} // Checks if the key pressed is an arrow key
+             onInput={(e) =>
+                 handleInput(rowIndex, columnIndex, (e.target as HTMLElement).innerText)
+             }
         >
         </div>
     );
