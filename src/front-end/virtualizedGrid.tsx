@@ -164,6 +164,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
     const [scrollOffset] = useState({ left: 0, top: 0 });
+    const activeSheet:string = "Sheet1"; //start-value for no sheet
 
     useEffect(() => {
         // Handle file drop events entirely in React
@@ -172,17 +173,21 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
             const file = event.dataTransfer?.files?.[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = async(e) => {
                     const content = e.target?.result as string;
                     WorkbookManager.createNewWorkbook(); // or call createNewWorkbook()
                     const xmlReader = new XMLReader();
-                    xmlReader.readFile(content); // Assumes it modifies the current workbook
-                    console.log("[React Drop Handler] File loaded. Updating UI...");
-                    setTimeout(() => {
-                        ShowWindowInGUI(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
-                    }, 100); // Give XMLReader a moment to finish parsing
+
+                    try {
+                        await xmlReader.readFile(content); // Assumes it modifies the current workbook
+                        console.log("[React Drop Handler] File loaded. Updating UI...");
+                        ShowWindowInGUI(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+                    } catch (error) {
+                        console.error("Error during load:", error);
+                    }
                 };
                 reader.readAsText(file);
+
             }
         }
         function handleDragOver(event: DragEvent) {
@@ -273,6 +278,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                       visibleColumnStopIndex,
                     }) => {
                         ShowWindowInGUI(
+                            activeSheet,
                             visibleColumnStartIndex,
                             visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
                             visibleRowStartIndex,
