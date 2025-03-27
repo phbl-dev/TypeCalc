@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {forwardRef, useEffect, useImperativeHandle, useRef, useState} from "react";
 import { FixedSizeGrid as Grid } from "react-window";
 import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {NumberCell, QuoteCell} from "../back-end/Cells";
@@ -19,7 +19,7 @@ interface GridInterface {
  *
  * @param n - The number to convert
  */
-export function numberToLetters(n: number) {
+function numberToLetters(n: number) {
     let letter = "";
     while (n > 0) {
         n--; // Required so that 1 = 'A'
@@ -27,6 +27,26 @@ export function numberToLetters(n: number) {
         n = Math.floor(n / 26);
     }
     return letter;
+}
+
+function lettersToNumber(letters:string):number {
+    let output = 0;
+    for (let i = 0; i < letters.length; i++) {
+        const charCode = letters.charCodeAt(i) - 65;
+        output = output * 26 + (charCode + 1);
+    }
+    return output;
+}
+
+function idToIndex(id: string): {colIndex:number, rowIndex:number} | null {
+    const split = id.match(/^([A-Za-z]+)(\d+)$/);
+    if(split) {
+        return {
+            colIndex: lettersToNumber(split[0]),
+            rowIndex: parseInt(split[1], 10)
+        }
+    }
+    return null;
 }
 
 /** Defines the column headers as a div with ID, style, and contents
@@ -139,17 +159,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     );
 };
 
-// function updateCell(cellID:string, cellValue:string):void {
-//
-// }
-
 /** Creates the sheet itself with headers and body. It extends the GridInterface so that
  * we can create a sheet with a self-defined amount of rows and columns.
  * The sheet itself consists of a top row flexbox with a corner cell and a row of column
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
  * additional grids; one for the row headers and one for the regular cells.
  */
-export const VirtualizedGrid: React.FC<GridInterface> = ({
+export const VirtualizedGrid: React.FC<GridInterface> = forwardRef(({
      columnCount,
      rowCount,
      columnWidth = 80,
@@ -197,6 +213,13 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
             window.removeEventListener("dragover", handleDragOver);
         };
     }, [scrollOffset]);
+
+    useImperativeHandle(ref, () => ({
+        jumpToCell: (cellID:string) => ({
+            const { columnIndex, rowIndex } = idToIndex(cellID);
+
+        })
+    }))
 
     /** Synchronizes scrolling between the grid body and the headers so that it works
      * like one, big grid. Does not currently synchronize scrolling done on the headers.
@@ -257,32 +280,34 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                 </Grid>
 
                 {/* Grid body */}
-                <Grid
-                    ref={bodyRef}
-                    columnCount={columnCount}
-                    columnWidth={columnWidth}
-                    height={height - colHeaderHeight}
-                    rowCount={rowCount}
-                    rowHeight={rowHeight}
-                    width={width - rowHeaderWidth}
-                    onScroll={syncScroll}
-                    onItemsRendered={({
-                      visibleRowStartIndex,
-                      visibleRowStopIndex,
-                      visibleColumnStartIndex,
-                      visibleColumnStopIndex,
-                    }) => {
-                        ShowWindowInGUI(
-                            visibleColumnStartIndex,
-                            visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
-                            visibleRowStartIndex,
-                            visibleRowStopIndex + 1
-                        );
-                    }}
-                >
-                    {Cell}
-                </Grid>
+                <div id="gridBody">
+                    <Grid
+                        ref={bodyRef}
+                        columnCount={columnCount}
+                        columnWidth={columnWidth}
+                        height={height - colHeaderHeight}
+                        rowCount={rowCount}
+                        rowHeight={rowHeight}
+                        width={width - rowHeaderWidth}
+                        onScroll={syncScroll}
+                        onItemsRendered={({
+                          visibleRowStartIndex,
+                          visibleRowStopIndex,
+                          visibleColumnStartIndex,
+                          visibleColumnStopIndex,
+                        }) => {
+                            ShowWindowInGUI(
+                                visibleColumnStartIndex,
+                                visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
+                                visibleRowStartIndex,
+                                visibleRowStopIndex + 1
+                            );
+                        }}
+                    >
+                        {Cell}
+                    </Grid>
+                </div>
             </div>
         </div>
     );
-};
+});
