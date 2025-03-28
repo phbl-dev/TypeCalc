@@ -1,5 +1,5 @@
-import React, {useEffect, useRef, useState} from "react";
-import { FixedSizeGrid as Grid } from "react-window";
+import React, { useEffect, useRef, useState } from "react";
+import { VariableSizeGrid as Grid } from "react-window";
 import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {NumberCell, QuoteCell} from "../back-end/Cells";
 
@@ -139,17 +139,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     );
 };
 
-// function updateCell(cellID:string, cellValue:string):void {
-//
-// }
-
 /** Creates the sheet itself with headers and body. It extends the GridInterface so that
  * we can create a sheet with a self-defined amount of rows and columns.
  * The sheet itself consists of a top row flexbox with a corner cell and a row of column
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
  * additional grids; one for the row headers and one for the regular cells.
  */
-export const VirtualizedGrid: React.FC<GridInterface> = ({
+export const VirtualizedGrid: React.FC<GridInterface> = (({
      columnCount,
      rowCount,
      columnWidth = 80,
@@ -231,10 +227,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                 <Grid
                     ref={colHeaderRef}
                     columnCount={columnCount}
-                    columnWidth={columnWidth}
+                    columnWidth={() => columnWidth}
                     height={colHeaderHeight}
                     rowCount={1}
-                    rowHeight={colHeaderHeight}
+                    rowHeight={() => colHeaderHeight}
                     width={width - rowHeaderWidth}
                 >
                     {ColumnHeader}
@@ -247,42 +243,44 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                 <Grid
                     ref={rowHeaderRef}
                     columnCount={1}
-                    columnWidth={rowHeaderWidth}
+                    columnWidth={() => rowHeaderWidth}
                     height={height - colHeaderHeight}
                     rowCount={rowCount}
-                    rowHeight={rowHeight}
+                    rowHeight={() => rowHeight}
                     width={rowHeaderWidth}
                 >
                     {RowHeader}
                 </Grid>
 
                 {/* Grid body */}
-                <Grid
-                    ref={bodyRef}
-                    columnCount={columnCount}
-                    columnWidth={columnWidth}
-                    height={height - colHeaderHeight}
-                    rowCount={rowCount}
-                    rowHeight={rowHeight}
-                    width={width - rowHeaderWidth}
-                    onScroll={syncScroll}
-                    onItemsRendered={({
-                      visibleRowStartIndex,
-                      visibleRowStopIndex,
-                      visibleColumnStartIndex,
-                      visibleColumnStopIndex,
-                    }) => {
-                        ShowWindowInGUI(
-                            visibleColumnStartIndex,
-                            visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
-                            visibleRowStartIndex,
-                            visibleRowStopIndex + 1
-                        );
-                    }}
-                >
-                    {Cell}
-                </Grid>
+                <div id="gridBody">
+                    <Grid
+                        ref={bodyRef}
+                        columnCount={columnCount}
+                        columnWidth={() => columnWidth}
+                        height={height - colHeaderHeight}
+                        rowCount={rowCount}
+                        rowHeight={() => rowHeight}
+                        width={width - rowHeaderWidth}
+                        onScroll={syncScroll}
+                        onItemsRendered={({
+                          visibleRowStartIndex,
+                          visibleRowStopIndex,
+                          visibleColumnStartIndex,
+                          visibleColumnStopIndex,
+                        }) => {
+                            ShowWindowInGUI(
+                                visibleColumnStartIndex,
+                                visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
+                                visibleRowStartIndex,
+                                visibleRowStopIndex + 1
+                            );
+                        }}
+                    >
+                        {Cell}
+                    </Grid>
+                </div>
             </div>
         </div>
     );
-};
+});
