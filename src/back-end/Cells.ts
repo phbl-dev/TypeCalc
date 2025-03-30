@@ -1,10 +1,10 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
-import { Sheet } from "./Sheet";
-import { Value } from "./Value";
-import { Adjusted, FullCellAddress, Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
-import { Error, Expr, NumberConst } from "./Expressions"; // This should be imported when it's done
-import { Formats } from "./Types";
-import { Workbook } from "./Workbook"; // This should be imported when it's done
+import type { Sheet } from "./Sheet";
+import type { Value } from "./Value";
+import { Adjusted, type FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
+import { Error, type Expr, NumberConst } from "./Expressions"; // This should be imported when it's done
+import type { Formats } from "./Types";
+import type { Workbook } from "./Workbook"; // This should be imported when it's done
 import { SpreadsheetVisitor} from "./Parser/Visitor";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
@@ -15,10 +15,10 @@ import { N } from "@formulajs/formulajs";
 
 
 export enum CellState {
-    Dirty,
-    Enqueued,
-    Computing,
-    Uptodate,
+    Dirty = 0,
+    Enqueued = 1,
+    Computing = 2,
+    Uptodate = 3,
 }
 
 // The Cell class and its subclasses represent the possible contents

@@ -1,4 +1,5 @@
-import React, {useEffect, useRef, useState} from "react";
+import type React from "react";
+import {useEffect, useRef, useState} from "react";
 import { FixedSizeGrid as Grid } from "react-window";
 import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {NumberCell, QuoteCell} from "../back-end/Cells";

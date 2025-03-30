@@ -18,8 +18,9 @@ export class ObjectValue extends Value {
      */
     public static Make(o: unknown): Value {
         if (o === null) {
-            return this.nullObjectValue;
-        } else return new ObjectValue(o);
+            return ObjectValue.nullObjectValue;
+        }
+        return new ObjectValue(o);
     }
 
     /*

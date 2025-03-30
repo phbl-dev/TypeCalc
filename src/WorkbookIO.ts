@@ -27,7 +27,7 @@ export class XMLReader {
             sheets.push(parsedSheets);
         }
 
-        for (let i: number = 0; i < sheets.length; i++) {
+        for (let i = 0; i < sheets.length; i++) {
             const sheetName: string = sheets[i].Name;
             const sheet: Sheet = new Sheet(WorkbookManager.getWorkbook() as Workbook, sheetName, false); //what is up with all these constructors?
             (WorkbookManager.getWorkbook() as Workbook).AddSheet(sheet);
@@ -40,8 +40,8 @@ export class XMLReader {
                 rows.push(sheets[i].Table.Row as RowType);
             }
 
-            let rowIndex: number = 0; //starts from 1 in XMLSS
-            for (let g: number = 0; g < rows.length; g++) {
+            let rowIndex = 0; //starts from 1 in XMLSS
+            for (let g = 0; g < rows.length; g++) {
                 let cells: CellType[] = [];
                 if (!rows[g].Index) {
                     rowIndex++;
@@ -54,9 +54,9 @@ export class XMLReader {
                 } else {
                     cells.push(rows[g].Cell as CellType);
                 }
-                let colIndex: number = 0;
+                let colIndex = 0;
 
-                for (let f: number = 0; f < cells.length; f++) {
+                for (let f = 0; f < cells.length; f++) {
                     if (!cells[f]){
                         continue;
                     }

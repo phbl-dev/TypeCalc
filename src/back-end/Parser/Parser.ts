@@ -1,4 +1,4 @@
-import { CstParser, ParserMethod, CstNode } from "chevrotain";
+import { CstParser, type ParserMethod, type CstNode } from "chevrotain";
 import { SpreadsheetLexer } from "./Lexer";
 
 /**

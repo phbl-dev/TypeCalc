@@ -1,8 +1,8 @@
-import { Sheet } from "./Sheet";
-import { Value } from "./Value";
-import { Adjusted, FullCellAddress, Interval, RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
-import { Cell } from "./Cells";
-import { Formats, IEquatable, ImpossibleException, Applier } from "./Types";
+import type { Sheet } from "./Sheet";
+import type { Value } from "./Value";
+import { Adjusted, FullCellAddress, Interval, type RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
+import type { Cell } from "./Cells";
+import { type Formats, type IEquatable, ImpossibleException, Applier } from "./Types";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ErrorValue } from "./ErrorValue";
@@ -111,7 +111,7 @@ export class NumberConst extends Const {
 
     public constructor(d: number) {
         super();
-        console.assert(!isNaN(d) && d !== Infinity);
+        console.assert(!isNaN(d) && d !== Number.POSITIVE_INFINITY);
         this.value = NumberValue.Make(d) as NumberValue;
     }
 
@@ -270,12 +270,12 @@ export class FunCall extends Expr {
     }
 
     public static Make(name: string, es: Expr[]): Expr {
-        let func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
+        const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
             throw new Error(`Function ${name} not found in formulajs`); // MakeUnknown was called here previously.
         }
 
-        for (let i: number = 0; i < es.length; i++) {
+        for (let i = 0; i < es.length; i++) {
             if (es[i] === null || es[i] === undefined) {
                 es[i] = new Error("#SYNTAX") as unknown as Expr;
             }
@@ -361,9 +361,9 @@ export class FunCall extends Expr {
     }
 
     public override Move(deltaCol: number, deltaRow: number): Expr {
-        let newEs: Expr[] = new Array(this.es.length);
+        const newEs: Expr[] = new Array(this.es.length);
 
-        for (let i: number = 0; i < this.es.length; i++) {
+        for (let i = 0; i < this.es.length; i++) {
             newEs[i] = this.es[i].Move(deltaCol, deltaRow);
         }
         return new FunCall(this.function, newEs);
@@ -371,10 +371,10 @@ export class FunCall extends Expr {
 
     // Can be copied with sharing if arguments can
     public override CopyTo(col: number, row: number): Expr {
-        let same: boolean = true;
-        let newEs: Expr[] = new Array(this.es.length);
+        let same = true;
+        const newEs: Expr[] = new Array(this.es.length);
 
-        for (let i: number = 0; i < this.es.length; i++) {
+        for (let i = 0; i < this.es.length; i++) {
             newEs[i] = this.es[i].CopyTo(col, row);
             same = same && (newEs[i] === this.es[i]); // sets 'same' to false if newEs[i] and this.es[i] are different.
         }
@@ -387,12 +387,12 @@ export class FunCall extends Expr {
     }
 
     public override InsertRowCols(modSheet: Sheet, thisSheet: boolean, R: number, N: number, r: number, doRows: boolean): Adjusted<Expr> {
-        let newEs: Expr[] = new Array(this.es.length);
+        const newEs: Expr[] = new Array(this.es.length);
         let upper: number = Number.MAX_VALUE;
-        let same: boolean = true;
+        let same = true;
 
-        for (let i: number = 0; i < this.es.length; i++) {
-            let ae: Adjusted<Expr> = this.es[i].InsertRowCols(modSheet, thisSheet, R, N, r, doRows);
+        for (let i = 0; i < this.es.length; i++) {
+            const ae: Adjusted<Expr> = this.es[i].InsertRowCols(modSheet, thisSheet, R, N, r, doRows);
             upper = Math.min(upper, ae.maxValidRow);
             same = same && ae.isUnchanged;
             newEs[i] = ae.type;
@@ -403,12 +403,12 @@ export class FunCall extends Expr {
 
     // Show infixed operators as infix and without excess parentheses
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
-        let stringArray: string[] = [];
-        let pre: number = 0; //TODO: Fix fixity
+        const stringArray: string[] = [];
+        const pre = 0; //TODO: Fix fixity
 
         if (pre === 0) { // Not operator
             stringArray.push(this.function.name + "(");
-            for (let i: number = 0; i < this.es.length; i++) {
+            for (let i = 0; i < this.es.length; i++) {
                 if (i > 0) {
                     stringArray.push(", ");
                 }
