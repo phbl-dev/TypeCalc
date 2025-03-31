@@ -328,7 +328,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = ({
                         ShowWindowInGUI(
                             activeSheet,
                             visibleColumnStartIndex,
-                            visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
+                            visibleColumnStopIndex + 2, // +1 because the stop index is inclusive
                             visibleRowStartIndex,
                             visibleRowStopIndex + 1
                         );
