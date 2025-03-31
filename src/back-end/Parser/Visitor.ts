@@ -1,11 +1,11 @@
-import { Workbook } from "../Workbook";
-import { Cell, Formula, NumberCell, QuoteCell, TextCell } from "../Cells";
-import { CellArea, CellRef, Error, Expr, FunCall, NumberConst, TextConst } from "../Expressions";
-import { A1RARef, A1RefCellAddress, R1C1RARef, RARefCellAddress, SuperRARef } from "../CellAddressing";
+import type { Workbook } from "../Workbook";
+import { type Cell, Formula, NumberCell, QuoteCell, TextCell } from "../Cells";
+import { CellArea, CellRef, Error, type Expr, FunCall, NumberConst, TextConst } from "../Expressions";
+import { A1RARef, A1RefCellAddress, R1C1RARef, RARefCellAddress, type SuperRARef } from "../CellAddressing";
 import { ErrorValue } from "../ErrorValue";
-import { Sheet } from "../Sheet";
+import type { Sheet } from "../Sheet";
 import { SpreadsheetParser } from "./Parser";
-import { CstNode, Lexer } from "chevrotain";
+import { type CstNode, Lexer } from "chevrotain";
 import { SpreadsheetLexer } from "./Lexer";
 import { NumberValue } from "../NumberValue";
 import { json } from "node:stream/consumers";
@@ -94,7 +94,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
    protected number(ctx: any): number {
 
-        return parseFloat(ctx["Number"][0].image);
+        return Number.parseFloat(ctx["Number"][0].image);
     }
 
    protected application(ctx: any): Expr {
@@ -124,14 +124,14 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     exprs1(ctx: any): Expr[] {
 
-        let elist: Expr[] = [];
+        const elist: Expr[] = [];
 
-        let e1 = this.visit(ctx["expression"][0]);
+        const e1 = this.visit(ctx["expression"][0]);
         elist.push(e1);
 
         if (ctx["expression"].length > 1) {
             for (let i = 1; i < ctx["expression"].length; i++) {
-                let e2 = this.visit(ctx["expression"][i]);
+                const e2 = this.visit(ctx["expression"][i]);
                 elist.push(e2);
             }
         }
@@ -142,7 +142,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     protected addOp(ctx: any): string {
 
-        let op: string = "";
+        let op = "";
 
         if (ctx.Plus) {
             op = "+";
@@ -156,7 +156,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     protected logicalOp(ctx: any): string {
 
-        let op: string = "";
+        let op = "";
         if (ctx.Equals) {
             op = "SUM";
         } else if (ctx.NotEqual) {
@@ -217,13 +217,13 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected factor(ctx: any): Expr {
-
+        console.log("In factor")
         console.log(JSON.stringify(ctx, null, 2));
 
         let r1, r2;
         let s1 = null;
         let d: number;
-        let sheetError: boolean = false;
+        let sheetError = false;
         let e = null;
 
         if (ctx["application"]) {
@@ -231,7 +231,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         }
 
         if (ctx["SheetRef"]) {
-            let sheetName = ctx["SheetRef"][0].image;
+            const sheetName = ctx["SheetRef"][0].image;
             s1 = this.workbook.get(sheetName.substring(0, sheetName.length - 1));
             if (s1 === null) {
                 sheetError = true;
@@ -258,26 +258,30 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             }
         }
 
-        if (ctx["number"]) {
+        if (ctx["Number"]) {
 
-            d = parseInt(ctx["number"][0].children["Number"][0].image);
+            d = Number.parseInt(ctx["Number"][0].children["Number"][0].image);
 
             e = new NumberConst(d);
         }
 
         if (ctx["Minus"]) {
 
-            let innerExpr = this.visit(ctx["factor"]);
+            const innerExpr = this.visit(ctx["factor"]);
 
             if (innerExpr instanceof NumberConst) {
                 e = new NumberConst(-innerExpr.value.value);
             } else {
-                e = FunCall.Make("PRODUCT", [new NumberConst(-1),innerExpr]);
+                e = FunCall.Make("PRODUCT", [new NumberConst(-1),NumberConst.Make(innerExpr)]);
             }
+
+
         }
 
+
+
         if (ctx["StringLiteral"]) {
-            let textValue = ctx["StringLiteral"][0].image;
+            const textValue = ctx["StringLiteral"][0].image;
             e = new TextConst(textValue.substring(1, textValue.length - 1));
         }
 
@@ -292,50 +296,50 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
 
         if (ctx["A1Ref"]) {
-            let token = ctx["A1Ref"][0].image
+            const token = ctx["A1Ref"][0].image
             raref = new A1RARef(token, 0,0);
         } else if (ctx["XMLSSRARef11"]) {
-            let token = ctx["XMLSSRARef11"][0];
+            const token = ctx["XMLSSRARef11"][0];
             raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef12"]) {
-            let token = ctx["XMLSSRARef12"][0];
+            const token = ctx["XMLSSRARef12"][0];
             raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef13"]) {
-            let token = ctx["XMLSSRARef13"][0];
+            const token = ctx["XMLSSRARef13"][0];
             raref = new A1RefCellAddress(token.image);
         } else if (ctx["XMLSSRARef21"]) {
-            let token = ctx["XMLSSRARef21"][0];
+            const token = ctx["XMLSSRARef21"][0];
             raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef22"]) {
-            let token = ctx["XMLSSRARef22"][0];
+            const token = ctx["XMLSSRARef22"][0];
             raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef23"]) {
-            let token = ctx["XMLSSRARef23"][0];
+            const token = ctx["XMLSSRARef23"][0];
             raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef31"]) {
-            let token = ctx["XMLSSRARef31"][0];
+            const token = ctx["XMLSSRARef31"][0];
             raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef32"]) {
-            let token = ctx["XMLSSRARef32"][0];
+            const token = ctx["XMLSSRARef32"][0];
             raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef33"]) {
-            let token = ctx["XMLSSRARef33"][0];
+            const token = ctx["XMLSSRARef33"][0];
             raref = new R1C1RARef(token.image);
         }
         return raref;
     }
 
     protected cellContents(ctx: any): Cell {
-
-        let e:any = this.visit(ctx.expression);
+        console.log(JSON.stringify(ctx, null, 2));
+        const e:any = this.visit(ctx.expression);
 
 
         if (ctx.QuoteCell) {
             this.cell = new QuoteCell(e.image.substring(1));
         } else if (ctx.StringLiteral) {
             this.cell = new TextCell(e.image.substring(1, e.image.length - 2));
-        } else if (ctx.NUMBER) {
-            this.cell = new NumberCell(parseInt(e.image));
+        } else if (ctx.number) {
+            this.cell = new NumberCell(Number.parseInt(ctx["number"][0].children["Number"][0].image));
         } else if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.Datetime) {

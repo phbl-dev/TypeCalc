@@ -1,4 +1,4 @@
-import { createToken, Lexer, TokenType } from "chevrotain"; // DONT CHANGE TO IMPORT!
+import { createToken, Lexer, type TokenType } from "chevrotain"; // DONT CHANGE TO IMPORT!
 
 /**
  * @class SpreadsheetLexer
@@ -71,9 +71,10 @@ export class SpreadsheetLexer {
         SpreadsheetLexer.Identifier,
 
         SpreadsheetLexer.WhiteSpace,
+        SpreadsheetLexer.NUMBER,
+
         SpreadsheetLexer.Datetime,
 
-        SpreadsheetLexer.NUMBER,
         SpreadsheetLexer.StringLiteral,
         SpreadsheetLexer.QuoteCell,
         SpreadsheetLexer.LessThanOrEqual,
