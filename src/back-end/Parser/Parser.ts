@@ -150,7 +150,7 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                        $.SUBRULE($.number);
+                            $.SUBRULE($.number);
                     },
                 },
 

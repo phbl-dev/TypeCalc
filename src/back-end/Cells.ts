@@ -462,11 +462,11 @@ export class Formula extends Cell {
             case CellState.Uptodate:
                 break;
             case CellState.Computing:
-
+/**
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
                 throw new CyclicException(msg, culprit); // Culprit should be added to this.
-
+*/
             case CellState.Dirty:
             case CellState.Enqueued:
                 this.state = CellState.Computing;

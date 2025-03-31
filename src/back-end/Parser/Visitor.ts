@@ -336,8 +336,9 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx.QuoteCell) {
             this.cell = new QuoteCell(e.image.substring(1));
         } else if (ctx.StringLiteral) {
-            this.cell = new TextCell(e.image.substring(1, e.image.length - 2));
-        } else if (ctx.NUMBER) {
+            console.log(e)
+            //this.cell = new TextCell(e.image.substring(1, e.image.length - 2));
+        } else if (ctx.number) {
             this.cell = new NumberCell(Number.parseInt(e.image));
         } else if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
