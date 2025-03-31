@@ -1,5 +1,5 @@
-import React, {forwardRef, useEffect, useImperativeHandle, useRef, useState} from "react";
-import { FixedSizeGrid as Grid } from "react-window";
+import React, {forwardRef,  useEffect, useImperativeHandle, useRef, useState } from "react";
+import { VariableSizeGrid as Grid } from "react-window";
 import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {NumberCell, QuoteCell} from "../back-end/Cells";
 
@@ -165,7 +165,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
  * additional grids; one for the row headers and one for the regular cells.
  */
-export const VirtualizedGrid: React.FC<GridInterface> = forwardRef(({
+export const VirtualizedGrid: React.FC<GridInterface> = forwardRef((({
      columnCount,
      rowCount,
      columnWidth = 80,
@@ -254,10 +254,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = forwardRef(({
                 <Grid
                     ref={colHeaderRef}
                     columnCount={columnCount}
-                    columnWidth={columnWidth}
+                    columnWidth={() => columnWidth}
                     height={colHeaderHeight}
                     rowCount={1}
-                    rowHeight={colHeaderHeight}
+                    rowHeight={() => colHeaderHeight}
                     width={width - rowHeaderWidth}
                 >
                     {ColumnHeader}
@@ -270,10 +270,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = forwardRef(({
                 <Grid
                     ref={rowHeaderRef}
                     columnCount={1}
-                    columnWidth={rowHeaderWidth}
+                    columnWidth={() => rowHeaderWidth}
                     height={height - colHeaderHeight}
                     rowCount={rowCount}
-                    rowHeight={rowHeight}
+                    rowHeight={() => rowHeight}
                     width={rowHeaderWidth}
                 >
                     {RowHeader}
@@ -284,10 +284,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = forwardRef(({
                     <Grid
                         ref={bodyRef}
                         columnCount={columnCount}
-                        columnWidth={columnWidth}
+                        columnWidth={() => columnWidth}
                         height={height - colHeaderHeight}
                         rowCount={rowCount}
-                        rowHeight={rowHeight}
+                        rowHeight={() => rowHeight}
                         width={width - rowHeaderWidth}
                         onScroll={syncScroll}
                         onItemsRendered={({
