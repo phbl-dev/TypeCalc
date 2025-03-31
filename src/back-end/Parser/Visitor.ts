@@ -80,8 +80,12 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx["addOp"]) {
             op = this.visit(ctx["addOp"]);
 
-            if (op === "+" || op === '-'  ) {
+            if (op === "+" ) {
                 op = "SUM";
+            }
+
+            if (op === "-") {
+                op = "SUB"
             }
 
             e2 = this.visit(ctx["term"][1]);
@@ -297,6 +301,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx["A1Ref"]) {
             const token = ctx["A1Ref"][0].image
             raref = new A1RARef(token, 0,0);
+            console.log("this is the value of raref: \n")
+            console.log({raref});
         } else if (ctx["XMLSSRARef11"]) {
             const token = ctx["XMLSSRARef11"][0];
             raref = new R1C1RARef(token.image);
@@ -336,8 +342,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx.QuoteCell) {
             this.cell = new QuoteCell(e.image.substring(1));
         } else if (ctx.StringLiteral) {
-            console.log(e)
-            //this.cell = new TextCell(e.image.substring(1, e.image.length - 2));
+            this.cell = new TextCell(e.image.substring(1, e.image.length - 2));
         } else if (ctx.number) {
             this.cell = new NumberCell(Number.parseInt(e.image));
         } else if (ctx.Equals) {

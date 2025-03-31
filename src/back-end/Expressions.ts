@@ -1,8 +1,8 @@
 import type { Sheet } from "./Sheet";
 import type { Value } from "./Value";
-import { Adjusted, FullCellAddress, Interval, type RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
+import { Adjusted, FullCellAddress, Interval,  SuperRARef } from "./CellAddressing";
 import type { Cell } from "./Cells";
-import { type Formats, type IEquatable, ImpossibleException, Applier } from "./Types";
+import { type Formats, type IEquatable, ImpossibleException } from "./Types";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ErrorValue } from "./ErrorValue";
@@ -280,6 +280,22 @@ export class FunCall extends Expr {
                 return -arg;
             }
             return new FunCall(func, es)
+        }
+
+        if (name === "SUB") {
+            const func = (...args: unknown[]): unknown => {
+                const numbers = args.map(arg => {
+                    if (typeof arg !== "number") {
+                        throw new Error(`SUB function expects numeric values, but received: ${typeof arg}`);
+                    }
+                    return arg;
+                });
+
+                // Perform subtraction from left to right
+                return numbers.reduce((acc, num) => acc - num);
+            };
+
+            return new FunCall(func, es);
         }
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
