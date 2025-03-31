@@ -14,70 +14,67 @@ import {numberToLetters} from "./front-end/virtualizedGrid.tsx";
  * cell addresses, values and types */
 export class XMLReader {
     constructor() {}
+    readFile(xmlString: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                const parser: XMLParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "", removeNSPrefix: true }); // attributeNamePrefix: "", removeNSPrefix: true
+                const parsedData: WorkbookType = parser.parse(xmlString);
+                let sheets: WorksheetType[] = []
+                const parsedSheets:WorksheetType|WorksheetType[] = parsedData.Workbook.Worksheet;
+                if (Array.isArray(parsedSheets)) {
+                    sheets = parsedSheets;
 
-    readFile(xmlString: string): void {
-        const parser: XMLParser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "", removeNSPrefix: true }); // attributeNamePrefix: "", removeNSPrefix: true
-        const parsedData: WorkbookType = parser.parse(xmlString);
-        let sheets: WorksheetType[] = []
-        const parsedSheets:WorksheetType|WorksheetType[] = parsedData.Workbook.Worksheet;
-        if (Array.isArray(parsedSheets)) {
-            sheets = parsedSheets;
-        }
-        else {
-            sheets.push(parsedSheets);
-        }
-
-        for (let i = 0; i < sheets.length; i++) {
-            const sheetName: string = sheets[i].Name;
-            const sheet: Sheet = new Sheet(WorkbookManager.getWorkbook() as Workbook, sheetName, false); //what is up with all these constructors?
-            (WorkbookManager.getWorkbook() as Workbook).AddSheet(sheet);
-
-            let rows: RowType[] = [];
-            if (Array.isArray(sheets[i].Table.Row)) {
-                rows = sheets[i].Table.Row as RowType[];
-            }
-            else {
-                rows.push(sheets[i].Table.Row as RowType);
-            }
-
-            let rowIndex = 0; //starts from 1 in XMLSS
-            for (let g = 0; g < rows.length; g++) {
-                let cells: CellType[] = [];
-                if (!rows[g].Index) {
-                    rowIndex++;
-                } else {
-                    rowIndex = rows[g].Index as number;
                 }
-
-                if (Array.isArray(rows[g].Cell)) {
-                    cells = rows[g].Cell as CellType[];
-                } else {
-                    cells.push(rows[g].Cell as CellType);
+                else {
+                    sheets.push(parsedSheets);
                 }
-                let colIndex = 0;
-
-                for (let f = 0; f < cells.length; f++) {
-                    if (!cells[f]){
-                        continue;
-                    }
-
-                    let cellContent: string | number | boolean | Date;
-                    if (!cells[f].Index) {
-                        colIndex++;
                     } else {
-                        colIndex = Number(cells[f].Index);
+                        rows.push(sheets[i].Table.Row as RowType);
                     }
-                    if (cells[f].Formula) {
-                        cellContent = cells[f].Formula as string;
-                    } else {
-                        cellContent = this.parseCellData(cells[f].Data);
+
+                    let rowIndex: number = 0; //starts from 1 in XMLSS
+                    for (let g: number = 0; g < rows.length; g++) {
+                        let cells: CellType[] = [];
+                        if (!rows[g].Index) {
+                            rowIndex++;
+                        } else {
+                            rowIndex = rows[g].Index as number;
+                        }
+
+                        if (Array.isArray(rows[g].Cell)) {
+                            cells = rows[g].Cell as CellType[];
+                        } else {
+                            cells.push(rows[g].Cell as CellType);
+                        }
+                        let colIndex: number = 0;
+
+                        for (let f: number = 0; f < cells.length; f++) {
+                            if (!cells[f]) {
+                                continue;
+                            }
+
+                            let cellContent: string | number | boolean | Date;
+                            if (!cells[f].Index) {
+                                colIndex++;
+                            } else {
+                                colIndex = Number(cells[f].Index);
+                            }
+                            if (cells[f].Formula) {
+                                cellContent = cells[f].Formula as string;
+                            } else {
+                                cellContent = this.parseCellData(cells[f].Data);
+                            }
+                            const cellToBeAdded: QuoteCell | NumberCell =
+                                typeof cellContent === "number" ? new NumberCell(cellContent as number) : new QuoteCell(cellContent as string);
+                            sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
+                        }
                     }
-                    const cellToBeAdded: QuoteCell | NumberCell =
-                        typeof cellContent === "number" ? new NumberCell(cellContent as number) : new QuoteCell(cellContent as string);
-                    sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
                 }
+                resolve();
+            } catch (error) {
+                reject(error);
             }
-        }
+        })
     }
 
     //Essentially a type system for cell data input. Can probably be out-sourced to parser once that works.
@@ -107,7 +104,7 @@ export class WorkbookManager {
     private static instance: Workbook | null = null;
 
     static getWorkbook(): Workbook | null {
-        console.log("[WorkbookManager] getWorkbook ->", this.instance);
+        //console.log("[WorkbookManager] getWorkbook ->", this.instance);
         if (!this.instance) {
             this.instance = new Workbook();
             const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", true);
@@ -119,6 +116,18 @@ export class WorkbookManager {
     static createNewWorkbook(): void {
         console.log("[WorkbookManager] createNewWorkbook");
         this.instance = new Workbook();
+    }
+
+    static getSheetNames():string[] {
+        if (!this.instance) {
+            console.error("[WorkbookManager] getSheets() can't see a workbook.");
+            return [];
+        }
+        let sheetNames: string[] = [];
+        this.instance.GetSheets().forEach((sheet: Sheet) => {
+            sheetNames.push(sheet.getName());
+        })
+        return sheetNames;
     }
 
     static setWorkbook(wb: Workbook): void {
@@ -134,7 +143,7 @@ export class WorkbookManager {
 //This is the method for retrieving cell data for the current view-port in the front-end.
 //Updates on every scroll, meaning that the values are stored only in back-end, and then repeatedly fetched
 //Makes sure that we only load data in the viewport, everything else stays in back-end.
-export function ShowWindowInGUI(leftCornerCol: number, rightCornerCol:number, topCornerRow: number, bottomCornerRow: number):void {
+export function ShowWindowInGUI(activeSheet:string, leftCornerCol: number, rightCornerCol:number, topCornerRow: number, bottomCornerRow: number):void {
     const wb = WorkbookManager.getWorkbook();
     if (!wb) {
         console.log("[ShowWindowInGUI] No workbook found!");
@@ -145,7 +154,7 @@ export function ShowWindowInGUI(leftCornerCol: number, rightCornerCol:number, to
     const endCol:number = rightCornerCol;
     const startRow:number = topCornerRow;
     const endRow:number = bottomCornerRow;
-    const sheet:Sheet|null = wb.get("Sheet1"); //This needs to be updated
+    const sheet:Sheet|null = wb.get(activeSheet); //This needs to be updated
     if (sheet) {
         for (let col: number = startCol; col < endCol ; col++) {
             for (let row: number = startRow; row < endRow; row++) {
