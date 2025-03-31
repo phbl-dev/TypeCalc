@@ -217,7 +217,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected factor(ctx: any): Expr {
-
+        console.log("In factor")
         console.log(JSON.stringify(ctx, null, 2));
 
         let r1, r2;
@@ -258,6 +258,13 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             }
         }
 
+        if (ctx["Number"]) {
+
+            d = Number.parseInt(ctx["Number"][0].children["Number"][0].image);
+
+            e = new NumberConst(d);
+        }
+
         if (ctx["Minus"]) {
 
             const innerExpr = this.visit(ctx["factor"]);
@@ -271,12 +278,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         }
 
-        if (ctx["number"]) {
-
-            d = Number.parseInt(ctx["number"][0].children["Number"][0].image);
-
-            e = new NumberConst(d);
-        }
 
 
         if (ctx["StringLiteral"]) {
@@ -329,7 +330,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected cellContents(ctx: any): Cell {
-
+        console.log(JSON.stringify(ctx, null, 2));
         const e:any = this.visit(ctx.expression);
 
 
@@ -337,8 +338,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             this.cell = new QuoteCell(e.image.substring(1));
         } else if (ctx.StringLiteral) {
             this.cell = new TextCell(e.image.substring(1, e.image.length - 2));
-        } else if (ctx.NUMBER) {
-            this.cell = new NumberCell(Number.parseInt(e.image));
+        } else if (ctx.number) {
+            this.cell = new NumberCell(Number.parseInt(ctx["number"][0].children["Number"][0].image));
         } else if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.Datetime) {

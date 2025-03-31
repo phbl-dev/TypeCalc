@@ -1,9 +1,9 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
 import type { Sheet } from "./Sheet";
 import type { Value } from "./Value";
-import { Adjusted, type FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
+import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
 import { Error, type Expr, NumberConst } from "./Expressions"; // This should be imported when it's done
-import type { Formats } from "./Types";
+import { CyclicException, Formats } from "./Types";
 import type { Workbook } from "./Workbook"; // This should be imported when it's done
 import { SpreadsheetVisitor} from "./Parser/Visitor";
 import { NumberValue } from "./NumberValue";
@@ -420,14 +420,15 @@ export class TextCell extends ConstCell {
 export class Formula extends Cell {
     public readonly workbook: Workbook;
     private e: Expr;
-    public state: CellState;
-    private v: Value | undefined = undefined;
+    public state: CellState = CellState.Dirty;
+    private v: Value | null;
 
     constructor(workbook: Workbook, e: Expr) {
         super();
         this.workbook = workbook;
         this.e = e;
         this.state = CellState.Uptodate;
+        this.v = null
     }
 
     public static Make(workbook: Workbook, e: Expr): Formula | null {
@@ -459,27 +460,19 @@ export class Formula extends Cell {
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         switch (this.state) {
             case CellState.Uptodate:
-                console.log("Uptodate");
                 break;
             case CellState.Computing:
-                console.log("Computing");
-                /**
+
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
-                throw new Error(msg); // Culprit should be added to this.
-                    */
-                break;
-            case CellState.Dirty:
-                console.log("Dirty");
-                break;  // Added to prevent fallthrough
+                throw new CyclicException(msg, culprit); // Culprit should be added to this.
 
+            case CellState.Dirty:
             case CellState.Enqueued:
-                console.log("Enqueued");
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
                 if (this.workbook.UseSupportSets) {
                     this.ForEachSupported(this.EnqueueForEvaluation);
-                    break;
                 }
                 break
         }

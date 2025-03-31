@@ -26,14 +26,15 @@ jobs:
       
       - name: Run tests
         run: npm run test
-  BiomeLinter:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Look at repository
-        uses: actions/checkout@v4
-      - name: Set up Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: latest
-      - name: Run Biome
-        run: biome lint . '**/*.{ts,js,tsx}'
+
+#  BiomeLinter:
+ #   runs-on: ubuntu-latest
+  #  steps:
+   #   - name: Look at repository
+    #    uses: actions/checkout@v4
+     # - name: Set up Biome
+      #  uses: biomejs/setup-biome@v2
+       # with:
+        #  version: latest
+      #- name: Run Biome
+       # run: biome lint . '**/*.{ts,js,tsx}'

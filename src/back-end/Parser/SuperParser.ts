@@ -6,15 +6,9 @@ const sheet = new Sheet(workbook,"sheet1",true)
 workbook.AddSheet(sheet)
 
 
+const A1:Cell = Cell.Parse('10',workbook, 0,0)!
 
-const B2:Cell = Cell.Parse('= - 10' ,workbook, 1, 1)!
 
-B2.MarkDirty()
+sheet.SetCell(A1, 0,0)
 
-B2.EnqueueForEvaluation(sheet,1,1)
-
-B2.Eval(sheet, 1, 1);
-
-sheet.SetCell(B2, 1,1)
-
-console.log(B2)
+console.log(A1)

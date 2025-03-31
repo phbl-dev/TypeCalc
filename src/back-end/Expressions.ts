@@ -510,12 +510,14 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
     }
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
+
         console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
-        const ca: RARefCellAddress = this.raref.address(col, row);  // col = 0, row = 1
+        console.log(sheet.Get(col,row))
+
         console.log(`Found values, col: ${col}, row: ${row}`);
-        const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef); // ca.col = 0, ca.row = 0
+        const cell: Cell | null = (this.sheet ?? sheet).Get(col, row)!; // ca.col = 0, ca.row = 0
         console.log(`Cell return ${cell}`);
-        return cell?.Eval(sheet, ca.col, ca.row) as Value;
+        return cell.Eval(sheet, col, row) as Value;
     }
 
     public GetAbsoluteAddr(sheet: Sheet | FullCellAddress, col?: number, row?: number): FullCellAddress {
