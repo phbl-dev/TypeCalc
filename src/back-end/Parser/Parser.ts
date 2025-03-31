@@ -114,8 +114,15 @@ export class SpreadsheetParser extends CstParser {
         }
 
         function Factor() {
-            $.SUBRULE($.application);
-            $.OR([
+            console.log("Visiting Factor");
+            return $.OR([
+                {
+                    ALT: () => {
+                        console.log("Looking in application");
+
+                        $.SUBRULE($.application);
+                    },
+                },
                 {
                     ALT: () => {
                         $.CONSUME(SpreadsheetLexer.Minus);
@@ -130,8 +137,11 @@ export class SpreadsheetParser extends CstParser {
                             $.SUBRULE2($.raref);
                         });
 
-                        },
+                    },
                 },
+
+
+
 
                 {
                     ALT: () => {
@@ -140,7 +150,7 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                        $.SUBRULE2($.factor);
+                            $.SUBRULE($.number);
                     },
                 },
 
@@ -203,7 +213,7 @@ export class SpreadsheetParser extends CstParser {
             $.OR([
                 {
                     ALT: () => {
-                       $.CONSUME(SpreadsheetLexer.A1Ref);
+                        $.CONSUME(SpreadsheetLexer.A1Ref);
                     },
                 },
                 {
@@ -213,12 +223,12 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                         $.CONSUME(SpreadsheetLexer.XMLSSRARef12);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef12);
                     }
                 },
                 {
                     ALT: () => {
-                         $.CONSUME(SpreadsheetLexer.XMLSSRARef13);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef13);
                     },
                 },
                 {
@@ -243,7 +253,7 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                       $.CONSUME(SpreadsheetLexer.XMLSSRARef32);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef32);
                     },
                 },
                 {
@@ -299,6 +309,7 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
+                        $.CONSUME(SpreadsheetLexer.NUMBER);
                         $.SUBRULE($.number);
                     },
                 },
@@ -313,7 +324,6 @@ export class SpreadsheetParser extends CstParser {
         }
         function NUMBER() {
             $.CONSUME(SpreadsheetLexer.NUMBER);
-
         }
 
         $.performSelfAnalysis();

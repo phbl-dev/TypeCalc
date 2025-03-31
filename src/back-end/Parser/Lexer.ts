@@ -71,10 +71,9 @@ export class SpreadsheetLexer {
         SpreadsheetLexer.Identifier,
 
         SpreadsheetLexer.WhiteSpace,
-        SpreadsheetLexer.NUMBER,
-
         SpreadsheetLexer.Datetime,
 
+        SpreadsheetLexer.NUMBER,
         SpreadsheetLexer.StringLiteral,
         SpreadsheetLexer.QuoteCell,
         SpreadsheetLexer.LessThanOrEqual,
