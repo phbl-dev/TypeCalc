@@ -471,8 +471,11 @@ export class Formula extends Cell {
             case CellState.Enqueued:
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
+                this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
-                    this.ForEachSupported(this.EnqueueForEvaluation);
+                    this.ForEachSupported(Formula.EnqueueCellForEvaluation);
+                    break;
+
                 }
                 break
         }
@@ -523,7 +526,7 @@ export class Formula extends Cell {
     public override MarkDirty() {
         if (this.state != CellState.Dirty) {
             this.state = CellState.Dirty;
-            this.ForEachSupported(this.MarkDirty);
+            this.ForEachSupported(Formula.MarkCellDirty);
         }
     }
 
