@@ -6,9 +6,13 @@ const sheet = new Sheet(workbook,"sheet1",true)
 workbook.AddSheet(sheet)
 
 
-const A1:Cell = Cell.Parse('10',workbook, 0,0)!
+const A1:Cell = Cell.Parse('= 10 + 10 ',workbook, 0,0)!
+
+
 
 
 sheet.SetCell(A1, 0,0)
+workbook.Recalculate()
+
 
 console.log(A1)
