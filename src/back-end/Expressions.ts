@@ -270,6 +270,17 @@ export class FunCall extends Expr {
     }
 
     public static Make(name: string, es: Expr[]): Expr {
+        /**
+         * NEG is a function that we implemented ourselves to turn a positive number into a negative number
+         * or vice versa.
+         */
+        if (name === "NEG") {
+            const func = (...args: unknown[]): unknown =>  {
+                const arg = args[0] as number;
+                return -arg;
+            }
+            return new FunCall(func, es)
+        }
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
             throw new Error(`Function ${name} not found in formulajs`); // MakeUnknown was called here previously.
