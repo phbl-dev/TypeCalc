@@ -4,7 +4,7 @@
 /// Currently, only Excel 2003 XMLSS format is supported.
 /// </summary>
 
-import { Workbook } from "../../Workbook";
+import type { Workbook } from "../../Workbook";
 
 export abstract class IOFormat {
     public abstract Read(filename: string): Workbook;

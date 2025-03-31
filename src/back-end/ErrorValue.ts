@@ -63,7 +63,7 @@ export class ErrorValue extends Value {
   }
 
   public static GetIndex(message: string): number {
-    return this.errorTable.getIndex(message);
+    return ErrorValue.errorTable.getIndex(message);
   }
 
   public ErrorNan(): number {
@@ -99,7 +99,7 @@ export class ErrorValue extends Value {
 
   public static MakeNan(errorIndex: number): number {
     // Get NaN's bit pattern
-    const nanBits = new Float64Array([NaN]);
+    const nanBits = new Float64Array([Number.NaN]);
     const dataView = new DataView(nanBits.buffer);
 
     // Read NaN as 64-bit integer

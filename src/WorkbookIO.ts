@@ -14,7 +14,6 @@ import {numberToLetters} from "./front-end/virtualizedGrid.tsx";
  * cell addresses, values and types */
 export class XMLReader {
     constructor() {}
-
     readFile(xmlString: string): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
@@ -24,19 +23,11 @@ export class XMLReader {
                 const parsedSheets:WorksheetType|WorksheetType[] = parsedData.Workbook.Worksheet;
                 if (Array.isArray(parsedSheets)) {
                     sheets = parsedSheets;
+
                 }
                 else {
                     sheets.push(parsedSheets);
                 }
-                console.log("Number of sheets during read:" + sheets.length);
-                for (let i: number = 0; i < sheets.length; i++) {
-                    const sheetName: string = sheets[i].Name;
-                    const sheet: Sheet = new Sheet(WorkbookManager.getWorkbook() as Workbook, sheetName, false); //what is up with all these constructors?
-                    (WorkbookManager.getWorkbook() as Workbook).AddSheet(sheet);
-                    console.log(sheetName);
-                    let rows: RowType[] = [];
-                    if (Array.isArray(sheets[i].Table.Row)) {
-                        rows = sheets[i].Table.Row as RowType[];
                     } else {
                         rows.push(sheets[i].Table.Row as RowType);
                     }

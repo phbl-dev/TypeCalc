@@ -8,7 +8,7 @@ export const createGrid = () => {
     const location = document.getElementById('root');
     if (location) {
         const table = ReactDOM.createRoot(location);
-        table.render(<VirtualizedGrid columnCount={parseInt(sheetDimensions[0])} rowCount={parseInt(sheetDimensions[1])}/>);
+        table.render(<VirtualizedGrid columnCount={Number.parseInt(sheetDimensions[0])} rowCount={Number.parseInt(sheetDimensions[1])}/>);
     }
 }
 

@@ -1,4 +1,4 @@
-import { CstParser, ParserMethod, CstNode } from "chevrotain";
+import { CstParser, type ParserMethod, type CstNode } from "chevrotain";
 import { SpreadsheetLexer } from "./Lexer";
 
 /**
@@ -114,15 +114,8 @@ export class SpreadsheetParser extends CstParser {
         }
 
         function Factor() {
-            console.log("Visiting Factor");
-            return $.OR([
-                {
-                    ALT: () => {
-                        console.log("Looking in application");
-
-                        $.SUBRULE($.application);
-                    },
-                },
+            $.SUBRULE($.application);
+            $.OR([
                 {
                     ALT: () => {
                         $.CONSUME(SpreadsheetLexer.Minus);
@@ -140,9 +133,6 @@ export class SpreadsheetParser extends CstParser {
                         },
                 },
 
-
-
-
                 {
                     ALT: () => {
                         $.CONSUME(SpreadsheetLexer.SheetRef);
@@ -150,7 +140,7 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                        $.SUBRULE($.number);
+                        $.SUBRULE2($.factor);
                     },
                 },
 
@@ -309,7 +299,6 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                        $.CONSUME(SpreadsheetLexer.NUMBER);
                         $.SUBRULE($.number);
                     },
                 },
@@ -324,6 +313,7 @@ export class SpreadsheetParser extends CstParser {
         }
         function NUMBER() {
             $.CONSUME(SpreadsheetLexer.NUMBER);
+
         }
 
         $.performSelfAnalysis();
