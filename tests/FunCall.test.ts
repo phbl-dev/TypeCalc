@@ -505,4 +505,20 @@ describe("Formula.js", () => {
 
         expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("false");
     });
+
+    test("Eval with IF", () => {
+        console.log(formulajs.IF(true, "Hello", "Goodbye"))
+        let expr1: Expr = new NumberConst(1); // We don't have a BooleanConst, but we can make boolean NumberConst
+        let expr2: Expr = new TextConst("Hello");
+        let expr3: Expr = new TextConst("Goodbye");
+        let expr4: Expr = new NumberConst(0); // We don't have a BooleanConst, but we can make boolean NumberConst
+
+        let funCall: Expr = FunCall.Make("IF", [expr1, expr2, expr3]);
+        let funCall2: Expr = FunCall.Make("IF", [expr4, expr2, expr3]);
+
+        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("Hello");
+        expect(TextValue.ToString(funCall2.Eval(sheet,0,0))).toBe("Goodbye");
+
+    });
+
 });
