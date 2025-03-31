@@ -4,7 +4,7 @@
 import { XMLParser } from "fast-xml-parser";
 import {Workbook} from "./back-end/Workbook";
 import {Sheet} from "./back-end/Sheet";
-import {NumberCell, QuoteCell} from "./back-end/Cells";
+import {Cell, NumberCell, QuoteCell} from "./back-end/Cells";
 import {numberToLetters} from "./front-end/virtualizedGrid.tsx";
 
 //The XMLReader is used to read an XML file via the method readFile(xml_filename)
@@ -76,6 +76,24 @@ export class XMLReader {
                             const cellToBeAdded: QuoteCell | NumberCell =
                                 typeof cellContent === "number" ? new NumberCell(cellContent as number) : new QuoteCell(cellContent as string);
                             sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
+                            // let cellContent: string;
+                            // if (!cells[f].Index) {
+                            //     colIndex++;
+                            // } else {
+                            //     colIndex = Number(cells[f].Index);
+                            // }
+                            // if (cells[f].Formula) {
+                            //     cellContent = cells[f].Formula as string;
+                            // } else {
+                            //     cellContent = String(cells[f].Data["#text"]);
+                            // }
+                            // console.log("Reader sees this in cell");
+                            // console.log(cellContent);
+                            // console.log(typeof cellContent);
+                            // const cellToBeAdded:Cell|null = Cell.Parse(cellContent, WorkbookManager.getWorkbook() as Workbook, colIndex, rowIndex);
+                            // if (cellToBeAdded) {
+                            //     sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
+                            // }
                         }
                     }
                 }

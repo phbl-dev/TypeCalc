@@ -118,6 +118,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
+        console.log("This is the input:");
+        console.log(typeof content);
+        console.log(content);
         const cellToBeAdded: QuoteCell | NumberCell =
             typeof content === "number" ? new NumberCell(content as number) : new QuoteCell(content as string);
         WorkbookManager.getWorkbook()?.get("Sheet1")?.SetCell(cellToBeAdded, columnIndex + 1, rowIndex + 1);

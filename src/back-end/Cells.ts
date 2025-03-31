@@ -148,11 +148,11 @@ export abstract class Cell {
      */
     public static Parse(text: string, workbook: Workbook, col: number, row: number): Cell | null {
         if (text) {
-
-
             const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
-            console.log("this is what is being returned from Cell: ", parser.ParseCell(text,workbook, col, row))
-            return parser.ParseCell(text,workbook, col, row); // We call the parseCell() method to return a readable Cell.
+            let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
+            console.log("this is what is being returned from Cell: ");
+            console.log(cellToBeAdded);
+            return cellToBeAdded; // We call the parseCell() method to return a readable Cell.
         } else return null;
     }
 
@@ -359,7 +359,7 @@ export class QuoteCell extends ConstCell {
     }
 
     public override Show(col: number, row: number, fo: Formats): string {
-        return "'" + this.value.value; // not just the TextValue but the value of the TextValue which gives us an actual string.
+        return "" + this.value.value; // not just the TextValue but the value of the TextValue which gives us an actual string.
         // Question: Why add "'"?
     }
 

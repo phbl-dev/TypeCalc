@@ -186,6 +186,7 @@ export class SuperRARef {
 
     //Maybe error handling can be better?
     show(col: number, row: number, format: Formats): string {
+        console.log("raref show is called");
         switch (format.getRefFmt()) {
             case "A1": {
                 const celladdr: RARefCellAddress = new RARefCellAddress(this, col, row);

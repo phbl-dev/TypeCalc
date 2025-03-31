@@ -114,11 +114,11 @@ export class SpreadsheetParser extends CstParser {
         }
 
         function Factor() {
-            console.log("Visiting Factor");
+            //console.log("Visiting Factor");
             return $.OR([
                 {
                     ALT: () => {
-                        console.log("Looking in application");
+                        //console.log("Looking in application");
 
                         $.SUBRULE($.application);
                     },
