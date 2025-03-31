@@ -73,9 +73,9 @@ export class NumberValue extends Value {
      * @param v - the value to be parsed
      * @constructor
      */
-    public static ToNumber(v: Value): object | null { // Should 'object' maybe be 'number' instead?
+    public static ToNumber(v: Value): number | null {
         const nv = v as NumberValue;
-        return nv != null ? (nv.value as unknown as object) : null;
+        return nv != null ? (nv.value as unknown as number) : null;
     }
 
     /**
