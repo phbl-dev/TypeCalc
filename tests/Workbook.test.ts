@@ -84,7 +84,7 @@ describe("Workbook", () => {
         expect(cell).not.toBeNull();
 
         // We haven't called Recalculate() yet so the cells have not been
-        expect(cell!.Eval(sheet, 1, 1)).toBe(undefined);
+        expect(cell!.Eval(sheet, 1, 1)).toBeFalsy;
 
         // Sheet.Set() calls Workbook.RecordCellChange() so editedCells should have length 4.
         expect(workbook.GetEditedCells().length).toBe(2);

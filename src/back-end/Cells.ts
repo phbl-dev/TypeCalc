@@ -471,6 +471,7 @@ export class Formula extends Cell {
             case CellState.Enqueued:
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
+                this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
                     this.ForEachSupported(Formula.EnqueueCellForEvaluation);
                     break;

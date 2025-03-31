@@ -515,7 +515,7 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
         console.log(sheet.Get(col,row))
 
         console.log(`Found values, col: ${col}, row: ${row}`);
-        const cell: Cell | null = (this.sheet ?? sheet).Get(col, row)!; // ca.col = 0, ca.row = 0
+        const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef)!; // ca.col = 0, ca.row = 0
         console.log(`Cell return ${cell}`);
         return cell.Eval(sheet, col, row) as Value;
     }
