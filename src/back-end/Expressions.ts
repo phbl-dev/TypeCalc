@@ -270,17 +270,10 @@ export class FunCall extends Expr {
     }
 
     public static Make(name: string, es: Expr[]): Expr {
-        /**
-         * NEG is a function that we implemented ourselves to turn a positive number into a negative number
-         * or vice versa.
-         */
-        if (name === "NEG") {
-            const func = (...args: unknown[]): unknown =>  {
-                const arg = args[0] as number;
-                return -arg;
-            }
-            return new FunCall(func, es)
-        }
+
+        if (name === "NEG") {return this.NEG(es)}
+        if (name === "EQUALS") {return this.EQUALS(es);}
+
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
             throw new Error(`Function ${name} not found in formulajs`); // MakeUnknown was called here previously.
@@ -299,7 +292,29 @@ export class FunCall extends Expr {
         }
     }
 
-    // Arguments are passed unevaluated to cater for non-strict IF
+    /**
+     * EQUALS is a function that we implemented ourselves to check if two values are equal.
+     */
+    private static EQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return args[0] === args[1];
+        }
+        return new FunCall(func, es)
+    }
+
+    /**
+     * NEG is a function that we implemented ourselves to turn a positive number into a negative number
+     * or vice versa.
+     */
+    private static NEG(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            const arg = args[0] as number;
+            return -arg;
+        }
+        return new FunCall(func, es)
+    }
+
+// Arguments are passed unevaluated to cater for non-strict IF
     // (Work in progress):
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         const args = FunCall.extracted(sheet, col, row, this.es);
@@ -522,12 +537,12 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
 
-        console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
-        console.log(sheet.Get(col,row))
+        // console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
+        // console.log(sheet.Get(col,row))
 
-        console.log(`Found values, col: ${col}, row: ${row}`);
+        // console.log(`Found values, col: ${col}, row: ${row}`);
         const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef)!; // ca.col = 0, ca.row = 0
-        console.log(`Cell return ${cell}`);
+        // console.log(`Cell return ${cell}`);
         return cell.Eval(sheet, col, row) as Value;
     }
 
