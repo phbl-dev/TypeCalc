@@ -164,6 +164,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
+                     ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1);
                  }
              }}
         >
