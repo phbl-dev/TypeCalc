@@ -270,37 +270,11 @@ export class FunCall extends Expr {
     }
 
     public static Make(name: string, es: Expr[]): Expr {
-        /**
-         * NEG is a function that we implemented ourselves to turn a positive number into a negative number
-         * or vice versa.
-         */
-        if (name === "NEG") {
-            const func = (...args: unknown[]): unknown =>  {
-                const arg = args[0] as number;
-                return -arg;
-            }
-            return new FunCall(func, es)
-        }
-
-        if (name === "SUB") {
-            const func = (...args: unknown[]): unknown => {
-                const numbers = args.map(arg => {
-                    if (typeof arg !== "number") {
-                        throw new Error(`SUB function expects numeric values, but received: ${typeof arg}`);
-                    }
-                    return arg;
-                });
-
-                // Perform subtraction from left to right
-                return numbers.reduce((acc, num) => acc - num);
-            };
-
-            return new FunCall(func, es);
-        }
 
         if (name === "NEG") {return this.NEG(es)}
         if (name === "EQUALS") {return this.EQUALS(es);}
         if (name === "DIVIDE") {return this.DIVIDE(es);}
+        if (name === "SUB") {return this.SUB(es)}
 
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
