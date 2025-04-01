@@ -194,8 +194,8 @@ export function ShowWindowInGUI(activeSheet:string, leftCornerCol: number, right
     const endRow:number = bottomCornerRow;
     const sheet:Sheet = wb.get(activeSheet) as Sheet; //This needs to be updated
     if (sheet) {
-        for (let col: number = startCol; col < endCol ; col++) {
-            for (let row: number = startRow; row < endRow; row++) {
+        for (let col: number = startCol; col <= endCol ; col++) {
+            for (let row: number = startRow; row <= endRow; row++) {
                 //console.log(col, row);
                 const colChar:string = numberToLetters(col);
                 const cellHTML = document.getElementById(colChar + row);
