@@ -1,8 +1,8 @@
 import type { Sheet } from "./Sheet";
 import type { Value } from "./Value";
-import { Adjusted, FullCellAddress, Interval,  SuperRARef } from "./CellAddressing";
+import { Adjusted, FullCellAddress, Interval, type RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
 import type { Cell } from "./Cells";
-import { type Formats, type IEquatable, ImpossibleException } from "./Types";
+import { type Formats, type IEquatable, ImpossibleException, Applier } from "./Types";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ErrorValue } from "./ErrorValue";
@@ -297,6 +297,12 @@ export class FunCall extends Expr {
 
             return new FunCall(func, es);
         }
+
+        if (name === "NEG") {return this.NEG(es)}
+        if (name === "EQUALS") {return this.EQUALS(es);}
+        if (name === "DIVIDE") {return this.DIVIDE(es);}
+
+
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
             throw new Error(`Function ${name} not found in formulajs`); // MakeUnknown was called here previously.

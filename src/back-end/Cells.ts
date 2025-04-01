@@ -293,7 +293,8 @@ export class BlankCell extends ConstCell {
     }
 
     Reset(): void {
-        throw new Error("Method not implemented (BlankCell Reset).");
+        console.log("Trying to reset BlankCell")
+        //throw new Error("Method not implemented (BlankCell Reset).");
     }
 
 
