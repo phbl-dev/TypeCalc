@@ -56,7 +56,7 @@ describe ("QuoteCell", () => {
      */
     test ("Show Test", () => {
         expect(typeof quoteCell.Show(0, 0, fo)).toBe("string");
-        expect(quoteCell.Show(0, 0, fo)).toBe("'test");
+        expect(quoteCell.Show(0, 0, fo)).toBe("test");
     })
 
     /**
