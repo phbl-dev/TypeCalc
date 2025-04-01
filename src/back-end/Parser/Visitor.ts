@@ -81,7 +81,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             op = this.visit(ctx["addOp"]);
 
             if (op === "+" ) {
-                op = "SUM";
+                op = "ADD";
             }
 
             if (op === "-") {
@@ -205,6 +205,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected expression(ctx: any): Expr {
+        console.log("Entered Expression");
         let e: Expr;
         let e2;
         let op;
@@ -219,6 +220,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         return e;
     }
+
 
     protected factor(ctx: any): Expr {
 
@@ -269,7 +271,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             if (innerExpr instanceof NumberConst) {
                 e = new NumberConst(-innerExpr.value.value);
             } else {
-                e = FunCall.Make("PRODUCT", [new NumberConst(-1),NumberConst.Make(innerExpr)]);
+                e = FunCall.Make("SUB", [e]);
             }
 
 
@@ -337,7 +339,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     protected cellContents(ctx: any): Cell {
         const e:any = this.visit(ctx.expression);
 
-        console.log(JSON.stringify(ctx, null, 2));
+        //console.log(JSON.stringify(ctx, null, 2));
 
         if (ctx.QuoteCell) {
             const helperConst = ctx["QuoteCell"][0].image
