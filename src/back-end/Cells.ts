@@ -2,7 +2,7 @@
 import type { Sheet } from "./Sheet";
 import type { Value } from "./Value";
 import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
-import { Error, type Expr, NumberConst } from "./Expressions"; // This should be imported when it's done
+import {Error, type Expr, FunCall, NumberConst} from "./Expressions"; // This should be imported when it's done
 import { CyclicException, Formats } from "./Types";
 import type { Workbook } from "./Workbook"; // This should be imported when it's done
 import { SpreadsheetVisitor} from "./Parser/Visitor";
@@ -462,12 +462,14 @@ export class Formula extends Cell {
             case CellState.Uptodate:
                 break;
             case CellState.Computing:
-                //console.log("Computing");
-                /**
+                console.log("Computing");
+
+                // if(this.Show(col, row, this.workbook.format).substring(0,3)) {break}
+
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
                 throw new CyclicException(msg, culprit); // Culprit should be added to this.
-*/
+
             case CellState.Dirty:
             case CellState.Enqueued:
                 this.state = CellState.Computing;

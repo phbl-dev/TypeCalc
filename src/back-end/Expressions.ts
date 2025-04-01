@@ -247,6 +247,7 @@ export class FunCall extends Expr {
     // containing various spreadsheet functions:
     public readonly function: (...args: unknown[]) => unknown;
     public es: Expr[];           // Non-null, elements non-null
+    public flag: boolean;        // We implemented a flag for non-strict functions such that we know if some of their arguments should not be evaluated.
 
     private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[]) {
         super();
@@ -256,6 +257,7 @@ export class FunCall extends Expr {
             this.function = FunCall.getFunctionByName(name);
         }
         this.es = es;
+        this.flag = false; // FIX THIS!!
     }
 
     public static getFunctionByName(name: string): (...args: unknown[]) => unknown {
@@ -274,7 +276,8 @@ export class FunCall extends Expr {
         if (name === "NEG") {return this.NEG(es)}
         if (name === "EQUALS") {return this.EQUALS(es);}
         if (name === "DIVIDE") {return this.DIVIDE(es);}
-
+        if (name === "-") {return this.SUB(es);}
+        if (name === "IF") {return this.IF(es);}
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
@@ -338,6 +341,23 @@ export class FunCall extends Expr {
         return new FunCall(func, es)
     }
 
+    /**
+     * IF is a function that we implemented ourselves to ...
+     */
+    private static IF(es: Expr[]) {
+        // SHOULD SET THE FLAG SOMEWHERE!
+        const func = (...args: unknown[]): unknown => {
+            if (args[0]) {
+                return args[1];
+            } else {
+                return args[2];
+            }
+        }
+        return new FunCall(func, es)
+    }
+
+
+
 // Arguments are passed unevaluated to cater for non-strict IF
     // (Work in progress):
     public override Eval(sheet: Sheet, col: number, row: number): Value {
@@ -345,6 +365,8 @@ export class FunCall extends Expr {
 
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
+        console.log("func name: ")
+        console.log(this.function);
         const result = this.function(...args);
 
         // If the return type is Date:
