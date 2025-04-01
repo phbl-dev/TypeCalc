@@ -273,6 +273,8 @@ export class FunCall extends Expr {
 
         if (name === "NEG") {return this.NEG(es)}
         if (name === "EQUALS") {return this.EQUALS(es);}
+        if (name === "DIVIDE") {return this.DIVIDE(es);}
+
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
@@ -294,6 +296,8 @@ export class FunCall extends Expr {
 
     /**
      * EQUALS is a function that we implemented ourselves to check if two values are equal.
+     * The method creates a "lambda" function and stores it in "func". So we don't evaluate
+     * "func" now but instead pass it on to a new FunCall instantiation.
      */
     private static EQUALS(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
@@ -310,6 +314,26 @@ export class FunCall extends Expr {
         const func = (...args: unknown[]): unknown => {
             const arg = args[0] as number;
             return -arg;
+        }
+        return new FunCall(func, es)
+    }
+
+    /**
+     * DIVIDE is a function that we implemented ourselves to divide two numbers
+     */
+    private static DIVIDE(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return (args[0] as number)/(args[1] as number);
+        }
+        return new FunCall(func, es)
+    }
+
+    /**
+     * SUB is a function that we implemented ourselves to subtract two numbers
+     */
+    private static SUB(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return (args[0] as number)-(args[1] as number);
         }
         return new FunCall(func, es)
     }

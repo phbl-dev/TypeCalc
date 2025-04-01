@@ -6,7 +6,7 @@ import { Workbook } from "../src/back-end/Workbook";
 import { NumberValue } from "../src/back-end/NumberValue";
 import { TextValue } from "../src/back-end/TextValue";
 import {SuperRARef} from "../src/back-end/CellAddressing";
-import {NumberCell} from "../src/back-end/Cells"; // Importing formulajs
+import {BlankCell, Formula, NumberCell} from "../src/back-end/Cells"; // Importing formulajs
 
 
 describe("Formula.js", () => {
@@ -86,9 +86,29 @@ describe("Formula.js", () => {
     test("Eval with POWER", () => {
         let expr1: Expr = new NumberConst(3);
         let expr2: Expr = new NumberConst(2);
-        let funCall: Expr = FunCall.Make("POWER", [expr1, expr2]);
 
-        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(9);
+        // Setting a number cell to be 10 and creating a reference for it:
+        const cellRef1 = new CellRef(sheet, new SuperRARef(false, 0, false, 5));
+        const cell1 = new NumberCell(3)
+        sheet.SetCell(cell1, 0, 5)
+
+        // Setting a number cell to be 5 and creating a reference for it:
+        const cellRef2 = new CellRef(sheet, new SuperRARef(false, 0, false, 6));
+        const cell2 = new NumberCell(2)
+        sheet.SetCell(cell2, 0, 6)
+
+        // Formula cell
+        const funCall4 = FunCall.Make("POWER", [cellRef1, cellRef2]);
+        const cell4 = Formula.Make(workbook, funCall4)
+        sheet.SetCell(cell4, 1, 6)
+        workbook.Recalculate();
+
+        let funCall: Expr = FunCall.Make("POWER", [expr1, expr2]);
+        let funCall2: Expr = FunCall.Make("POWER", [cellRef1, cellRef2]);
+
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(9);  // Works with expressions
+        expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe(9); // Works with cell references that are linked to number cells
+        expect(sheet.Get(1,6).Eval(sheet,1,1).ToObject()).toBe(9);
     });
 
     test("Eval with ABS", () => {
@@ -516,6 +536,7 @@ describe("Formula.js", () => {
         const expr5: Expr = new TextConst("Hello");
         const expr6: Expr = new TextConst("true");
         const expr7: Expr = new TextConst("false");
+        const expr8: Expr = new NumberConst(42);
 
         // Setting a number cell to be 10 and creating a reference for it:
         const cellRef1 = new CellRef(sheet, new SuperRARef(false, 1, false, 1));
@@ -531,12 +552,16 @@ describe("Formula.js", () => {
         const funCall2: Expr = FunCall.Make("IF", [expr4, expr2, expr3]);
         const funCall3: Expr = FunCall.Make("IF", [FunCall.Make("EQUALS", [expr2, expr5]), expr6, expr7]);
         const funCall4: Expr = FunCall.Make("EQUALS", [cellRef1, cellRef2])
+        const funCall5: Expr = FunCall.Make("IF", [expr4, FunCall.Make("DIVIDE", [expr1, expr4]), expr8])
+
 
         expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("Hello");
         expect(TextValue.ToString(funCall2.Eval(sheet,0,0))).toBe("Goodbye");
         expect(TextValue.ToString(funCall3.Eval(sheet,0,0))).toBe("true");
         expect(TextValue.ToString(funCall4.Eval(sheet,0,0))).toBe("false");
 
+        // IF(FALSE, 1/0, 42) skal evaluere til 42, ikke til fejlen #DIV/0!
+        expect(NumberValue.ToNumber(funCall5.Eval(sheet,0,0))).toBe(42);
 
     });
 
@@ -562,5 +587,7 @@ describe("Formula.js", () => {
         expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("false");
         expect(TextValue.ToString(funCall2.Eval(sheet,0,0))).toBe("true");
     })
+
+
 
 });
