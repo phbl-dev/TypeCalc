@@ -10,7 +10,7 @@ import { createToken, Lexer, type TokenType } from "chevrotain"; // DONT CHANGE 
  */
 export class SpreadsheetLexer {
     static WhiteSpace = createToken({ name: "WhiteSpace", pattern: /\s+/, group: Lexer.SKIPPED });
-    static Datetime = createToken({ name: "Datetime", pattern: /\d{4}-\d{2}-\d{2} \[T\d{2}:\d{2}:\d{2}\.\d]]/ });
+    static Datetime = createToken({ name: "Datetime", pattern: /\d{4}-\d{2}-\d{2}\[T\d{2}:\d{2}:\d{2}\[.\d*]]/ });
 
     static NUMBER: TokenType = createToken({ name: "Number", pattern: /-?\d+(\.\d+)?([eE][-+]?\d+)?/ });
     static Colon: TokenType = createToken({ name: "Colon", pattern: /:/ });

@@ -335,7 +335,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected cellContents(ctx: any): Cell {
-
         const e:any = this.visit(ctx.expression);
 
         console.log(JSON.stringify(ctx, null, 2));
@@ -344,17 +343,18 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             const helperConst = ctx["QuoteCell"][0].image
             this.cell = new QuoteCell(ctx["QuoteCell"][0].image.substring(1, helperConst.length - 1));
         } else if (ctx.StringLiteral) {
-            console.log("Entered String Literal")
             const helperConst = ctx["StringLiteral"][0].image
-            console.log(ctx["StringLiteral"][0].image)
 
             this.cell = new TextCell(ctx["StringLiteral"][0].image.substring(1, helperConst.length - 1 ));
         } else if (ctx.number) {
-            this.cell = new NumberCell(Number.parseInt(e.image));
+            console.log(ctx["number"][0].children["Number"][0].image)
+            this.cell = new NumberCell(Number.parseInt(ctx["number"][0].children["Number"][0].image));
         } else if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.Datetime) {
-            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(BigInt((ctx.Datetime[0].image as Date).getTime()) * 10_000n + 621355968000000000n));
+            console.log(ctx["Datetime"][0].image)
+
+            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(BigInt((ctx.Datetime[0].image).getTime()) * 10_000n + 621355968000000000n));
         }
 
         return this.cell;
