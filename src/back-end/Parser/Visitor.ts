@@ -222,7 +222,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     protected factor(ctx: any): Expr {
 
-        console.log(JSON.stringify(ctx, null, 2));
+        //console.log(JSON.stringify(ctx, null, 2));
 
         let r1, r2;
         let s1 = null;

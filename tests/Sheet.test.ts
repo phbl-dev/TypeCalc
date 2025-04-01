@@ -19,12 +19,13 @@ describe("Sheet Testing", () => {
     expect(sheet.Rows === 100 && sheet.cols === 100).toBeTruthy();
   });
 
-  test.skip("insert a value to the sheet", () => {
+  test("insert a value to the sheet", () => {
     const cellAddress: SuperCellAddress = new SuperCellAddress(1, 2);
+    const cellToAdd = new NumberCell(10);
+    sheet.Set(cellAddress, cellToAdd);
 
-    sheet.Set(cellAddress, new NumberCell(10));
-
-    console.log(sheet.Get(cellAddress))
+    console.log(cellAddress.toString());
+    console.log()
 
     //expect(sheet.ShowValue(1, 2).search("10")).toBe(9); // should return 9 as that is where the value 10 is found at (index-wise)
   });

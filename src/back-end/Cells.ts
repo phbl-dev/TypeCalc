@@ -148,11 +148,11 @@ export abstract class Cell {
      */
     public static Parse(text: string, workbook: Workbook, col: number, row: number): Cell | null {
         if (text) {
-
-
             const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
-            console.log("this is what is being returned from Cell: ", parser.ParseCell(text,workbook, col, row))
-            return parser.ParseCell(text,workbook, col, row); // We call the parseCell() method to return a readable Cell.
+            let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
+            console.log("this is what is being returned from Cell: ");
+            console.log(cellToBeAdded);
+            return cellToBeAdded; // We call the parseCell() method to return a readable Cell.
         } else return null;
     }
 
@@ -293,7 +293,7 @@ export class BlankCell extends ConstCell {
     }
 
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented (BlankCell Reset).");
     }
 
 
@@ -335,7 +335,7 @@ export class NumberCell extends ConstCell {
 
     // We have to implement these methods from the ConstCell as well:
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented (NumberCell Reset)");
     }
 
 }
@@ -359,7 +359,7 @@ export class QuoteCell extends ConstCell {
     }
 
     public override Show(col: number, row: number, fo: Formats): string {
-        return "'" + this.value.value; // not just the TextValue but the value of the TextValue which gives us an actual string.
+        return "" + this.value.value; // not just the TextValue but the value of the TextValue which gives us an actual string.
         // Question: Why add "'"?
     }
 
@@ -369,7 +369,7 @@ export class QuoteCell extends ConstCell {
 
     // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented. (QuoteCell Reset)");
     }
 
 }
@@ -402,7 +402,7 @@ export class TextCell extends ConstCell {
 
     // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented. (TextCell Reset)");
     }
 
 }
@@ -462,7 +462,8 @@ export class Formula extends Cell {
             case CellState.Uptodate:
                 break;
             case CellState.Computing:
-/**
+                //console.log("Computing");
+                /**
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
                 throw new CyclicException(msg, culprit); // Culprit should be added to this.
