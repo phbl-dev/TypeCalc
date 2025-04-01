@@ -293,7 +293,7 @@ export class BlankCell extends ConstCell {
     }
 
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented (BlankCell Reset).");
     }
 
 
@@ -335,7 +335,7 @@ export class NumberCell extends ConstCell {
 
     // We have to implement these methods from the ConstCell as well:
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented (NumberCell Reset)");
     }
 
 }
@@ -369,7 +369,7 @@ export class QuoteCell extends ConstCell {
 
     // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented. (QuoteCell Reset)");
     }
 
 }
@@ -402,7 +402,7 @@ export class TextCell extends ConstCell {
 
     // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented. (TextCell Reset)");
     }
 
 }
@@ -462,7 +462,7 @@ export class Formula extends Cell {
                 console.log("Uptodate");
                 break;
             case CellState.Computing:
-                console.log("Computing");
+                //console.log("Computing");
                 /**
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
@@ -478,7 +478,7 @@ export class Formula extends Cell {
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
                 if (this.workbook.UseSupportSets) {
-                    this.ForEachSupported(this.EnqueueForEvaluation);
+                    this.ForEachSupported(Formula.EnqueueCellForEvaluation);
                     break;
                 }
                 break
@@ -530,7 +530,7 @@ export class Formula extends Cell {
     public override MarkDirty() {
         if (this.state != CellState.Dirty) {
             this.state = CellState.Dirty;
-            this.ForEachSupported(this.MarkDirty);
+            this.ForEachSupported(Formula.MarkCellDirty);
         }
     }
 

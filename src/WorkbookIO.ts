@@ -129,8 +129,9 @@ export class XMLReader {
 //Follows a singleton dogma, since we really never need to have multiple workbooks at the same time.
 export class WorkbookManager {
     private static instance: Workbook | null = null;
+    private static activeSheet:string = "Sheet1";
 
-    static getWorkbook(): Workbook | null {
+    static getWorkbook(): Workbook {
         //console.log("[WorkbookManager] getWorkbook ->", this.instance);
         if (!this.instance) {
             this.instance = new Workbook();
@@ -138,6 +139,16 @@ export class WorkbookManager {
             this.instance.AddSheet(baseSheet);
             }
         return this.instance;
+    }
+
+    //static addSheet(sheetName:string):void {}
+
+    static getActiveSheetName():string {
+        return this.activeSheet;
+    }
+
+    static setActiveSheet(activeSheetName:string):void {
+        this.activeSheet = activeSheetName;
     }
 
     static createNewWorkbook(): void {
@@ -181,14 +192,24 @@ export function ShowWindowInGUI(activeSheet:string, leftCornerCol: number, right
     const endCol:number = rightCornerCol;
     const startRow:number = topCornerRow;
     const endRow:number = bottomCornerRow;
-    const sheet:Sheet|null = wb.get(activeSheet); //This needs to be updated
+    const sheet:Sheet = wb.get(activeSheet) as Sheet; //This needs to be updated
     if (sheet) {
         for (let col: number = startCol; col < endCol ; col++) {
             for (let row: number = startRow; row < endRow; row++) {
+                //console.log(col, row);
                 const colChar:string = numberToLetters(col);
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
-                    cellHTML.innerText = sheet.Show(col,row);
+                    WorkbookManager.getWorkbook().Recalculate();
+                    let cellEval =  sheet.Get(col - 1,row - 1)?.Eval(sheet, 0, 0)?.ToObject();
+                    if (cellEval != undefined) {
+                        console.log("I found a cell at:");
+                        console.log("Row:", row);
+                        console.log("Col:", col);
+                        cellHTML.innerText = cellEval as string;
+                        console.log(cellEval as string);
+                    }
+
                 }
             }
         }
