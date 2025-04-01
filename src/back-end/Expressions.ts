@@ -1,8 +1,8 @@
-import { Sheet } from "./Sheet";
-import { Value } from "./Value";
-import { Adjusted, FullCellAddress, Interval, RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
-import { Cell } from "./Cells";
-import { Formats, IEquatable, ImpossibleException, Applier } from "./Types";
+import type { Sheet } from "./Sheet";
+import type { Value } from "./Value";
+import { Adjusted, FullCellAddress, Interval, type RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
+import type { Cell } from "./Cells";
+import { type Formats, type IEquatable, ImpossibleException, Applier } from "./Types";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ErrorValue } from "./ErrorValue";
@@ -111,7 +111,7 @@ export class NumberConst extends Const {
 
     public constructor(d: number) {
         super();
-        console.assert(!isNaN(d) && d !== Infinity);
+        console.assert(!isNaN(d) && d !== Number.POSITIVE_INFINITY);
         this.value = NumberValue.Make(d) as NumberValue;
     }
 
@@ -270,12 +270,18 @@ export class FunCall extends Expr {
     }
 
     public static Make(name: string, es: Expr[]): Expr {
-        let func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
+
+        if (name === "NEG") {return this.NEG(es)}
+        if (name === "EQUALS") {return this.EQUALS(es);}
+        if (name === "DIVIDE") {return this.DIVIDE(es);}
+
+
+        const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
             throw new Error(`Function ${name} not found in formulajs`); // MakeUnknown was called here previously.
         }
 
-        for (let i: number = 0; i < es.length; i++) {
+        for (let i = 0; i < es.length; i++) {
             if (es[i] === null || es[i] === undefined) {
                 es[i] = new Error("#SYNTAX") as unknown as Expr;
             }
@@ -288,7 +294,51 @@ export class FunCall extends Expr {
         }
     }
 
-    // Arguments are passed unevaluated to cater for non-strict IF
+    /**
+     * EQUALS is a function that we implemented ourselves to check if two values are equal.
+     * The method creates a "lambda" function and stores it in "func". So we don't evaluate
+     * "func" now but instead pass it on to a new FunCall instantiation.
+     */
+    private static EQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return args[0] === args[1];
+        }
+        return new FunCall(func, es)
+    }
+
+    /**
+     * NEG is a function that we implemented ourselves to turn a positive number into a negative number
+     * or vice versa.
+     */
+    private static NEG(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            const arg = args[0] as number;
+            return -arg;
+        }
+        return new FunCall(func, es)
+    }
+
+    /**
+     * DIVIDE is a function that we implemented ourselves to divide two numbers
+     */
+    private static DIVIDE(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return (args[0] as number)/(args[1] as number);
+        }
+        return new FunCall(func, es)
+    }
+
+    /**
+     * SUB is a function that we implemented ourselves to subtract two numbers
+     */
+    private static SUB(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return (args[0] as number)-(args[1] as number);
+        }
+        return new FunCall(func, es)
+    }
+
+// Arguments are passed unevaluated to cater for non-strict IF
     // (Work in progress):
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         const args = FunCall.extracted(sheet, col, row, this.es);
@@ -361,9 +411,9 @@ export class FunCall extends Expr {
     }
 
     public override Move(deltaCol: number, deltaRow: number): Expr {
-        let newEs: Expr[] = new Array(this.es.length);
+        const newEs: Expr[] = new Array(this.es.length);
 
-        for (let i: number = 0; i < this.es.length; i++) {
+        for (let i = 0; i < this.es.length; i++) {
             newEs[i] = this.es[i].Move(deltaCol, deltaRow);
         }
         return new FunCall(this.function, newEs);
@@ -371,10 +421,10 @@ export class FunCall extends Expr {
 
     // Can be copied with sharing if arguments can
     public override CopyTo(col: number, row: number): Expr {
-        let same: boolean = true;
-        let newEs: Expr[] = new Array(this.es.length);
+        let same = true;
+        const newEs: Expr[] = new Array(this.es.length);
 
-        for (let i: number = 0; i < this.es.length; i++) {
+        for (let i = 0; i < this.es.length; i++) {
             newEs[i] = this.es[i].CopyTo(col, row);
             same = same && (newEs[i] === this.es[i]); // sets 'same' to false if newEs[i] and this.es[i] are different.
         }
@@ -387,12 +437,12 @@ export class FunCall extends Expr {
     }
 
     public override InsertRowCols(modSheet: Sheet, thisSheet: boolean, R: number, N: number, r: number, doRows: boolean): Adjusted<Expr> {
-        let newEs: Expr[] = new Array(this.es.length);
+        const newEs: Expr[] = new Array(this.es.length);
         let upper: number = Number.MAX_VALUE;
-        let same: boolean = true;
+        let same = true;
 
-        for (let i: number = 0; i < this.es.length; i++) {
-            let ae: Adjusted<Expr> = this.es[i].InsertRowCols(modSheet, thisSheet, R, N, r, doRows);
+        for (let i = 0; i < this.es.length; i++) {
+            const ae: Adjusted<Expr> = this.es[i].InsertRowCols(modSheet, thisSheet, R, N, r, doRows);
             upper = Math.min(upper, ae.maxValidRow);
             same = same && ae.isUnchanged;
             newEs[i] = ae.type;
@@ -403,12 +453,12 @@ export class FunCall extends Expr {
 
     // Show infixed operators as infix and without excess parentheses
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
-        let stringArray: string[] = [];
-        let pre: number = 0; //TODO: Fix fixity
+        const stringArray: string[] = [];
+        const pre = 0; //TODO: Fix fixity
 
         if (pre === 0) { // Not operator
             stringArray.push(this.function.name + "(");
-            for (let i: number = 0; i < this.es.length; i++) {
+            for (let i = 0; i < this.es.length; i++) {
                 if (i > 0) {
                     stringArray.push(", ");
                 }
@@ -510,12 +560,14 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
     }
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
-        console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
-        const ca: RARefCellAddress = this.raref.address(col, row);  // col = 0, row = 1
-        console.log(`Found values, col: ${col}, row: ${row}`);
-        const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef); // ca.col = 0, ca.row = 0
-        console.log(`Cell return ${cell}`);
-        return cell?.Eval(sheet, ca.col, ca.row) as Value;
+
+        // console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
+        // console.log(sheet.Get(col,row))
+
+        // console.log(`Found values, col: ${col}, row: ${row}`);
+        const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef)!; // ca.col = 0, ca.row = 0
+        // console.log(`Cell return ${cell}`);
+        return cell.Eval(sheet, col, row) as Value;
     }
 
     public GetAbsoluteAddr(sheet: Sheet | FullCellAddress, col?: number, row?: number): FullCellAddress {

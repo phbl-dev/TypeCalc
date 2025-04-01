@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { Workbook } from "../src/back-end/Workbook";
 import { Sheet, SheetRep } from "../src/back-end/Sheet";
-import { NumberCell, TextCell } from "../src/back-end/Cells";
+import {Cell, Formula, NumberCell, TextCell} from "../src/back-end/Cells";
 import { NumberValue } from "../src/back-end/NumberValue";
 import { FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "../src/back-end/CellAddressing";
 import { TextValue } from "../src/back-end/TextValue";
+import {CellRef, Expr, FunCall, NumberConst} from "../src/back-end/Expressions";
 
 
 describe("Workbook", () => {
@@ -51,39 +52,59 @@ describe("Workbook", () => {
 
     /**
      * Recalculate update cell values of the workbook.
-     * (Should be tested with Formula cell).
      */
-    test.skip("Recalculate",  () => {
+    test("Recalculate",  () => {
         const recalceResult = workbook.Recalculate();
         expect(typeof recalceResult).toBe("number"); // Recalculate() returns a number.
         expect(recalceResult).toBeGreaterThan(0);    // Expect the time to be valid, i.e. positive.
 
-        const cellAddress: SuperCellAddress = new SuperCellAddress(0, 0);
-        sheet.Set(cellAddress, new NumberCell(10));
+        // Creating a new SuperRARef and a new CellRef for our function call
+        const superRaref: SuperRARef = new SuperRARef(false, 2, false, 0); // We set the reference to be relative (i.e. "not fixed")
+        const cellRef: Expr = new CellRef(sheet, superRaref);
 
-        const cellAddress2: SuperCellAddress = new SuperCellAddress(1, 0);
-        sheet.Set(cellAddress2, new TextCell("Test Text"));
+        // Creating a number cell with the value 5 and setting it in the sheet at position 2,0
+        const numberCell = new NumberCell(5);
+        sheet.SetCell(numberCell,2,0)
 
-        const cellA = sheet.getCells().Get(0, 0);    // Get the newly added cells and store them in variables
-        const cellB = sheet.getCells().Get(1, 0);
+        // One expression:
+        const expr1: Expr = new NumberConst(10);
 
-        expect(cellA).not.toBeNull();                         // Ensure they are not null
-        expect(cellB).not.toBeNull();
+        // Inserting the expressions (one is a number const and the other one is cell reference):
+        const funCall: Expr = FunCall.Make("SUM", [expr1, cellRef])
 
-        expect(cellA!.Eval(sheet, 0, 0)).toEqual(NumberValue.Make(10)); // The content of 0,0 should be 10
-        expect(cellB!.Eval(sheet, 1, 0)).toEqual(TextValue.Make("Test Text")); // The content of 1,0 should be "Test Text"
+        // Creating a cell address for a formula cell and setting it in the sheet:
+        const formula: Cell = new Formula(workbook, funCall)
 
-        expect(workbook.GetEditedCells().length).toBe(2);     // Sheet.Set() calls Workbook.RecordCellChange() so editedCells should have length 2.
+        sheet.SetCell(formula,1,1);
 
-        workbook.Recalculate();                               // Run Recalculate()
+        // Get the newly added cell and store it in a variable. Check that it is not null:
+        const cell = sheet.getCells().Get(1, 1);
+        expect(cell).not.toBeNull();
 
-        expect(workbook.GetEditedCells().length).toBe(0);     // After calling Recalculate() once the editedCells should have length 0 because they were marked dirty, enqueued for evaluation and then reevaluated.
+        // We haven't called Recalculate() yet so the cells have not been
+        expect(cell!.Eval(sheet, 1, 1)).toBeFalsy;
+
+        // Sheet.SetCell() calls Workbook.RecordCellChange() so editedCells should have length 4.
+        expect(workbook.GetEditedCells().length).toBe(4);
+
+        // Run Recalculate()
+        workbook.Recalculate();
+
+        // After calling Recalculate() once the editedCells should have length 0 because they were marked dirty, enqueued for evaluation and then reevaluated.
+        expect(workbook.GetEditedCells().length).toBe(0);
 
         // In this case the reevaluation won't have caused any change to the cell values because these two are just static cells with no dynamic values:
-        expect(cellA!.Eval(sheet, 0, 0)).toEqual(NumberValue.Make(10)); // Ensuring that the cell content is still the same after recalculation
-        expect(cellB!.Eval(sheet, 1, 0)).toEqual(TextValue.Make("Test Text")); // Ensuring that the cell content is still the same after recalculation
+        expect(cell!.Eval(sheet, 1, 1)).toEqual(NumberValue.Make(15)); // The content of 1,1 should be 10+5=15
 
-        // Redo the test when FunCall and FormulaJS is implemented to see if values of a cell with a function that holds cell references is updated if the one of the cell references change value.
+        const numberCellUpdated = new NumberCell(10);
+        sheet.SetCell(numberCellUpdated,2,0)
+        sheet.SetCell(formula,1,1);
+
+        // Run Recalculate() again after updating the value of cell 2,0.
+        workbook.Recalculate();
+
+        // The content of 1,1 should now be 20
+        expect(cell!.Eval(sheet, 1, 1)).toEqual(NumberValue.Make(20));
     });
 
 

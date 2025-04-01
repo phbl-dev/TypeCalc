@@ -1,10 +1,10 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
-import { Sheet } from "./Sheet";
-import { Value } from "./Value";
-import { Adjusted, FullCellAddress, Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
-import { Error, Expr, NumberConst } from "./Expressions"; // This should be imported when it's done
-import { Formats } from "./Types";
-import { Workbook } from "./Workbook"; // This should be imported when it's done
+import type { Sheet } from "./Sheet";
+import type { Value } from "./Value";
+import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
+import { Error, type Expr, NumberConst } from "./Expressions"; // This should be imported when it's done
+import { CyclicException, Formats } from "./Types";
+import type { Workbook } from "./Workbook"; // This should be imported when it's done
 import { SpreadsheetVisitor} from "./Parser/Visitor";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
@@ -15,10 +15,10 @@ import { N } from "@formulajs/formulajs";
 
 
 export enum CellState {
-    Dirty,
-    Enqueued,
-    Computing,
-    Uptodate,
+    Dirty = 0,
+    Enqueued = 1,
+    Computing = 2,
+    Uptodate = 3,
 }
 
 // The Cell class and its subclasses represent the possible contents
@@ -148,11 +148,11 @@ export abstract class Cell {
      */
     public static Parse(text: string, workbook: Workbook, col: number, row: number): Cell | null {
         if (text) {
-
-
             const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
-            console.log("this is what is being returned from Cell: ", parser.ParseCell(text,workbook, col, row))
-            return parser.ParseCell(text,workbook, col, row); // We call the parseCell() method to return a readable Cell.
+            let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
+            console.log("this is what is being returned from Cell: ");
+            console.log(cellToBeAdded);
+            return cellToBeAdded; // We call the parseCell() method to return a readable Cell.
         } else return null;
     }
 
@@ -293,7 +293,8 @@ export class BlankCell extends ConstCell {
     }
 
     Reset(): void {
-        throw new Error("Method not implemented.");
+        console.log("Trying to reset BlankCell")
+        //throw new Error("Method not implemented (BlankCell Reset).");
     }
 
 
@@ -335,7 +336,7 @@ export class NumberCell extends ConstCell {
 
     // We have to implement these methods from the ConstCell as well:
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented (NumberCell Reset)");
     }
 
 }
@@ -359,7 +360,7 @@ export class QuoteCell extends ConstCell {
     }
 
     public override Show(col: number, row: number, fo: Formats): string {
-        return "'" + this.value.value; // not just the TextValue but the value of the TextValue which gives us an actual string.
+        return "" + this.value.value; // not just the TextValue but the value of the TextValue which gives us an actual string.
         // Question: Why add "'"?
     }
 
@@ -369,7 +370,7 @@ export class QuoteCell extends ConstCell {
 
     // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented. (QuoteCell Reset)");
     }
 
 }
@@ -402,7 +403,7 @@ export class TextCell extends ConstCell {
 
     // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
     Reset(): void {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented. (TextCell Reset)");
     }
 
 }
@@ -420,14 +421,15 @@ export class TextCell extends ConstCell {
 export class Formula extends Cell {
     public readonly workbook: Workbook;
     private e: Expr;
-    public state: CellState;
-    private v: Value | undefined = undefined;
+    public state: CellState = CellState.Dirty;
+    private v: Value | null;
 
     constructor(workbook: Workbook, e: Expr) {
         super();
         this.workbook = workbook;
         this.e = e;
         this.state = CellState.Uptodate;
+        this.v = null
     }
 
     public static Make(workbook: Workbook, e: Expr): Formula | null {
@@ -459,27 +461,23 @@ export class Formula extends Cell {
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         switch (this.state) {
             case CellState.Uptodate:
-                console.log("Uptodate");
                 break;
             case CellState.Computing:
-                console.log("Computing");
+                //console.log("Computing");
                 /**
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
-                throw new Error(msg); // Culprit should be added to this.
-                    */
-                break;
+                throw new CyclicException(msg, culprit); // Culprit should be added to this.
+*/
             case CellState.Dirty:
-                console.log("Dirty");
-                break;  // Added to prevent fallthrough
-
             case CellState.Enqueued:
-                console.log("Enqueued");
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
+                this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
-                    this.ForEachSupported(this.EnqueueForEvaluation);
+                    this.ForEachSupported(Formula.EnqueueCellForEvaluation);
                     break;
+
                 }
                 break
         }
@@ -530,7 +528,7 @@ export class Formula extends Cell {
     public override MarkDirty() {
         if (this.state != CellState.Dirty) {
             this.state = CellState.Dirty;
-            this.ForEachSupported(this.MarkDirty);
+            this.ForEachSupported(Formula.MarkCellDirty);
         }
     }
 

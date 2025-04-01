@@ -2,9 +2,9 @@ import { hashCode, Value } from "./Value";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ErrorValue } from "./ErrorValue";
-import { Sheet } from "./Sheet";
+import type { Sheet } from "./Sheet";
 import { FullCellAddress, SuperCellAddress } from "./CellAddressing";
-import { Cell } from "./Cells";
+import type { Cell } from "./Cells";
 
 export abstract class ArrayValue extends Value {
     public static readonly Type = typeof ArrayValue;
@@ -59,7 +59,7 @@ export abstract class ArrayValue extends Value {
         const arr = v as unknown as ArrayValue;
         if (arr != null && arr.Rows == 1) {
             const res: number[] = new Array(arr.Cols);
-            for (let i: number = 0; i < arr.Cols; i++) {
+            for (let i = 0; i < arr.Cols; i++) {
                 if (arr.Get(i, 0) instanceof NumberValue) {
                     res[i] = (arr.Get(i, 0) as NumberValue).value as number;
                 } else {
@@ -85,7 +85,7 @@ export abstract class ArrayValue extends Value {
         const arr: ArrayValue = v as unknown as ArrayValue;
         if (arr != null && arr.Rows == 1) {
             const res: string[] = new Array(arr.Cols);
-            for (let i: number = 0; i < arr.Cols; i++) {
+            for (let i = 0; i < arr.Cols; i++) {
                 if (arr.Get(i, 0) instanceof TextValue) {
                     res[i] = (arr.Get(i, 0) as TextValue).value as string;
                 } else {
@@ -150,7 +150,7 @@ export abstract class ArrayValue extends Value {
     }
 
     private ToDoubleOrNaN(value: Value): number {
-        return Number(value) || NaN;
+        return Number(value) || Number.NaN;
     }
 
     public Apply(act: (val: Value) => void): void;

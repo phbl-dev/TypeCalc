@@ -19,7 +19,7 @@ export class NumberValue extends Value {
 
     private constructor(value: number) {
         super();
-        if (isFinite(value as number) && !isNaN(value)) {
+        if (Number.isFinite(value as number) && !Number.isNaN(value)) {
             this.value = value;
         } else {
             throw new Error(`Invalid value provided: ${value}`);
@@ -34,17 +34,17 @@ export class NumberValue extends Value {
      * @return Value - the resulting NumberValue as type Value
      */
     public static Make(d: number): Value {
-        if (!isFinite(Number(d))) {
+        if (!Number.isFinite(Number(d))) {
             return ErrorValue.numError;
-        } else if (isNaN(Number(d))) {
+        } if (Number.isNaN(Number(d))) {
             return ErrorValue.FromNan(Number(d));
-        } else if (d == 0) {
+        }  if (d === 0) {
             return NumberValue.ZERO as Value;
-        } else if (d == 1) {
+        }  if (d === 1) {
             return NumberValue.ONE as Value;
-        } else {
-            return new NumberValue(Number(d)) as Value;
         }
+            return new NumberValue(Number(d)) as Value;
+
     }
 
     /**

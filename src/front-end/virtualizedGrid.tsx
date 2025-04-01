@@ -1,7 +1,9 @@
 import React, {forwardRef,  useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
-import {NumberCell, QuoteCell} from "../back-end/Cells";
+import {NumberCell, QuoteCell, Cell as BackendCell} from "../back-end/Cells";
+import {Sheet} from "../back-end/Sheet.ts";
+import {SuperCellAddress} from "../back-end/CellAddressing.ts";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -83,6 +85,7 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
  */
 const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: number, style:any}) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
+    let initialValueRef = useRef<string>("");
 
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
     const handleHover = () => {
@@ -92,8 +95,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-    // Allows us to navigate the cells using the arrow keys
-    const arrowNav = (event:any): void => {
+    // Allows us to navigate the cells using the arrow and Enter keys
+    const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
 
@@ -109,6 +112,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 break;
             case "ArrowRight":
                 nextCol = columnIndex + 1;
+                break;
+            case "Enter":
+                nextRow = rowIndex + 1;
                 break;
             default:
                 return;
@@ -128,9 +134,16 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
-        const cellToBeAdded: QuoteCell | NumberCell =
-            typeof content === "number" ? new NumberCell(content as number) : new QuoteCell(content as string);
-        WorkbookManager.getWorkbook()?.get("Sheet1")?.SetCell(cellToBeAdded, columnIndex + 1, rowIndex + 1);
+        const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
+        // const cellToBeAdded: QuoteCell | NumberCell =
+        //     typeof content === "number" ? new NumberCell(content as number) : new QuoteCell(content as string);
+        if (!cellToBeAdded) {return}
+        let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
+        console.log("I'm trying to add the value:");
+        console.log(content);
+        console.log("To the address:")
+        console.log(newCellAddress.toString());
+        WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
     }
 
     return (
@@ -139,15 +152,74 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  ...style, // Inherit style from style.css
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
+             onFocus={(e) => {
+                 // Save the initial value on focus
+                 initialValueRef.current = (e.target as HTMLElement).innerText;
+             }}
              onMouseMove={handleHover} // Gets the cellID when moving the mouse
-             onKeyDown={arrowNav} // Checks if the key pressed is an arrow key
-             onInput={(e) =>
-                 handleInput(rowIndex, columnIndex, (e.target as HTMLElement).innerText)
-             }
+             onKeyDown={(e) => {
+                 keyNav(e);
+             }}
+             onBlur={(e) => {
+                 const newValue = (e.target as HTMLElement).innerText;
+                 if (newValue !== initialValueRef.current) {
+                     handleInput(rowIndex, columnIndex, newValue);
+                 }
+             }}
         >
         </div>
     );
 };
+
+const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames }) => {
+    return (
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+            {sheetNames.map((name) => (
+                <button
+                    key={name}
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name)}}
+                    style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #ccc',
+                        backgroundColor: activeSheet === name ? '#007bff' : '#f0f0f0',
+                        color: activeSheet === name ? 'white' : 'black',
+                        fontWeight: activeSheet === name ? 'bold' : 'normal',
+                        cursor: 'pointer',
+                    }}
+                >
+                    {name}
+                </button>
+
+            ))}
+            <button
+                onClick={() => {
+                    const newSheetName = window.prompt("Enter an unused Sheet Name");
+                    if (newSheetName && !sheetNames.includes(newSheetName) && newSheetName.trim() !== "") {
+                        let newSheet = new Sheet(WorkbookManager.getWorkbook(), newSheetName, false);
+                        WorkbookManager.getWorkbook().AddSheet(newSheet);
+                        setSheetNames([...sheetNames, newSheetName]);
+                    }
+                }}
+                style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #ccc',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                }}
+            >
+                + New Sheet
+            </button>
+        </div>
+    );
+};
+
+// function updateCell(cellID:string, cellValue:string):void {
+//
+// }
 
 /** Creates the sheet itself with headers and body. It extends the GridInterface so that
  * we can create a sheet with a self-defined amount of rows and columns.
@@ -169,7 +241,9 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
-    const [scrollOffset] = useState({ left: 0, top: 0 });
+    let [scrollOffset] = useState({ left: 0, top: 0 });
+    let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
+    let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
     useEffect(() => {
         const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
@@ -182,15 +256,23 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             const file = event.dataTransfer?.files?.[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = async(e) => {
                     const content = e.target?.result as string;
                     WorkbookManager.createNewWorkbook(); // or call createNewWorkbook()
                     const xmlReader = new XMLReader();
-                    xmlReader.readFile(content); // Assumes it modifies the current workbook
-                    console.log("[React Drop Handler] File loaded. Updating UI...");
-                    setTimeout(() => {
-                        ShowWindowInGUI(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
-                    }, 100); // Give XMLReader a moment to finish parsing
+
+                    try {
+                        await xmlReader.readFile(content); // Assumes it modifies the current workbook
+
+                        console.log("[React Drop Handler] File loaded. Updating UI...");
+                        sheetNames = WorkbookManager.getSheetNames();
+                        setSheetNames(sheetNames);
+                        setActiveSheet(sheetNames[0]);
+                        WorkbookManager.setActiveSheet(sheetNames[0]);
+                        ShowWindowInGUI(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+                    } catch (error) {
+                        console.error("Error during load:", error);
+                    }
                 };
                 reader.readAsText(file);
             }
@@ -241,6 +323,18 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         };
     }, [scrollOffset]);
 
+    useEffect(() => {
+        if (activeSheet) {
+            ShowWindowInGUI(
+                activeSheet,
+                scrollOffset.left,
+                scrollOffset.left + 30,
+                scrollOffset.top,
+                scrollOffset.top + 30
+            );
+        }
+    }, [activeSheet]);
+
 
     /** Synchronizes scrolling between the grid body and the headers so that it works
      * like one, big grid. Does not currently synchronize scrolling done on the headers.
@@ -260,6 +354,12 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     return (
         // Container that wraps around all parts of the sheet
         <div id="sheet">
+            <SheetSelector
+                sheetNames={sheetNames}
+                activeSheet={activeSheet}
+                setActiveSheet={setActiveSheet}
+                setSheetNames={setSheetNames}
+            />
             {/* Header row as a 1-row grid */}
             <div style={{ display: "flex" }}>
                 {/* Top-left corner */}
@@ -312,12 +412,13 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                         ref={bodyRef}
                         onScroll={syncScroll}
                         onItemsRendered={({
-                          visibleRowStartIndex,
-                          visibleRowStopIndex,
-                          visibleColumnStartIndex,
-                          visibleColumnStopIndex,
-                        }) => {
+                                              visibleRowStartIndex,
+                                              visibleRowStopIndex,
+                                              visibleColumnStartIndex,
+                                              visibleColumnStopIndex,
+                                          }) => {
                             ShowWindowInGUI(
+                                activeSheet,
                                 visibleColumnStartIndex,
                                 visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
                                 visibleRowStartIndex,
