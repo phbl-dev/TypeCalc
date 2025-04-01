@@ -320,6 +320,49 @@ export class FunCall extends Expr {
             return new FunCall(func, es);
         }
     }
+    /**
+     * EQUALS is a function that we implemented ourselves to check if two values are equal.
+     * The method creates a "lambda" function and stores it in "func". So we don't evaluate
+     * "func" now but instead pass it on to a new FunCall instantiation.
+     */
+    private static EQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return args[0] === args[1];
+        }
+        return new FunCall(func, es)
+    }
+
+    /**
+     * NEG is a function that we implemented ourselves to turn a positive number into a negative number
+     * or vice versa.
+     */
+    private static NEG(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            const arg = args[0] as number;
+            return -arg;
+        }
+        return new FunCall(func, es)
+    }
+
+    /**
+     * DIVIDE is a function that we implemented ourselves to divide two numbers
+     */
+    private static DIVIDE(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return (args[0] as number)/(args[1] as number);
+        }
+        return new FunCall(func, es)
+    }
+
+    /**
+     * SUB is a function that we implemented ourselves to subtract two numbers
+     */
+    private static SUB(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return (args[0] as number)-(args[1] as number);
+        }
+        return new FunCall(func, es)
+    }
 
     // Arguments are passed unevaluated to cater for non-strict IF
     // (Work in progress):
