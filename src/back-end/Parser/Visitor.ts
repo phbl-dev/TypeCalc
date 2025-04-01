@@ -338,11 +338,17 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         const e:any = this.visit(ctx.expression);
 
+        console.log(JSON.stringify(ctx, null, 2));
 
         if (ctx.QuoteCell) {
-            this.cell = new QuoteCell(e.image.substring(1));
+            const helperConst = ctx["QuoteCell"][0].image
+            this.cell = new QuoteCell(ctx["QuoteCell"][0].image.substring(1, helperConst.length - 1));
         } else if (ctx.StringLiteral) {
-            this.cell = new TextCell(e.image.substring(1, e.image.length - 2));
+            console.log("Entered String Literal")
+            const helperConst = ctx["StringLiteral"][0].image
+            console.log(ctx["StringLiteral"][0].image)
+
+            this.cell = new TextCell(ctx["StringLiteral"][0].image.substring(1, helperConst.length - 1 ));
         } else if (ctx.number) {
             this.cell = new NumberCell(Number.parseInt(e.image));
         } else if (ctx.Equals) {

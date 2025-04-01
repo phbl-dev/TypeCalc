@@ -16,7 +16,9 @@ export class SpreadsheetLexer {
     static Colon: TokenType = createToken({ name: "Colon", pattern: /:/ });
     static Identifier: TokenType = createToken({ name: "Identifier", pattern: /[A-Za-z][A-Za-z0-9_]*/ }); // aka name in ATG file.
     static StringLiteral: TokenType = createToken({ name: "StringLiteral", pattern: /"([^"\\]|\\.)*"/ });
-    static QuoteCell: TokenType = createToken({ name: "QuoteCell", pattern: /'([^'\\]|\\.)*/ });
+
+    static QuoteCell: TokenType = createToken({ name: "QuoteCell", pattern: /'([^'\\]|\\.)*'/ , longer_alt:SpreadsheetLexer.StringLiteral});
+
     static Ampersand: TokenType = createToken({ name: "Ampersand", pattern: /&/ });
     static LParen: TokenType = createToken({ name: "LParen", pattern: /\(/ });
     static RParen: TokenType = createToken({ name: "RParen", pattern: /\)/ });
@@ -74,8 +76,9 @@ export class SpreadsheetLexer {
         SpreadsheetLexer.Datetime,
 
         SpreadsheetLexer.NUMBER,
-        SpreadsheetLexer.StringLiteral,
         SpreadsheetLexer.QuoteCell,
+
+        SpreadsheetLexer.StringLiteral,
         SpreadsheetLexer.LessThanOrEqual,
         SpreadsheetLexer.GreaterThanOrEqual,
         SpreadsheetLexer.NotEqual,
