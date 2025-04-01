@@ -62,21 +62,7 @@ export class XMLReader {
                                 continue;
                             }
 
-                            let cellContent: string | number | boolean | Date;
-                            if (!cells[f].Index) {
-                                colIndex++;
-                            } else {
-                                colIndex = Number(cells[f].Index);
-                            }
-                            if (cells[f].Formula) {
-                                cellContent = cells[f].Formula as string;
-                            } else {
-                                cellContent = this.parseCellData(cells[f].Data);
-                            }
-                            const cellToBeAdded: QuoteCell | NumberCell =
-                                typeof cellContent === "number" ? new NumberCell(cellContent as number) : new QuoteCell(cellContent as string);
-                            sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
-                            // let cellContent: string;
+                            // let cellContent: string | number | boolean | Date;
                             // if (!cells[f].Index) {
                             //     colIndex++;
                             // } else {
@@ -85,15 +71,29 @@ export class XMLReader {
                             // if (cells[f].Formula) {
                             //     cellContent = cells[f].Formula as string;
                             // } else {
-                            //     cellContent = String(cells[f].Data["#text"]);
+                            //     cellContent = this.parseCellData(cells[f].Data);
                             // }
-                            // console.log("Reader sees this in cell");
-                            // console.log(cellContent);
-                            // console.log(typeof cellContent);
-                            // const cellToBeAdded:Cell|null = Cell.Parse(cellContent, WorkbookManager.getWorkbook() as Workbook, colIndex, rowIndex);
-                            // if (cellToBeAdded) {
-                            //     sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
-                            // }
+                            // const cellToBeAdded: QuoteCell | NumberCell =
+                            //     typeof cellContent === "number" ? new NumberCell(cellContent as number) : new QuoteCell(cellContent as string);
+                            // sheet.SetCell(cellToBeAdded, colIndex as number, rowIndex as number);
+                            let cellContent: string;
+                            if (!cells[f].Index) {
+                                colIndex++;
+                            } else {
+                                colIndex = Number(cells[f].Index);
+                            }
+                            if (cells[f].Formula) {
+                                cellContent = cells[f].Formula as string;
+                            } else {
+                                cellContent = String(cells[f].Data["#text"]);
+                            }
+                            console.log("Reader sees this in cell");
+                            console.log(cellContent);
+                            console.log(typeof cellContent);
+                            const cellToBeAdded:Cell|null = Cell.Parse(cellContent, WorkbookManager.getWorkbook() as Workbook, colIndex, rowIndex);
+                            if (cellToBeAdded) {
+                                sheet.SetCell(cellToBeAdded, colIndex - 1, rowIndex - 1);
+                            }
                         }
                     }
                 }
@@ -181,7 +181,7 @@ export class WorkbookManager {
 //This is the method for retrieving cell data for the current view-port in the front-end.
 //Updates on every scroll, meaning that the values are stored only in back-end, and then repeatedly fetched
 //Makes sure that we only load data in the viewport, everything else stays in back-end.
-export function ShowWindowInGUI(activeSheet:string, leftCornerCol: number, rightCornerCol:number, topCornerRow: number, bottomCornerRow: number):void {
+export function ShowWindowInGUI(activeSheet:string, leftCornerCol: number, rightCornerCol:number, topCornerRow: number, bottomCornerRow: number, sheetSwap:boolean):void {
     const wb = WorkbookManager.getWorkbook();
     if (!wb) {
         console.log("[ShowWindowInGUI] No workbook found!");
@@ -203,13 +203,16 @@ export function ShowWindowInGUI(activeSheet:string, leftCornerCol: number, right
                     WorkbookManager.getWorkbook().Recalculate();
                     let cellEval =  sheet.Get(col - 1,row - 1)?.Eval(sheet, 0, 0)?.ToObject();
                     if (cellEval != undefined) {
-                        console.log("I found a cell at:");
-                        console.log("Row:", row);
-                        console.log("Col:", col);
+                        // console.log("I found a cell at:");
+                        // console.log("Row:", row);
+                        // console.log("Col:", col);
                         cellHTML.innerText = cellEval as string;
-                        console.log(cellEval as string);
+                        //console.log(cellEval as string);
                     }
-
+                    else if (sheetSwap) {
+                        //console.log("Showing empty cell")
+                        cellHTML.innerText = "";
+                    }
                 }
             }
         }
