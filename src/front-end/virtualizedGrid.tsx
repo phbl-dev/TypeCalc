@@ -214,12 +214,12 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
                     if (bodyRef.current) {
                         bodyRef.current.scrollToItem({
-                            align: "smart",
+                            align: "start",
                             columnIndex: col,
                             rowIndex: row
                         });
                         if (targetCell && headerCorner) {
-                            targetCell.focus();
+                            targetCell.focus(); //TODO: Needs to fire event twice for targetCell.focus to focus a cell
                             headerCorner.textContent = cellID;
                         }
                     }
