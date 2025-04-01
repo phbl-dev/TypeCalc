@@ -80,8 +80,12 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx["addOp"]) {
             op = this.visit(ctx["addOp"]);
 
-            if (op === "+" || op === '-'  ) {
+            if (op === "+" ) {
                 op = "SUM";
+            }
+
+            if (op === "-") {
+                op = "SUB"
             }
 
             e2 = this.visit(ctx["term"][1]);
@@ -297,6 +301,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx["A1Ref"]) {
             const token = ctx["A1Ref"][0].image
             raref = new A1RARef(token, 0,0);
+            console.log("this is the value of raref: \n")
+            console.log({raref});
         } else if (ctx["XMLSSRARef11"]) {
             const token = ctx["XMLSSRARef11"][0];
             raref = new R1C1RARef(token.image);
@@ -329,21 +335,26 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected cellContents(ctx: any): Cell {
-
         const e:any = this.visit(ctx.expression);
 
+        console.log(JSON.stringify(ctx, null, 2));
 
         if (ctx.QuoteCell) {
-            this.cell = new QuoteCell(e.image.substring(1));
+            const helperConst = ctx["QuoteCell"][0].image
+            this.cell = new QuoteCell(ctx["QuoteCell"][0].image.substring(1, helperConst.length - 1));
         } else if (ctx.StringLiteral) {
-            console.log(e)
-            //this.cell = new TextCell(e.image.substring(1, e.image.length - 2));
+            const helperConst = ctx["StringLiteral"][0].image
+
+            this.cell = new TextCell(ctx["StringLiteral"][0].image.substring(1, helperConst.length - 1 ));
         } else if (ctx.number) {
-            this.cell = new NumberCell(Number.parseInt(e.image));
+            console.log(ctx["number"][0].children["Number"][0].image)
+            this.cell = new NumberCell(Number.parseInt(ctx["number"][0].children["Number"][0].image));
         } else if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.Datetime) {
-            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(BigInt((ctx.Datetime[0].image as Date).getTime()) * 10_000n + 621355968000000000n));
+            console.log(ctx["Datetime"][0].image)
+
+            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(BigInt((ctx.Datetime[0].image).getTime()) * 10_000n + 621355968000000000n));
         }
 
         return this.cell;

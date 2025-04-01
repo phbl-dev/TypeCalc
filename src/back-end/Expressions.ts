@@ -274,6 +274,7 @@ export class FunCall extends Expr {
         if (name === "NEG") {return this.NEG(es)}
         if (name === "EQUALS") {return this.EQUALS(es);}
         if (name === "DIVIDE") {return this.DIVIDE(es);}
+        if (name === "SUB") {return this.SUB(es)}
 
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
@@ -293,7 +294,6 @@ export class FunCall extends Expr {
             return new FunCall(func, es);
         }
     }
-
     /**
      * EQUALS is a function that we implemented ourselves to check if two values are equal.
      * The method creates a "lambda" function and stores it in "func". So we don't evaluate
@@ -338,7 +338,7 @@ export class FunCall extends Expr {
         return new FunCall(func, es)
     }
 
-// Arguments are passed unevaluated to cater for non-strict IF
+    // Arguments are passed unevaluated to cater for non-strict IF
     // (Work in progress):
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         const args = FunCall.extracted(sheet, col, row, this.es);
@@ -561,12 +561,12 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
 
-        // console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
-        // console.log(sheet.Get(col,row))
+        console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
+        console.log(sheet.Get(col,row))
 
-        // console.log(`Found values, col: ${col}, row: ${row}`);
+        console.log(`Found values, col: ${col}, row: ${row}`);
         const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef)!; // ca.col = 0, ca.row = 0
-        // console.log(`Cell return ${cell}`);
+        console.log(`Cell return ${cell}`);
         return cell.Eval(sheet, col, row) as Value;
     }
 
