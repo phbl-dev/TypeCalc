@@ -379,6 +379,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     rowCount={1}
                     rowHeight={() => colHeaderHeight}
                     width={width - rowHeaderWidth}
+                    overscanColumnCount={10}
                     ref={colHeaderRef}
                 >
                     {ColumnHeader}
@@ -395,6 +396,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     rowCount={rowCount}
                     rowHeight={() => rowHeight}
                     width={rowHeaderWidth}
+                    overscanRowCount={10}
                     ref={rowHeaderRef}
                 >
                     {RowHeader}
@@ -409,6 +411,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                         rowCount={rowCount}
                         rowHeight={() => rowHeight}
                         width={width - rowHeaderWidth}
+                        overscanColumnCount={10}
+                        overscanRowCount={10}
                         ref={bodyRef}
                         onScroll={syncScroll}
                         onItemsRendered={({
