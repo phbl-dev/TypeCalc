@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {forwardRef,  useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {NumberCell, QuoteCell, Cell as BackendCell} from "../back-end/Cells";
@@ -15,6 +15,7 @@ interface GridInterface {
     rowHeaderWidth?: number;
     width?: number;
     height?: number;
+    ref?: React.Ref<any>;
 }
 
 /** Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
@@ -29,6 +30,19 @@ export function numberToLetters(n: number) {
         n = Math.floor(n / 26);
     }
     return letter;
+}
+
+function lettersToNumber(letters:string):number {
+    let output = 0;
+    for (let i = 0; i < letters.length; i++) {
+        const charCode = letters.charCodeAt(i) - 65;
+        output = output * 26 + (charCode + 1);
+    }
+    return output;
+}
+
+export function getCell(cellID:string):HTMLElement|null{
+    return document.getElementById(cellID);
 }
 
 /** Defines the column headers as a div with ID, style, and contents
@@ -62,10 +76,6 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
         {rowIndex + 1} {/* +1 since its 0-indexed */}
     </div>
 );
-
-export function getCell(cellID:string):HTMLElement|null{
-    return document.getElementById(cellID);
-}
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
@@ -218,15 +228,15 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames 
  * additional grids; one for the row headers and one for the regular cells.
  */
 export const VirtualizedGrid: React.FC<GridInterface> = (({
-                                                              columnCount,
-                                                              rowCount,
-                                                              columnWidth = 80,
-                                                              rowHeight = 30,
-                                                              colHeaderHeight = rowHeight * 1.2,
-                                                              rowHeaderWidth = columnWidth * 0.65,
-                                                              width = window.innerWidth,
-                                                              height = window.innerHeight * 0.92,
-                                                          }) => {
+     columnCount,
+     rowCount,
+     columnWidth = 80,
+     rowHeight = 30,
+     colHeaderHeight = rowHeight * 1.2,
+     rowHeaderWidth = columnWidth * 0.65,
+     width = window.innerWidth,
+     height = window.innerHeight * 0.92,
+ }) => {
     // Used to synchronize scrolling between the referenced objects
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
@@ -236,6 +246,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
     useEffect(() => {
+        const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
+        const input = document.getElementById("jumpToInput") as HTMLInputElement;
+        if (!jumpButton || !input) return; // In case either element doesn't exist/is null
+
         // Handle file drop events entirely in React
         function handleDrop(event: DragEvent) {
             event.preventDefault();
@@ -267,12 +281,45 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             event.preventDefault();
         }
 
-        window.addEventListener("drop", handleDrop);
-        window.addEventListener("dragover", handleDragOver);
+        // Handles the "Go to"/jump to a specific cell
+        const handleJump = () => {
+            const cellID = input.value.trim();
+            const headerCorner = document.getElementById("headerCorner");
+
+            if(cellID) {
+                const idSplit = cellID.match(/[A-Za-z]+|\d+/g) || [];
+                const targetCell = getCell(cellID);
+
+                if(idSplit.length === 2) {
+                    const col = lettersToNumber(idSplit[0]);
+                    const row = parseInt(idSplit[1], 10);
+
+                    if (bodyRef.current) {
+                        bodyRef.current.scrollToItem({
+                            align: "start",
+                            columnIndex: col,
+                            rowIndex: row
+                        });
+                        if (targetCell && headerCorner) {
+                            targetCell.focus(); //TODO: Needs to fire event twice for targetCell.focus to focus a cell
+                            headerCorner.textContent = cellID;
+                        }
+                    }
+                }
+            }
+        }
+
+        window.addEventListener("drop", handleDrop); // Drag and drop
+        window.addEventListener("dragover", handleDragOver); // Drag and drop
+        jumpButton.addEventListener("click", handleJump); // Jump to cell
+        input.addEventListener("keydown", (e) => { // Jump to cell
+            if(e.key === "Enter") handleJump();
+        })
 
         return () => {
-            window.removeEventListener("drop", handleDrop);
-            window.removeEventListener("dragover", handleDragOver);
+            window.removeEventListener("drop", handleDrop); // Drag and drop
+            window.removeEventListener("dragover", handleDragOver); // Drag and drop
+            jumpButton.removeEventListener("click", handleJump); // Jump to cell
         };
     }, [scrollOffset]);
 
@@ -295,7 +342,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      * @param scrollLeft Horizontal scrolling value
      * @param scrollTop Vertical scrolling value
      */
-    function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }) {
+    function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }):void {
         if (colHeaderRef.current && scrollLeft !== undefined) {
             colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
         }
@@ -326,13 +373,13 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 </div>
                 {/* Column headers as a grid */}
                 <Grid
-                    ref={colHeaderRef}
                     columnCount={columnCount}
                     columnWidth={() => columnWidth}
                     height={colHeaderHeight}
                     rowCount={1}
                     rowHeight={() => colHeaderHeight}
                     width={width - rowHeaderWidth}
+                    ref={colHeaderRef}
                 >
                     {ColumnHeader}
                 </Grid>
@@ -342,13 +389,13 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             <div style={{ display: "flex" }}>
                 {/* Row headers */}
                 <Grid
-                    ref={rowHeaderRef}
                     columnCount={1}
                     columnWidth={() => rowHeaderWidth}
                     height={height - colHeaderHeight}
                     rowCount={rowCount}
                     rowHeight={() => rowHeight}
                     width={rowHeaderWidth}
+                    ref={rowHeaderRef}
                 >
                     {RowHeader}
                 </Grid>
@@ -356,13 +403,13 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 {/* Grid body */}
                 <div id="gridBody">
                     <Grid
-                        ref={bodyRef}
                         columnCount={columnCount}
                         columnWidth={() => columnWidth}
                         height={height - colHeaderHeight}
                         rowCount={rowCount}
                         rowHeight={() => rowHeight}
                         width={width - rowHeaderWidth}
+                        ref={bodyRef}
                         onScroll={syncScroll}
                         onItemsRendered={({
                                               visibleRowStartIndex,

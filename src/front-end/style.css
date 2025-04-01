@@ -4,8 +4,7 @@
     white-space: normal;
     font-family: Arial, sans-serif;
 }
-
-*::-webkit-scrollbar :not(#gridBody){
+*::-webkit-scrollbar {
     display: none;
 }
 
@@ -94,8 +93,13 @@ header h4 {
     border: 1px solid white;
 }
 
-.gridBody {
+#gridBody {
     display: flex;
+    scrollbar-width: auto; !important; /* Doesn't work */
+}
+
+#gridBody::-webkit-scrollbar {
+    display: block !important; /* Doesn't work */
 }
 
 .Cell {
