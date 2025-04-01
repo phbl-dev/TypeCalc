@@ -64,8 +64,7 @@ describe("Workbook", () => {
 
         // Creating a number cell with the value 5 and setting it in the sheet at position 2,0
         const numberCell = new NumberCell(5);
-        const cellAddress1: SuperCellAddress = new SuperCellAddress(2, 0);
-        sheet.Set(cellAddress1, numberCell)
+        sheet.SetCell(numberCell,2,0)
 
         // One expression:
         const expr1: Expr = new NumberConst(10);
@@ -74,10 +73,9 @@ describe("Workbook", () => {
         const funCall: Expr = FunCall.Make("SUM", [expr1, cellRef])
 
         // Creating a cell address for a formula cell and setting it in the sheet:
-        const cellAddress3: SuperCellAddress = new SuperCellAddress(1, 1);
         const formula: Cell = new Formula(workbook, funCall)
 
-        sheet.Set(cellAddress3, formula);
+        sheet.SetCell(formula,1,1);
 
         // Get the newly added cell and store it in a variable. Check that it is not null:
         const cell = sheet.getCells().Get(1, 1);
@@ -86,8 +84,8 @@ describe("Workbook", () => {
         // We haven't called Recalculate() yet so the cells have not been
         expect(cell!.Eval(sheet, 1, 1)).toBeFalsy;
 
-        // Sheet.Set() calls Workbook.RecordCellChange() so editedCells should have length 4.
-        expect(workbook.GetEditedCells().length).toBe(2);
+        // Sheet.SetCell() calls Workbook.RecordCellChange() so editedCells should have length 4.
+        expect(workbook.GetEditedCells().length).toBe(4);
 
         // Run Recalculate()
         workbook.Recalculate();
@@ -99,9 +97,8 @@ describe("Workbook", () => {
         expect(cell!.Eval(sheet, 1, 1)).toEqual(NumberValue.Make(15)); // The content of 1,1 should be 10+5=15
 
         const numberCellUpdated = new NumberCell(10);
-        const cellAddressUpdated: SuperCellAddress = new SuperCellAddress(2, 0);
-        sheet.Set(cellAddressUpdated, numberCellUpdated)
-        sheet.Set(cellAddress3, formula);
+        sheet.SetCell(numberCellUpdated,2,0)
+        sheet.SetCell(formula,1,1);
 
         // Run Recalculate() again after updating the value of cell 2,0.
         workbook.Recalculate();
