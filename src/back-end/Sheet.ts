@@ -1,15 +1,15 @@
-import { Workbook } from "./Workbook";
+import type { Workbook } from "./Workbook";
 import { Cell, BlankCell, CachedArrayFormula, Formula, ArrayFormula } from "./Cells";
-import { Adjusted, Interval, SuperCellAddress } from "./CellAddressing";
-import { Expr } from "./Expressions";
+import { type Adjusted, Interval, SuperCellAddress } from "./CellAddressing";
+import type { Expr } from "./Expressions";
 import { ArrayValue } from "./ArrayValue";
 
 /**
  * Creates a new sheet. Default size is 20 columns and 1000 rows.
  */
 export class Sheet {
-    public cols: number = 2000;
-    public rows: number = 10000;
+    public cols = 2000;
+    public rows = 10000;
     private name: string;
     public readonly workbook: Workbook;
     private readonly cells: SheetRep;
@@ -104,8 +104,8 @@ export class Sheet {
      * @constructor
      */
     public ShowAll(show: (col: number, row: number, arg3: string) => void): void {
-        for (let c: number = 0; c < this.Cols; c++) {
-            for (let r: number = 0; r < this.Rows; r++) {
+        for (let c = 0; c < this.Cols; c++) {
+            for (let r = 0; r < this.Rows; r++) {
                 const cell: Cell | null = this.Get(c, r);
                 if (cell != null) {
                     show(c, r, this.ShowValue(c, r));
@@ -502,7 +502,7 @@ export class Sheet {
 }
 
 export class SheetRep {
-    private LOGW: number = 4;
+    private LOGW = 4;
     W = 1 << this.LOGW;
     MW = this.W - 1;
     SIZEW = 1 << (4 * this.LOGW);
@@ -537,15 +537,15 @@ export class SheetRep {
 
         const index0 = (((c >> (3 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (3 * this.LOGH)) & this.MH);
         this.tile0[index0] ??= new Array(this.W * this.H);
-        let tile1:Cell[][][] = this.tile0[index0];
+        const tile1:Cell[][][] = this.tile0[index0];
 
         const index1 = (((c >> (2 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (2 * this.LOGH)) & this.MH);
         tile1[index1] ??= new Array(this.W * this.H);
-        let tile2: Cell[][] = tile1[index1];
+        const tile2: Cell[][] = tile1[index1];
 
         const index2 = (((c >> this.LOGW) & this.MW) << this.LOGH) | ((r >> this.LOGH) & this.MH);
         tile2[index2] ??= new Array(this.W * this.H);
-        let tile3: Cell[] = tile2[index2];
+        const tile3: Cell[] = tile2[index2];
 
         const index3 = ((c & this.MW) << this.LOGH) | (r & this.MH);
         if (value instanceof Cell) {

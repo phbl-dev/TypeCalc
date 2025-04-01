@@ -1,7 +1,7 @@
-import { FullCellAddress } from "./CellAddressing";
-import { Sheet } from "./Sheet";
-import { Value } from "./Value";
-import { Expr } from "./Expressions";
+import type { FullCellAddress } from "./CellAddressing";
+import type { Sheet } from "./Sheet";
+import type { Value } from "./Value";
+import type { Expr } from "./Expressions";
 
 // An IDepend is an object such as Cell, Expr, CGExpr, ComputeCell that can tell what full
 // cell addresses it depends on.
@@ -59,10 +59,10 @@ export class Formats {
         static readonly R1C1: string = "R1C1";
     };
 
-    private showFormulas: boolean = false;
+    private showFormulas = false;
     private refFmt: keyof typeof Formats.Reftype = "A1";
-    private argDelim: string = ",";
-    private rangeDelim: string = ":";
+    private argDelim = ",";
+    private rangeDelim = ":";
 
     public getRefFmt(): keyof typeof Formats.Reftype {
         return this.refFmt;

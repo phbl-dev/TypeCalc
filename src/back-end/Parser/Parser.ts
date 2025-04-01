@@ -1,4 +1,4 @@
-import { CstParser, ParserMethod, CstNode } from "chevrotain";
+import { CstParser, type ParserMethod, type CstNode } from "chevrotain";
 import { SpreadsheetLexer } from "./Lexer";
 
 /**
@@ -137,7 +137,7 @@ export class SpreadsheetParser extends CstParser {
                             $.SUBRULE2($.raref);
                         });
 
-                        },
+                    },
                 },
 
 
@@ -150,7 +150,7 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                        $.SUBRULE($.number);
+                            $.SUBRULE($.number);
                     },
                 },
 
@@ -213,7 +213,7 @@ export class SpreadsheetParser extends CstParser {
             $.OR([
                 {
                     ALT: () => {
-                       $.CONSUME(SpreadsheetLexer.A1Ref);
+                        $.CONSUME(SpreadsheetLexer.A1Ref);
                     },
                 },
                 {
@@ -223,12 +223,12 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                         $.CONSUME(SpreadsheetLexer.XMLSSRARef12);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef12);
                     }
                 },
                 {
                     ALT: () => {
-                         $.CONSUME(SpreadsheetLexer.XMLSSRARef13);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef13);
                     },
                 },
                 {
@@ -253,7 +253,7 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                       $.CONSUME(SpreadsheetLexer.XMLSSRARef32);
+                        $.CONSUME(SpreadsheetLexer.XMLSSRARef32);
                     },
                 },
                 {

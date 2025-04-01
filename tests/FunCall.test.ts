@@ -25,6 +25,20 @@ describe("Formula.js", () => {
         expect(maker instanceof Expr).toBe(true)
     });
 
+    test("Make method with NEG", () => {
+        let expr1: Expr = new NumberConst(1);
+        let expr2: Expr = new NumberConst(20);
+        let expr3: Expr = new NumberConst(-20);
+
+        let maker = FunCall.Make("NEG", [expr1])
+        let maker2 = FunCall.Make("NEG", [expr2])
+        let maker3 = FunCall.Make("NEG", [expr3])
+
+        expect(NumberValue.ToNumber(maker.Eval(sheet, 0,0))).toBe(-1)
+        expect(NumberValue.ToNumber(maker2.Eval(sheet, 0,0))).toBe(-20)
+        expect(NumberValue.ToNumber(maker3.Eval(sheet, 0,0))).toBe(20)
+    });
+
     // ======== [ MATH TESTS ] ========
     test("Getter method with SUM", () => {
         let func: (...args: unknown[]) => unknown;

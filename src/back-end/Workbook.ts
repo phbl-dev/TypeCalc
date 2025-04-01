@@ -1,7 +1,7 @@
-import { Sheet } from "./Sheet";
+import type { Sheet } from "./Sheet";
 import { CyclicException, Formats } from "./Types";
 import { FullCellAddress, SupportArea } from "./CellAddressing";
-import { Cell, Formula } from "./Cells";
+import { Cell, type Formula } from "./Cells";
 
 // A Workbook is a collection of distinct named Sheets.
 export class Workbook {

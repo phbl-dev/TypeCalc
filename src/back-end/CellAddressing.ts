@@ -1,7 +1,7 @@
-import { Formats } from "./Types";
-import { Sheet } from "./Sheet";
-import { Value } from "./Value";
-import { Cell } from "./Cells";
+import type { Formats } from "./Types";
+import type { Sheet } from "./Sheet";
+import type { Value } from "./Value";
+import type { Cell } from "./Cells";
 
 //An interval represents a range of numbers from a min to a max, including both
 export class Interval {
@@ -66,7 +66,7 @@ export class Adjusted<Type> {
     readonly maxValidRow: number; // Adjustment is invalid for rows >= maxValidRow
     readonly isUnchanged: boolean; // Indicates if the adjustment is identical to the original
 
-    constructor(type: Type, maxValidRow: number = Number.MAX_SAFE_INTEGER, isUnchanged: boolean = true) {
+    constructor(type: Type, maxValidRow: number = Number.MAX_SAFE_INTEGER, isUnchanged = true) {
         this.type = type;
         this.maxValidRow = maxValidRow;
         this.isUnchanged = isUnchanged;
@@ -97,8 +97,8 @@ export class SuperRARef {
     }
 
     parseIntWithIndex(s: string, i: number): { value: number; index: number } {
-        let val: number = 0;
-        let negative: boolean = false;
+        let val = 0;
+        let negative = false;
 
         // Handle optional sign
         if (i < s.length && (s[i] === "-" || s[i] === "+")) {
@@ -236,13 +236,13 @@ export class A1RARef extends SuperRARef {
             return;
         }
 
-        let i: number = 0;
+        let i = 0;
         if (i < this.a1ref.length && this.a1ref[i] == "$") {
             this.colAbs = true;
             i++;
         }
 
-        let val: number = -1;
+        let val = -1;
         //proceed from here
         while (i < a1ref.length && this.isAToZ(this.a1ref[i])) {
             val = (val + 1) * 26 + this.aToZValue(this.a1ref[i]);
@@ -266,7 +266,7 @@ export class R1C1RARef extends SuperRARef {
     constructor(r1c1: string) {
         super(true, 0, true, 0);
         this.r1c1 = r1c1;
-        let i: number = 0;
+        let i = 0;
         if (i < this.r1c1.length && this.r1c1[i] == "R") {
             i++;
         }
@@ -355,7 +355,7 @@ export class SuperCellAddress {
 
     //translates a column number to an excel-style letter.
     columnName(col: number): string {
-        let name: string = "";
+        let name = "";
         while (col >= 26) {
             name = String.fromCharCode("A".charCodeAt(0) + (col % 26)) + name;
             col = Math.floor(col / 26) - 1;
@@ -455,7 +455,7 @@ export class SupportSet {
     //removes cells from the given ranges. This may cascade depending on whether the range
     //is a lone cell or an area.
     removeCell(sheet: Sheet, col: number, row: number): void {
-        let i: number = 0;
+        let i = 0;
         let count: number = this.ranges.length;
         while (i < count) {
             if (this.ranges[i].removeCell(this, sheet, col, row)) {
@@ -584,7 +584,7 @@ export class SupportArea extends SupportRange {
     //These next larger methods are all part of a group that handles the processing of supporting cells in an area, making sure to avoid processing the same cell more than once, even when area overlap.
     forEachSupported(act: (sheet: Sheet, col: number, row: number) => void): void {
         if (SupportArea.idempotentForeach && this.count > SupportArea.alreadyVisited.length + 1) {
-            for (let i: number = 0; i < SupportArea.alreadyVisited.length; i++) {
+            for (let i = 0; i < SupportArea.alreadyVisited.length; i++) {
                 const old: SupportArea = SupportArea.alreadyVisited[i];
                 if (this.overlaps(old)) {
                     const overlap: SupportArea = this.overlap(old);
