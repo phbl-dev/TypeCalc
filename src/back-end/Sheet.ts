@@ -381,6 +381,7 @@ export class Sheet {
             }
         } else if (col instanceof SuperCellAddress) {
             // Fix: Ensure col is a SuperCellAddress
+            console.log("col:", col.col, "row:", col.row);
             this.Set(col.col, newCell, col.row);
         }
     }
