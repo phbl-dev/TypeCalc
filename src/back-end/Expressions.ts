@@ -494,6 +494,7 @@ export class FunCall extends Expr {
                 for (let r = 0; r < value.Rows; r++) {
                     for (let c = 0; c < value.Cols; c++) {
                         const cellValue = value.Get(c, r);
+                        console.log(`Look here ${cellValue}`);
                         if (cellValue instanceof NumberValue) {
                             result.push(NumberValue.ToNumber(cellValue));
                         }
@@ -868,32 +869,32 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
         }
     }
 
-    public AddToSupport(supported:Sheet, col: number, row: number, cols: number, rows: number) {
-        const referredSheet = this.sheet ?? supported
-        let referredRows:Interval, referredCols:Interval;
+    public AddToSupport(supported: Sheet, col: number, row: number, cols: number, rows: number) {
+        const referredSheet = this.sheet ?? supported;
+        let referredRows: Interval, referredCols: Interval;
         let supportedCols: (arg: number) => Interval;
         let supportedRows: (arg: number) => Interval;
-        const ra = this.ul.rowRef, rb = this.lr.rowRef, r1 = row, r2 = row + rows -1
-        const ca =this.ul.colRef, cb = this.lr.colRef, c1 = col, c2 = col + cols - 1;
+        const ra = this.ul.rowRef, rb = this.lr.rowRef, r1 = row, r2 = row + rows - 1;
+        const ca = this.ul.colRef, cb = this.lr.colRef, c1 = col, c2 = col + cols - 1;
 
         [referredRows, supportedRows] = CellArea.RefAndSupp(this.ul.rowAbs, this.lr.rowAbs, ra, rb, r1, r2);
-       [referredCols, supportedCols] =  CellArea.RefAndSupp(this.ul.colAbs, this.lr.colAbs, ca, cb, c1, c2,);
+        [referredCols, supportedCols] = CellArea.RefAndSupp(this.ul.colAbs, this.lr.colAbs, ca, cb, c1, c2);
 
-       if(referredCols.length() < referredRows.length()) {
-           referredCols.forEach((col) => {
-               const suppCols = supportedCols(col)
-               referredRows.forEach((row) => {
-                   referredSheet.AddSupport(col, row, supported, suppCols, supportedRows(row))
-               })
-           })
-       } else {
-           referredRows.forEach((row) => {
-               const suppRows = supportedRows(col)
-               referredCols.forEach((col) => {
-                   referredSheet.AddSupport(col, row, supported, supportedCols(col), suppRows)
-               })
-           })
-       }
+        if(referredCols.length() < referredRows.length()) {
+            referredCols.forEach((c) => {
+                const suppCols = supportedCols(c);
+                referredRows.forEach((r) => {
+                    referredSheet.AddSupport(c, r, supported, suppCols, supportedRows(r));
+                });
+            });
+        } else {
+            referredRows.forEach((r) => {
+                const suppRows = supportedRows(r);
+                referredCols.forEach((c) => {
+                    referredSheet.AddSupport(c, r, supported, supportedCols(c), suppRows);
+                });
+            });
+        }
     }
 
     private static RefAndSupp(ulAbs:boolean, lrAbs:boolean, ra:number, rb:number, r1:number, r2:number):  [Interval, (arg: number) => Interval] {
