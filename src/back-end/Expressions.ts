@@ -278,6 +278,7 @@ export class FunCall extends Expr {
         if (name === "DIVIDE") {return this.DIVIDE(es);}
         if (name === "SUB") {return this.SUB(es)}
         if (name === "ADD") {return this.ADD(es)}
+        if (name === "IF") {return this.IF(es)}
 
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
