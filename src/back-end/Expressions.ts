@@ -748,8 +748,8 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
 
 // Should it inherit from IEquatable<CellArea>?
 export class CellArea extends Expr implements IEquatable<CellArea> {
-    private readonly ul: SuperRARef;
-    private readonly lr: SuperRARef;
+    private readonly ul: SuperRARef; // ul = upper left
+    private readonly lr: SuperRARef; // lr = lower right
     public readonly sheet: Sheet;
     constructor(
         sheet: Sheet,

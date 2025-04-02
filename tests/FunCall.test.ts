@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, should, test} from "vitest";
 import * as formulajs from '@formulajs/formulajs'
-import {CellRef, Expr, ExprArray, FunCall, NumberConst, TextConst} from "../src/back-end/Expressions";
+import {CellArea, CellRef, Expr, ExprArray, FunCall, NumberConst, TextConst} from "../src/back-end/Expressions";
 import { Sheet } from "../src/back-end/Sheet";
 import { Workbook } from "../src/back-end/Workbook";
 import { NumberValue } from "../src/back-end/NumberValue";
@@ -633,6 +633,10 @@ describe("Formula.js", () => {
 
         expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("false");
         expect(TextValue.ToString(funCall2.Eval(sheet,0,0))).toBe("true");
+    })
+
+    test("Eval with CHOOSE", () => {
+        const cellArea1 = new CellArea(sheet, );
     })
 
 
