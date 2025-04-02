@@ -248,6 +248,7 @@ export class FunCall extends Expr {
     public readonly function: (...args: unknown[]) => unknown;
     public es: Expr[];           // Non-null, elements non-null
     public nonStrict: boolean;        // We implemented a flag for non-strict functions such that we know if some of their arguments should not be evaluated.
+    public isChoose: boolean
 
     private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[]) {
         super();
@@ -258,6 +259,7 @@ export class FunCall extends Expr {
         }
         this.es = es;
         this.nonStrict = false;
+        this.isChoose = false;
     }
 
     public static getFunctionByName(name: string): (...args: unknown[]) => unknown {
@@ -271,6 +273,39 @@ export class FunCall extends Expr {
         throw new Error(`Function ${name} not found in formulajs`);
     }
 
+    private static IF(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            if (args[0]) {
+                return args[1];
+            } else {
+                return args[2];
+            }
+        }
+
+        // We create a new instance of FunCall, such that we can update our non-strict flag to true.
+        // This is important for methods such as IF and CHOOSE, where lazy evaluation is desired.
+        const funCall = new FunCall(func, es);
+        funCall.nonStrict = true;
+        return funCall;
+    }
+
+
+    private static CHOOSE(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            if((args[0] as Value).ToObject() as number >= 1 && (args[0] as Value).ToObject() as number <= args.length) {
+                return args[0];
+            }
+        }
+
+
+        const funCall = new FunCall(func, es);
+        funCall.nonStrict = true;
+        funCall.isChoose = true;
+        return funCall;
+    }
+
+
+
     public static Make(name: string, es: Expr[]): Expr {
 
         if (name === "NEG") {return this.NEG(es)}
@@ -279,6 +314,7 @@ export class FunCall extends Expr {
         if (name === "SUB") {return this.SUB(es)}
         if (name === "ADD") {return this.ADD(es)}
         if (name === "IF") {return this.IF(es)}
+        if (name === "CHOOSE") {return this.CHOOSE(es)}
 
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
@@ -298,6 +334,7 @@ export class FunCall extends Expr {
             return new FunCall(func, es);
         }
     }
+
     /**
      * EQUALS is a function that we implemented ourselves to check if two values are equal.
      * The method creates a "lambda" function and stores it in "func". So we don't evaluate
@@ -353,35 +390,20 @@ export class FunCall extends Expr {
     }
 
 
-    /**
-     * IF is a function that we implemented ourselves to ...
-     */
-    private static IF(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
-            if (args[0]) {
-                return args[1];
-            } else {
-                return args[2];
-            }
-        }
-
-        // We create a new instance of FunCall, such that we can update our non-strict flag to true.
-        // This is important for methods such as IF and CHOOSE, where lazy evaluation is desired.
-        const funCall = new FunCall(func, es);
-        funCall.nonStrict = true;
-        return funCall;
-    }
 
 
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         // Special case for lazy evaluation functions like IF and CHOOSE
         if (this.nonStrict) {
-
-            if (this.FindBoolValue(sheet, col, row)) {
-                return this.es[1].Eval(sheet, col, row);
+            if (!this.isChoose) {
+                if (this.FindBoolValue(sheet, col, row)) {
+                    return this.es[1].Eval(sheet, col, row);
+                } else {
+                    return this.es[2].Eval(sheet, col, row);
+                }
             } else {
-                return this.es[2].Eval(sheet, col, row);
+                return this.es[(this.es[0].Eval(sheet,col,row).ToObject() as number)].Eval(sheet, col, row);
             }
         }
 
@@ -389,8 +411,6 @@ export class FunCall extends Expr {
 
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
-        console.log("func name: ")
-        console.log(this.function);
         const result = this.function(...args);
 
         // If the return type is Date:
@@ -467,8 +487,21 @@ export class FunCall extends Expr {
             if (value instanceof TextValue) {
                 return TextValue.ToString(value)
             }
-            return null;
+            if (value instanceof ArrayView) {
 
+                const result = [];
+
+                for (let r = 0; r < value.Rows; r++) {
+                    for (let c = 0; c < value.Cols; c++) {
+                        const cellValue = value.Get(c, r);
+                        if (cellValue instanceof NumberValue) {
+                            result.push(NumberValue.ToNumber(cellValue));
+                        }
+                    }
+                }
+                return result;
+            }
+            return null;
         });
         return args;
     }
@@ -789,15 +822,8 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
 
             const lrCa = this.lr.address(col as number,row as number);
 
-            const view = ArrayView.Make(ulCa,lrCa, this.sheet ?? fca as Sheet)
+            return ArrayView.Make(ulCa,lrCa, this.sheet ?? fca as Sheet)
 
-            for (let i = 0; i < view.Cols; i++) {
-                for (let j = 0; j < view.Rows; j++) {
-                    //Do nothing
-                }
-            }
-
-            return view
         }
     }
 

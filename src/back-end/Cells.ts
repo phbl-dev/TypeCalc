@@ -631,6 +631,14 @@ export class Formula extends Cell {
     }
 }
 
+/**
+ * An ArrayFormula is a cached array formula shared among several
+ * cells, each cell accessing one part of the result array.  Several
+ * ArrayFormula cells share one CachedArrayFormula cell; evaluation
+ * of one cell will evaluate the formula and cache its (array) value
+ * for the other cells to use.
+ */
+
 export class ArrayFormula extends Cell {
     public readonly caf: CachedArrayFormula;
     private readonly ca: SuperCellAddress;

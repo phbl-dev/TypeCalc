@@ -306,8 +306,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx["A1Ref"]) {
             const token = ctx["A1Ref"][0].image
             raref = new A1RARef(token, 0,0);
-            console.log("this is the value of raref: \n")
-            console.log({raref});
+
         } else if (ctx["XMLSSRARef11"]) {
             const token = ctx["XMLSSRARef11"][0];
             raref = new R1C1RARef(token.image);

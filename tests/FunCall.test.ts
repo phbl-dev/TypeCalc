@@ -6,7 +6,7 @@ import { Workbook } from "../src/back-end/Workbook";
 import { NumberValue } from "../src/back-end/NumberValue";
 import { TextValue } from "../src/back-end/TextValue";
 import {SuperRARef} from "../src/back-end/CellAddressing";
-import {BlankCell, Formula, NumberCell} from "../src/back-end/Cells";
+import { BlankCell, Cell, Formula, NumberCell } from "../src/back-end/Cells";
 import {CyclicException} from "../src/back-end/Types";
 import {ErrorValue} from "../src/back-end/ErrorValue"; // Importing formulajs
 
@@ -636,5 +636,26 @@ describe("Formula.js", () => {
     })
 
 
+    test("Eval with CHOOSE", () => {
+        sheet.SetCell(Cell.Parse("=10", workbook, 0,0),1,0) // B1
+        sheet.SetCell(Cell.Parse("=10", workbook, 0,0),0,0) // A1
+
+        // Creating A1 Cycle!
+        sheet.SetCell(Cell.Parse("=SUM(CHOOSE(2, A1:A10, B1:B10, C1:C10))", workbook, 0,0),0,0)
+
+        workbook.Recalculate();
+
+        // Cycle is not a problem because CHOOSE is non-strict so it doesn't evaluate "A1:A10" because it only
+        // needs to evaluate "B1:B10":
+        expect(sheet.Get(0,0).Eval(sheet,0,0).ToObject()).toBe(10)
+
+        // Change argument to be 1:
+        sheet.SetCell(Cell.Parse("=SUM(CHOOSE(1, A1:A10, B1:B10, C1:C10))", workbook, 0,0),0,0)
+
+        workbook.Recalculate();
+
+        // Correctly throws cyclic exception because now the Cell Area A1:A10 is chosen, and it has a cycle:
+        expect(() => sheet.Get(0,0).Eval(sheet,0,0)).toThrowError(CyclicException);
+    })
 
 });
