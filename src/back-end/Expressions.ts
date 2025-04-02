@@ -315,6 +315,16 @@ export class FunCall extends Expr {
         if (name === "ADD") {return this.ADD(es)}
         if (name === "IF") {return this.IF(es)}
         if (name === "CHOOSE") {return this.CHOOSE(es)}
+        if (name === "NOTEQUALS") {return this.NOTEQUALS(es)}
+        if (name === "GEQ") {return this.GEQ(es)}
+        if (name === "GEQUALS") {return this.GEQUALS(es)}
+        if (name === "LEQUALS") {return this.LEQUALS(es)}
+        if (name === "LEQ") {return this.LEQ(es)}
+        if (name === "CONCATENATE") {return this.CONCATENATE(es)}
+
+
+
+
 
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
@@ -333,6 +343,8 @@ export class FunCall extends Expr {
         } else {
             return new FunCall(func, es);
         }
+
+
     }
 
     /**
@@ -342,9 +354,18 @@ export class FunCall extends Expr {
      */
     private static EQUALS(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return args[0] === args[1];
-        }
+                return args[0] === args[1];
+            }
+
         return new FunCall(func, es)
+    }
+
+    private static CONCATENATE(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+
+            return args.join('');  // Join all arguments as strings
+        }
+        return new FunCall(func, es);
     }
 
     /**
@@ -358,6 +379,61 @@ export class FunCall extends Expr {
         }
         return new FunCall(func, es)
     }
+
+    /**
+     * NOT EQUALS is a function that we implemented ourselves to check if two variables are not the same
+     */
+
+    private static NOTEQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return args[0] !== args[1];
+        }
+        return new FunCall(func, es)
+    }
+
+    private static GEQ(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+
+                return (args[0] as number) > (args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+    private static LEQ(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return (args[0] as number) < (
+                    args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+
+    private static LEQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return (args[0] as number) <= (
+                    args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+
+    private static GEQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return (args[0] as number) >= (
+                    args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+
 
     /**
      * DIVIDE is a function that we implemented ourselves to divide two numbers

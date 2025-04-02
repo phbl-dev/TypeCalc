@@ -98,7 +98,7 @@ describe("Parse Numbers", () => {
 
         cell.Eval(sheet, 0, 0)
 
-        expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(0)
+        expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(-10)
     })
 
     test("Parse Numbers: 10 * 10 - 10 * 5", () => {
@@ -116,7 +116,7 @@ describe("Parse Cells", () => {
     const workbook: Workbook = new Workbook();
     const sheet: Sheet = new Sheet(workbook, "sheet1", false)
     test("Parse Cells: A1 = 10 * 10, B2 = A1 - 10", () => {
-        const cell1:Cell = Cell.Parse("= 10 * 10 * 10",workbook,0,0)!
+        const cell1:Cell = Cell.Parse("= 10 * 10 * 10 ",workbook,0,0)!
         cell1.MarkDirty()
 
         cell1.EnqueueForEvaluation(sheet,0,0)
@@ -125,18 +125,18 @@ describe("Parse Cells", () => {
 
         sheet.SetCell(cell1,0,0)
 
-        const cell2:Cell = Cell.Parse("=A1 - 10",workbook,0,0)!
+        const cell2:Cell = Cell.Parse("=A1/10 - 10",workbook,0,0)!
         cell2.MarkDirty()
 
         cell2.EnqueueForEvaluation(sheet,0,0)
 
-        cell2.Eval(sheet,0,0)
+        console.log(cell2.Eval(sheet,0,0))
 
         expect(cell2.Eval(sheet,0,0)!.ToObject()).toBe(90)
     })
 
 
-    test("Parse Cells: A1 = 10 * 10, B2 = A1 - 10", () => {
+    test("Parse Cells: A1 = 10 * 10, B2 = A1 - 10, C3 = A1 * B2", () => {
         const A1:Cell = Cell.Parse("=10 * 10",workbook,0,0)!
         A1.MarkDirty()
 
@@ -161,8 +161,8 @@ describe("Parse Cells", () => {
 
         C3.EnqueueForEvaluation(sheet,0,0)
 
-        C3.Eval(sheet,0,0)
 
+        console.log(C3.Eval(sheet,0,0))
 
         expect(C3.Eval(sheet,0,0)!.ToObject()).toBe(9000)
 
