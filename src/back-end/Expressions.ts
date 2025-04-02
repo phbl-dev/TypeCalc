@@ -411,8 +411,6 @@ export class FunCall extends Expr {
 
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
-        console.log("func name: ")
-        console.log(this.function);
         const result = this.function(...args);
 
         // If the return type is Date:
@@ -489,8 +487,21 @@ export class FunCall extends Expr {
             if (value instanceof TextValue) {
                 return TextValue.ToString(value)
             }
-            return null;
+            if (value instanceof ArrayView) {
 
+                const result = [];
+
+                for (let r = 0; r < value.Rows; r++) {
+                    for (let c = 0; c < value.Cols; c++) {
+                        const cellValue = value.Get(c, r);
+                        if (cellValue instanceof NumberValue) {
+                            result.push(NumberValue.ToNumber(cellValue));
+                        }
+                    }
+                }
+                return result;
+            }
+            return null;
         });
         return args;
     }
@@ -811,15 +822,8 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
 
             const lrCa = this.lr.address(col as number,row as number);
 
-            const view = ArrayView.Make(ulCa,lrCa, this.sheet ?? fca as Sheet)
+            return ArrayView.Make(ulCa,lrCa, this.sheet ?? fca as Sheet)
 
-            for (let i = 0; i < view.Cols; i++) {
-                for (let j = 0; j < view.Rows; j++) {
-                    //Do nothing
-                }
-            }
-
-            return view
         }
     }
 
