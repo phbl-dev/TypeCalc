@@ -14,7 +14,7 @@ export class SpreadsheetLexer {
 
     static NUMBER: TokenType = createToken({ name: "Number", pattern: /-?\d+(\.\d+)?([eE][-+]?\d+)?/ });
     static Colon: TokenType = createToken({ name: "Colon", pattern: /:/ });
-    static Identifier: TokenType = createToken({ name: "Identifier", pattern: /[A-Za-z][A-Za-z0-9_]*\(/ }); // aka name in ATG file.
+    static Identifier: TokenType = createToken({ name: "Identifier", pattern: /[A-Za-z][A-Za-z0-9_]*/ }); // aka name in ATG file.
     static StringLiteral: TokenType = createToken({ name: "StringLiteral", pattern: /"([^"\\]|\\.)*"/ });
 
     static QuoteCell: TokenType = createToken({ name: "QuoteCell", pattern: /'([^'\\]|\\.)*'/ , longer_alt:SpreadsheetLexer.StringLiteral});
