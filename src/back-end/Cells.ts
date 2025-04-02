@@ -25,6 +25,7 @@ export enum CellState {
 // of a spreadsheet cell.
 export abstract class Cell {
     private supportSet: SupportSet | null = null;
+    private ogText:string|null = null;
 
     // Method made for testing:
     public GetSupportSet(): SupportSet | null {
@@ -150,10 +151,16 @@ export abstract class Cell {
         if (text) {
             const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
             let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
+            if (cellToBeAdded == null) {return null}
+            cellToBeAdded.ogText = text;
             console.log("this is what is being returned from Cell: ");
             console.log(cellToBeAdded);
             return cellToBeAdded; // We call the parseCell() method to return a readable Cell.
         } else return null;
+    }
+
+    public GetText():string|null {
+        return this.ogText;
     }
 
     // Add the support range to the cell, avoiding direct self-support at sheet[col,row]
@@ -604,7 +611,8 @@ export class Formula extends Cell {
      * @constructor
      */
     public override Show(col: number, row: number, fo: Formats): string {
-        return "=" + this.e.Show(col, row, 0, fo);
+        return "=" + this.showValue().toString();
+        //return "=" + this.e.Show(col, row, 0, fo);
     }
 
     public get Expr(): Expr {
