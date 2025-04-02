@@ -245,8 +245,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     let [scrollOffset] = useState({ left: 0, top: 0 });
     let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
-    console.log(lettersToNumber("CPQN"));
-    console.log(window.devicePixelRatio)
+
     useEffect(() => {
         const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
         const input = document.getElementById("jumpToInput") as HTMLInputElement;
@@ -357,7 +356,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
             scrollOffset.top = Math.floor(scrollTop/rowHeight);
         }
-        console.log(scrollLeft, scrollTop);
+        //console.log(scrollLeft, scrollTop);
 
     }
 
