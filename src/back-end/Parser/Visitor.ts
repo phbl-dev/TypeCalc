@@ -315,7 +315,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef13"]) {
             const token = ctx["XMLSSRARef13"][0];
-            raref = new A1RefCellAddress(token.image);
+            raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef21"]) {
             const token = ctx["XMLSSRARef21"][0];
             raref = new R1C1RARef(token.image);
