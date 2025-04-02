@@ -306,8 +306,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx["A1Ref"]) {
             const token = ctx["A1Ref"][0].image
             raref = new A1RARef(token, 0,0);
-            console.log("this is the value of raref: \n")
-            console.log({raref});
+
         } else if (ctx["XMLSSRARef11"]) {
             const token = ctx["XMLSSRARef11"][0];
             raref = new R1C1RARef(token.image);
@@ -342,7 +341,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     protected cellContents(ctx: any): Cell {
         const e:any = this.visit(ctx.expression);
 
-        console.log(JSON.stringify(ctx, null, 2));
+        //console.log(JSON.stringify(ctx, null, 2));
 
         if (ctx.QuoteCell) {
             const helperConst = ctx["QuoteCell"][0].image

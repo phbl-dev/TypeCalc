@@ -475,9 +475,7 @@ export class FunCall extends Expr {
      * @public
      */
     public static extracted(sheet: Sheet, col: number, row: number, es: Expr[]) {
-
         const args: (string | number | object | null | undefined)[] = es.map(expr => {
-
             if (expr instanceof ExprArray) {
                 return FunCall.extracted(sheet, col, row, expr.GetExprArray());
             }
@@ -489,8 +487,21 @@ export class FunCall extends Expr {
             if (value instanceof TextValue) {
                 return TextValue.ToString(value)
             }
-            return null;
+            if (value instanceof ArrayView) {
 
+                const result = [];
+
+                for (let r = 0; r < value.Rows; r++) {
+                    for (let c = 0; c < value.Cols; c++) {
+                        const cellValue = value.Get(c, r);
+                        if (cellValue instanceof NumberValue) {
+                            result.push(NumberValue.ToNumber(cellValue));
+                        }
+                    }
+                }
+                return result;
+            }
+            return null;
         });
         return args;
     }
@@ -815,7 +826,8 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
 
             for (let i = 0; i < view.Cols; i++) {
                 for (let j = 0; j < view.Rows; j++) {
-                    //Do nothing
+                    console.log(`This is the value for col: ${i}, and row: ${j} `)
+                    console.log(view.Get(i,j).ToObject())
                 }
             }
 
