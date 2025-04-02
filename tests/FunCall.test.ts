@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import {beforeEach, describe, expect, should, test} from "vitest";
 import * as formulajs from '@formulajs/formulajs'
 import {CellRef, Expr, ExprArray, FunCall, NumberConst, TextConst} from "../src/back-end/Expressions";
 import { Sheet } from "../src/back-end/Sheet";
@@ -6,7 +6,9 @@ import { Workbook } from "../src/back-end/Workbook";
 import { NumberValue } from "../src/back-end/NumberValue";
 import { TextValue } from "../src/back-end/TextValue";
 import {SuperRARef} from "../src/back-end/CellAddressing";
-import {BlankCell, Formula, NumberCell} from "../src/back-end/Cells"; // Importing formulajs
+import {BlankCell, Formula, NumberCell} from "../src/back-end/Cells";
+import {CyclicException} from "../src/back-end/Types";
+import {ErrorValue} from "../src/back-end/ErrorValue"; // Importing formulajs
 
 
 describe("Formula.js", () => {
@@ -536,34 +538,79 @@ describe("Formula.js", () => {
         const expr5: Expr = new TextConst("Hello");
         const expr6: Expr = new TextConst("true");
         const expr7: Expr = new TextConst("false");
-        const expr8: Expr = new NumberConst(42);
 
-        // Setting a number cell to be 10 and creating a reference for it:
-        const cellRef1 = new CellRef(sheet, new SuperRARef(false, 1, false, 1));
-        const cell1 = new NumberCell(10)
-        sheet.SetCell(cell1, 1, 1)
 
-        // Setting a number cell to be 5 and creating a reference for it:
-        const cellRef2 = new CellRef(sheet, new SuperRARef(false, 2, false, 2));
-        const cell2 = new NumberCell(5)
-        sheet.SetCell(cell2, 2, 2)
+
 
         const funCall: Expr = FunCall.Make("IF", [expr1, expr2, expr3]);
         const funCall2: Expr = FunCall.Make("IF", [expr4, expr2, expr3]);
         const funCall3: Expr = FunCall.Make("IF", [FunCall.Make("EQUALS", [expr2, expr5]), expr6, expr7]);
-        const funCall4: Expr = FunCall.Make("EQUALS", [cellRef1, cellRef2])
-        const funCall5: Expr = FunCall.Make("IF", [expr4, FunCall.Make("DIVIDE", [expr1, expr4]), expr8])
 
 
         expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("Hello");
         expect(TextValue.ToString(funCall2.Eval(sheet,0,0))).toBe("Goodbye");
         expect(TextValue.ToString(funCall3.Eval(sheet,0,0))).toBe("true");
-        expect(TextValue.ToString(funCall4.Eval(sheet,0,0))).toBe("false");
 
-        // IF(FALSE, 1/0, 42) skal evaluere til 42, ikke til fejlen #DIV/0!
-        expect(NumberValue.ToNumber(funCall5.Eval(sheet,0,0))).toBe(42);
+
+
+        // expect(NumberValue.ToNumber(sheet.Get(0,0).Eval(sheet,0,0))).toBe(42);
+
+
 
     });
+
+
+    // Testing that a cyclic is NOT detected in certain IF() situations (where it's not required).
+    test("Eval with IF2", () => {
+        const trueExpr: Expr = new NumberConst(1); // We don't have a BooleanConst, but we can make boolean NumberConst
+        const falseExpr: Expr = new NumberConst(0); // We don't have a BooleanConst, but we can make boolean NumberConst
+        const expr3: Expr = new NumberConst(42);
+
+        // If we divide 1/0 we get an error value as we should:
+        const shouldBreak = FunCall.Make("DIVIDE", [trueExpr, falseExpr])
+        expect(shouldBreak.Eval(sheet,0,0).ToObject()).toBeInstanceOf(ErrorValue);
+
+        // But if it is wrapped inside an IF statement then we don't want to evaluate 1/0 if we don't need to.
+        // So we should correctly skip the ErrorValue:
+        const funCall5: Expr = FunCall.Make("IF", [falseExpr, shouldBreak, expr3])
+        const cell1 = Formula.Make(workbook, funCall5)
+        sheet.SetCell(cell1, 0, 0);
+        workbook.Recalculate();
+
+        // IF(FALSE, 1/0, 42) should be evaluated to 42, and not ErrorValue:
+        expect(sheet.Get(0,0).Eval(sheet,0,0).ToObject()).toBe(42);
+
+        // If cell A1 holds the formula =IF(FALSE, A1, 42) then there should not be
+        // detected a cycle because the reference to A1 in the formula should not
+        // even be evaluated.
+        const cellRef3 = new CellRef(sheet, new SuperRARef(false, 1, false, 0));
+        const funCall6 = FunCall.Make("IF", [falseExpr, cellRef3, expr3])
+        const cell3 = Formula.Make(workbook, funCall6);
+        sheet.SetCell(cell3, 1, 0) // Creating a cyclic dependency on purpose to check that it won't cause problems for IF in this scenario.
+        workbook.Recalculate();
+
+        expect(sheet.Get(1,0).Eval(sheet,1,0).ToObject()).toBe(42);
+
+        // NOTE: right now there may not be a cyclic dependency because it isn't tracked right:
+        const funCall7 = FunCall.Make("IF", [trueExpr, cellRef3, expr3])
+        const cell4 = Formula.Make(workbook, funCall7);
+        sheet.SetCell(cell4, 1, 0) // Creating a cyclic dependency on purpose to check that it won't cause problems for IF in this scenario.
+
+        console.log(sheet.Get(1,0).Eval(sheet,1,0))
+        workbook.Recalculate();
+
+
+        expect(() => {
+            sheet.Get(1, 0).Eval(sheet, 1, 0).ToObject();
+        }).toThrowError(CyclicException);
+
+        //expect(sheet.Get(1,0).Eval(sheet,1,0)).toThrow("CyclicException: ### CYCLE in cell TestSheet!B1 formula =func(1, TestSheet!C1, 42) \n")
+        //console.log(sheet.Get(1,0).Eval(sheet,0,0))
+        // When we insert "true" as the first expressions the second expression
+        // should be evaluated and then a cyclic dependency should be detected.
+        // But it just gives 0.
+    })
+
 
     test("Eval with EQUALS", () => {
         // Setting a number cell to be 10 and creating a reference for it:

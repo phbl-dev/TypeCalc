@@ -247,6 +247,7 @@ export class FunCall extends Expr {
     // containing various spreadsheet functions:
     public readonly function: (...args: unknown[]) => unknown;
     public es: Expr[];           // Non-null, elements non-null
+    public nonStrict: boolean;        // We implemented a flag for non-strict functions such that we know if some of their arguments should not be evaluated.
 
     private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[]) {
         super();
@@ -256,6 +257,7 @@ export class FunCall extends Expr {
             this.function = FunCall.getFunctionByName(name);
         }
         this.es = es;
+        this.nonStrict = false;
     }
 
     public static getFunctionByName(name: string): (...args: unknown[]) => unknown {
@@ -350,13 +352,44 @@ export class FunCall extends Expr {
     }
 
 
-    // Arguments are passed unevaluated to cater for non-strict IF
-    // (Work in progress):
+    /**
+     * IF is a function that we implemented ourselves to ...
+     */
+    private static IF(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            if (args[0]) {
+                return args[1];
+            } else {
+                return args[2];
+            }
+        }
+
+        // We create a new instance of FunCall, such that we can update our non-strict flag to true.
+        // This is important for methods such as IF and CHOOSE, where lazy evaluation is desired.
+        const funCall = new FunCall(func, es);
+        funCall.nonStrict = true;
+        return funCall;
+    }
+
+
+
     public override Eval(sheet: Sheet, col: number, row: number): Value {
+        // Special case for lazy evaluation functions like IF and CHOOSE
+        if (this.nonStrict) {
+
+            if (this.FindBoolValue(sheet, col, row)) {
+                return this.es[1].Eval(sheet, col, row);
+            } else {
+                return this.es[2].Eval(sheet, col, row);
+            }
+        }
+
         const args = FunCall.extracted(sheet, col, row, this.es);
 
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
+        console.log("func name: ")
+        console.log(this.function);
         const result = this.function(...args);
 
         // If the return type is Date:
@@ -382,6 +415,23 @@ export class FunCall extends Expr {
         }
 
         return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
+    }
+
+    private FindBoolValue(sheet: Sheet, col: number, row: number) {
+        let conditionValue = false;
+
+        const args_0: Value = this.es[0].Eval(sheet, col, row);
+
+
+        console.log(`Look here ${args_0.ToObject()}`);
+
+        if (args_0 instanceof NumberValue) {
+            conditionValue = NumberValue.ToBoolean(args_0) as unknown as boolean;
+        } else if (args_0 instanceof TextValue) {
+            const text: string = TextValue.ToString(args_0)!;
+            conditionValue = text.toLowerCase() === "true" || text === "1";
+        }
+        return conditionValue;
     }
 
     /**
