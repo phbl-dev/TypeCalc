@@ -164,6 +164,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
+                     ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
                  }
              }}
         >
@@ -171,13 +172,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     );
 };
 
-const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames }) => {
+const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
     return (
         <footer style={{ display: 'flex', gap: '1px'}}>
             {sheetNames.map((name) => (
                 <button
                     key={name}
-                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name)}}
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); ShowWindowInGUI(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30, true)}}
                     style={{
                         backgroundColor: activeSheet === name ? 'darkslategrey' : '',
                         color: activeSheet === name ? '' : '',
@@ -262,7 +263,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                         setSheetNames(sheetNames);
                         setActiveSheet(sheetNames[0]);
                         WorkbookManager.setActiveSheet(sheetNames[0]);
-                        ShowWindowInGUI(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+                        ShowWindowInGUI(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30, false);
                     } catch (error) {
                         console.error("Error during load:", error);
                     }
@@ -302,6 +303,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             }
         }
 
+
+
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
         jumpButton.addEventListener("click", handleJump); // Jump to cell
@@ -316,17 +319,18 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         };
     }, [scrollOffset]);
 
-    useEffect(() => {
-        if (activeSheet) {
-            ShowWindowInGUI(
-                activeSheet,
-                scrollOffset.left,
-                scrollOffset.left + 30,
-                scrollOffset.top,
-                scrollOffset.top + 30
-            );
-        }
-    }, [activeSheet]);
+    // useEffect(() => {
+    //     if (activeSheet) {
+    //         ShowWindowInGUI(
+    //             activeSheet,
+    //             scrollOffset.left,
+    //             scrollOffset.left + 30,
+    //             scrollOffset.top,
+    //             scrollOffset.top + 30,
+    //             false
+    //         );
+    //     }
+    // }, [activeSheet]);
 
 
     /** Synchronizes scrolling between the grid body and the headers so that it works
@@ -336,12 +340,16 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      * @param scrollTop Vertical scrolling value
      */
     function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }):void {
+        //console.log(scrollOffset);
         if (colHeaderRef.current && scrollLeft !== undefined) {
             colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
+            scrollOffset.left = Math.floor(scrollLeft/columnWidth);
         }
         if (rowHeaderRef.current && scrollTop !== undefined) {
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
+            scrollOffset.top = Math.floor(scrollTop/rowHeight);
         }
+
     }
 
     return (
@@ -352,6 +360,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 activeSheet={activeSheet}
                 setActiveSheet={setActiveSheet}
                 setSheetNames={setSheetNames}
+                scrollOffset = {scrollOffset}
             />
             {/* Header row as a 1-row grid */}
             <div style={{ display: "flex" }}>
@@ -419,7 +428,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                                 visibleColumnStartIndex,
                                 visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
                                 visibleRowStartIndex,
-                                visibleRowStopIndex + 1
+                                visibleRowStopIndex + 1,
+                                false
                             );
                         }}
                     >
