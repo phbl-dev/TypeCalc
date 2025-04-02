@@ -375,7 +375,7 @@ export class FunCall extends Expr {
 
     private static ADD(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return args.reduce((acc, curr) => (acc as number) + (curr as number),0)
+            return (args[0] as number) + (args[1] as number);
         }
         return new FunCall(func, es)
     }
@@ -384,7 +384,7 @@ export class FunCall extends Expr {
      */
     private static SUB(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return args.reduce((acc, curr) => (acc as number) - (curr as number));
+            return (args[0] as number) - (args[1] as number);
         };
         return new FunCall(func, es);
     }

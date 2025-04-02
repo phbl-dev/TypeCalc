@@ -274,7 +274,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             if (innerExpr instanceof NumberConst) {
                 e = new NumberConst(-innerExpr.value.value);
             } else {
-                e = FunCall.Make("SUB", [e]);
+                e = FunCall.Make("NEG", [e]);
             }
 
 
@@ -305,7 +305,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         if (ctx["A1Ref"]) {
             const token = ctx["A1Ref"][0].image
-            raref = new A1RARef(token, 0,0);
+            raref = new A1RARef(token, this.col,this.row);
 
         } else if (ctx["XMLSSRARef11"]) {
             const token = ctx["XMLSSRARef11"][0];
