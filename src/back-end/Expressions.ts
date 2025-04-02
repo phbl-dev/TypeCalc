@@ -657,13 +657,18 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
 
+
         console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
         console.log(sheet.Get(col,row))
 
         console.log(`Found values, col: ${col}, row: ${row}`);
         const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef)!; // ca.col = 0, ca.row = 0
-        console.log(`Cell return ${cell}`);
-        return cell.Eval(sheet, col, row) as Value;
+        if(cell !== undefined && cell !== null) {
+            return cell.Eval(sheet, col, row) as Value;
+        }
+        else {
+            return TextValue.Make(ErrorValue.refError.message);
+        }
     }
 
     public GetAbsoluteAddr(sheet: Sheet | FullCellAddress, col?: number, row?: number): FullCellAddress {
