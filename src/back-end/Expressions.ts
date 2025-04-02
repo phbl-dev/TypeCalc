@@ -275,6 +275,7 @@ export class FunCall extends Expr {
         if (name === "EQUALS") {return this.EQUALS(es);}
         if (name === "DIVIDE") {return this.DIVIDE(es);}
         if (name === "SUB") {return this.SUB(es)}
+        if (name === "ADD") {return this.ADD(es)}
 
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
@@ -329,14 +330,25 @@ export class FunCall extends Expr {
     }
 
     /**
-     * SUB is a function that we implemented ourselves to subtract two numbers
+     * ADD is a function that we implemented ourselves to add two or more numbers
      */
-    private static SUB(es: Expr[]) {
+
+    private static ADD(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return (args[0] as number)-(args[1] as number);
+            return args.reduce((acc, curr) => (acc as number) + (curr as number),0)
         }
         return new FunCall(func, es)
     }
+    /**
+     * SUB is a function that we implemented ourselves to subtract two or more numbers
+     */
+    private static SUB(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return args.reduce((acc, curr) => (acc as number) - (curr as number));
+        };
+        return new FunCall(func, es);
+    }
+
 
     // Arguments are passed unevaluated to cater for non-strict IF
     // (Work in progress):

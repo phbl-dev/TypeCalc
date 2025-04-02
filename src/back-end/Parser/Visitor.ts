@@ -70,27 +70,30 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected logicalTerm(ctx: any): Expr {
-
         let e: Expr;
-        let e2: Expr;
-        let op: string;
 
+        // Get the first term
         e = this.visit(ctx["term"][0]);
 
-        if (ctx["addOp"]) {
-            op = this.visit(ctx["addOp"]);
+        // Process all subsequent term-operator pairs
+        if (ctx["addOp"] && ctx["addOp"].length > 0) {
+            for (let i = 0; i < ctx["addOp"].length; i++) {
+                // Get the operator
+                let op = this.visit(ctx["addOp"][i]);
 
-            if (op === "+" ) {
-                op = "SUM";
+                // Transform the operator name as needed
+                if (op === "+") {
+                    op = "ADD";
+                } else if (op === "-") {
+                    op = "SUB";
+                }
+
+                // Get the next term
+                const e2 = this.visit(ctx["term"][i + 1]);
+
+                // Create a function call for this operation
+                e = FunCall.Make(op, [e, e2]);
             }
-
-            if (op === "-") {
-                op = "SUB"
-            }
-
-            e2 = this.visit(ctx["term"][1]);
-            e = FunCall.Make(op, [e, e2]);
-
         }
 
         return e;
@@ -206,23 +209,25 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     protected expression(ctx: any): Expr {
         let e: Expr;
-        let e2;
-        let op;
 
         e = this.visit(ctx["logicalTerm"][0]);
-        op = this.visit(ctx["logicalTerm"][0]);
-        if (ctx["logicalTerm"][1]) {
-            e2 = this.visit(ctx["logicalTerm"][1]);
 
-            e = FunCall.Make(op, [e, e2 as NumberConst]);
+        if (ctx["Operator"] && ctx["logicalTerm"].length > 1) {
+            for (let i = 0; i < ctx["Operator"].length; i++) {
+                const op = this.visit(ctx["Operator"][i]);
+
+                const nextTerm = this.visit(ctx["logicalTerm"][i + 1]);
+
+                e = FunCall.Make(op, [e, nextTerm]);
+            }
         }
 
         return e;
     }
 
+
     protected factor(ctx: any): Expr {
 
-        //console.log(JSON.stringify(ctx, null, 2));
 
         let r1, r2;
         let s1 = null;
@@ -269,7 +274,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             if (innerExpr instanceof NumberConst) {
                 e = new NumberConst(-innerExpr.value.value);
             } else {
-                e = FunCall.Make("PRODUCT", [new NumberConst(-1),NumberConst.Make(innerExpr)]);
+                e = FunCall.Make("SUB", [e]);
             }
 
 
@@ -352,9 +357,39 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         } else if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.Datetime) {
-            console.log(ctx["Datetime"][0].image)
+            // Get the datetime string
+            let dateTimeStr = ctx["Datetime"][0].image;
+            console.log("Original datetime string:", dateTimeStr);
 
-            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(BigInt((ctx.Datetime[0].image).getTime()) * 10_000n + 621355968000000000n));
+            try {
+                // Remove the square brackets while preserving the content
+                dateTimeStr = dateTimeStr.replace(/\[/g, '').replace(/\]/g, '');
+                console.log("Cleaned datetime string:", dateTimeStr);
+
+                // Parse the date
+                const dateObj = new Date(dateTimeStr);
+
+                if (!isNaN(dateObj.getTime())) {
+                    // In Excel, dates are stored as days since December 31, 1899
+                    // 25569 is the number of days between Jan 1, 1900 and Jan 1, 1970 (Unix epoch)
+                    const excelDate = dateObj.getTime() / (24 * 60 * 60 * 1000) + 25569;
+
+                    // Add the fractional day for time
+                    const timeOfDay = (dateObj.getHours() * 3600 + dateObj.getMinutes() * 60 + dateObj.getSeconds()) / 86400;
+                    const excelDateTime = excelDate + timeOfDay;
+
+                    console.log("Excel datetime value:", excelDateTime);
+
+                    // Create the number cell with the Excel date value
+                    this.cell = new NumberCell(excelDateTime);
+                } else {
+                    console.error("Invalid date after cleaning:", dateTimeStr);
+                    this.cell = new NumberCell(0); // Fallback
+                }
+            } catch (error) {
+                console.error("Error processing datetime:", error);
+                this.cell = new NumberCell(0); // Fallback
+            }
         }
 
         return this.cell;

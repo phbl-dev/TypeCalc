@@ -37,8 +37,8 @@ describe("Parse Numbers", () => {
 
     })
 
-    test("Parse Numbers: 10 + 10 ", () => {
-        const cell: Cell = Cell.Parse("=10 + 10", workbook, 0, 0)!
+    test("Parse Numbers: 10 + 10 + 10 ", () => {
+        const cell: Cell = Cell.Parse("= 10 + 10 + 10", workbook, 0, 0)!
 
         cell.MarkDirty()
 
@@ -46,13 +46,24 @@ describe("Parse Numbers", () => {
 
         cell.Eval(sheet, 0, 0)
 
-        expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(20)
+        expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(30)
 
 
     })
 
+    test("Parse Numbers: 10 + 10 + 10 - 10 - 10 - 10", () => {
+        const cell: Cell = Cell.Parse("=10 + 10 + 10 - 10 - 10 * 10", workbook, 0, 0)!
+        cell.MarkDirty()
+
+        cell.EnqueueForEvaluation(sheet, 0, 0)
+
+        cell.Eval(sheet, 0, 0)
+
+        expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(-80)
+    })
+
     test("Parse Numbers: 10 - 10 ", () => {
-        const cell: Cell = Cell.Parse("=10 - 10", workbook, 0, 0)!
+        const cell: Cell = Cell.Parse("= 10 - 10", workbook, 0, 0)!
         cell.MarkDirty()
 
         cell.EnqueueForEvaluation(sheet, 0, 0)
@@ -62,15 +73,26 @@ describe("Parse Numbers", () => {
         expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(0)
     })
 
-    test("Parse Numbers: 10 * 10 - 10 ", () => {
-        const cell: Cell = Cell.Parse("=10 * 10 - 10", workbook, 0, 0)!
+    test("Parse Numbers: SUM(10,10,10) ", () => {
+        const cell: Cell = Cell.Parse("=SUM(10, 10, 10)", workbook, 0, 0)!
         cell.MarkDirty()
 
         cell.EnqueueForEvaluation(sheet, 0, 0)
 
         cell.Eval(sheet, 0, 0)
 
-        expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(90)
+        expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(30)
+    })
+
+    test("Parse Numbers: 10 - 10 - 10 ", () => {
+        const cell: Cell = Cell.Parse(`= 10 - 10 - 10`, workbook, 0, 0)!
+        cell.MarkDirty()
+
+        cell.EnqueueForEvaluation(sheet, 0, 0)
+
+        cell.Eval(sheet, 0, 0)
+
+        expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(-10)
     })
 
     test("Parse Numbers: 10 * 10 - 10 * 5", () => {
