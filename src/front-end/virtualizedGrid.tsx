@@ -174,26 +174,25 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
 const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
     return (
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+        <footer style={{ display: 'flex', gap: '1px'}}>
             {sheetNames.map((name) => (
                 <button
                     key={name}
                     onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); ShowWindowInGUI(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30, true)}}
                     style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid #ccc',
-                        backgroundColor: activeSheet === name ? '#007bff' : '#f0f0f0',
-                        color: activeSheet === name ? 'white' : 'black',
-                        fontWeight: activeSheet === name ? 'bold' : 'normal',
-                        cursor: 'pointer',
+                        backgroundColor: activeSheet === name ? 'darkslategrey' : '',
+                        color: activeSheet === name ? '' : '',
+                        fontWeight: activeSheet === name ? '' : 'normal',
+                        borderBottom: activeSheet === name ? '3px solid #4a7e76' : '',
+                        borderRadius: activeSheet === name ? '0' : '',
+                        height: activeSheet === name ? '19px' : '',
                     }}
                 >
                     {name}
                 </button>
 
             ))}
-            <button
+            <button id="createSheetButton"
                 onClick={() => {
                     const newSheetName = window.prompt("Enter an unused Sheet Name");
                     if (newSheetName && !sheetNames.includes(newSheetName) && newSheetName.trim() !== "") {
@@ -203,18 +202,12 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
                     }
                 }}
                 style={{
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #ccc',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
+                    /*backgroundColor: '#28a745',*/
                 }}
             >
-                + New Sheet
+                +
             </button>
-        </div>
+        </footer>
     );
 };
 
@@ -233,8 +226,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      rowCount,
      columnWidth = 80,
      rowHeight = 30,
-     colHeaderHeight = rowHeight * 1.2,
-     rowHeaderWidth = columnWidth * 0.65,
+     colHeaderHeight = 40,
+     rowHeaderWidth = 40,
      width = window.innerWidth,
      height = window.innerHeight * 0.92,
  }) => {

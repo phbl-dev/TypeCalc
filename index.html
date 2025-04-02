@@ -11,13 +11,12 @@
 
   <body>
     <header>
-      <button class="menuButton" type = "reset" id = "reset" onclick = " localStorage.clear(); location.reload()">Reset data</button> <!-- Clear's the local storage and reloads the page -->
+      <button class="menuButton" type = "reset" id = "reset" onclick = "localStorage.clear(); location.reload()">Clear</button> <!-- Clear's the local storage and reloads the page -->
       <button class="menuButton" type = "button" id = "jumpToCell">Go to</button>
       <label for="jumpToInput"></label><input class="menuTextField" type = "text" id = "jumpToInput">
       <h4 contenteditable="true" id="documentTitle">Spreadsheet name</h4>
     </header>
     <div id="root"><!--Table goes here--></div>
-    <footer>
-    </footer>
+    <!-- Footer created separately by SheetSelector in virtualizedGrid -->
   </body>
 </html>
