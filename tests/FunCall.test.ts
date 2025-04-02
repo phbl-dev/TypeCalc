@@ -6,7 +6,7 @@ import { Workbook } from "../src/back-end/Workbook";
 import { NumberValue } from "../src/back-end/NumberValue";
 import { TextValue } from "../src/back-end/TextValue";
 import {SuperRARef} from "../src/back-end/CellAddressing";
-import {BlankCell, Formula, NumberCell} from "../src/back-end/Cells";
+import { BlankCell, Cell, Formula, NumberCell } from "../src/back-end/Cells";
 import {CyclicException} from "../src/back-end/Types";
 import {ErrorValue} from "../src/back-end/ErrorValue"; // Importing formulajs
 
@@ -633,6 +633,15 @@ describe("Formula.js", () => {
 
         expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("false");
         expect(TextValue.ToString(funCall2.Eval(sheet,0,0))).toBe("true");
+    })
+
+
+    test("Eval with CHOOSE", () => {
+        sheet.SetCell(Cell.Parse("=CHOOSE(2, A1, 20, 30)", workbook, 0,0),0,0)
+
+        workbook.Recalculate();
+
+        console.log(sheet.Get(0,0))
     })
 
 
