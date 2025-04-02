@@ -219,7 +219,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
                 onClick={() => {
                     const newSheetName = window.prompt("Enter an unused Sheet Name");
                     if (newSheetName && !sheetNames.includes(newSheetName) && newSheetName.trim() !== "") {
-                        let newSheet = new Sheet(WorkbookManager.getWorkbook(), newSheetName, false);
+                        let newSheet = new Sheet(WorkbookManager.getWorkbook(), newSheetName, 65536, 1048576, false);
                         WorkbookManager.getWorkbook().AddSheet(newSheet);
                         setSheetNames([...sheetNames, newSheetName]);
                     }
@@ -372,6 +372,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
             scrollOffset.top = Math.floor(scrollTop/rowHeight);
         }
+        //console.log(scrollLeft, scrollTop);
 
     }
 

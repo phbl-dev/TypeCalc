@@ -136,7 +136,7 @@ export class WorkbookManager {
         //console.log("[WorkbookManager] getWorkbook ->", this.instance);
         if (!this.instance) {
             this.instance = new Workbook();
-            const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", true);
+            const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", 65536, 1048576, true);
             this.instance.AddSheet(baseSheet);
         }
         return this.instance;
