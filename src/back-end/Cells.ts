@@ -611,8 +611,8 @@ export class Formula extends Cell {
      * @constructor
      */
     public override Show(col: number, row: number, fo: Formats): string {
-        return "=" + this.showValue().toString();
-        //return "=" + this.e.Show(col, row, 0, fo);
+        //return "=" + this.showValue().toString();
+        return "=" + this.e.Show(col, row, 0, fo);
     }
 
     public get Expr(): Expr {
