@@ -7,7 +7,16 @@
 *::-webkit-scrollbar {
     display: none;
 }
+button {
+    background: #4a7e76;
+    color: white;
+    border: none;
+    border-radius: 6px;
+}
+button:hover {background-color: #243d3d;}
 
+
+/* ------------------------------------------ */
 header {
     display: flex;
     align-items: center;
@@ -22,13 +31,9 @@ header {
 }
 
 header button {
-    background: lightgray;
-    color: black;
-    border: solid black 1px;
-    border-radius: 6px;
     height: 30px;
+    width: 80px;
 }
-button:hover {background-color: rgb(100, 100, 100);}
 
 input {
     height: 25px;
@@ -126,12 +131,9 @@ footer {
 }
 
 footer button {
-    background: #4a7e76;
-    color: white;
     height: 20px;
     width: 79px;
     cursor: pointer;
-    border: none;
     border-radius: 0 0 6px 6px;
     font-weight: bold;
 }
@@ -139,8 +141,4 @@ footer button {
 #createSheetButton {
     width: 50px;
     color: white;
-}
-
-footer button:hover {
-    background-color: green;
 }
