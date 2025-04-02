@@ -14,7 +14,6 @@ import { json } from "node:stream/consumers";
  * @class
  * @desc <b>Visitor Class </b>.This class relies on the implementation of the SpreadSheetParser class to generate a CST (Concrete Syntax Tree),
  * to which is it traversing the tree, and manipulates the outcome.
- * @todo look there are some issues with multiple statement as of now.
  * @example new SpreadsheetVisitor().ParseCell("= 10 + 10)", new Workbook(), 1, 1); // Can be used to parse the input "= 10 + 10".
  */
 export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisitorConstructor() {
@@ -86,6 +85,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
                     op = "ADD";
                 } else if (op === "-") {
                     op = "SUB";
+                } else if (op === "&") {
+                    op = "CONCATENATE";
                 }
 
                 // Get the next term
@@ -162,20 +163,20 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected logicalOp(ctx: any): string {
-
+        console.log(ctx)
         let op = "";
         if (ctx.Equals) {
-            op = "SUM";
+            op = "EQUALS";
         } else if (ctx.NotEqual) {
-            op = "<>";
+            op = "NOTEQUALS";
         } else if (ctx.LessThan) {
-            op = "<";
+            op = "LEQ";
         } else if (ctx.LessThanOrEqual) {
-            op = "<=";
+            op = "LEQUALS";
         } else if (ctx.GreaterThan) {
-            op = ">";
+            op = "GEQ";
         } else if (ctx.GreaterThanOrEqual) {
-            op = ">=";
+            op = "GEQUALS";
         }
         return op;
     }
@@ -190,21 +191,19 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected term(ctx: any): Expr {
+        let e = this.visit(ctx["powFactor"][0]);
 
-        let e;
-        let e2;
-        let op: string;
+        if (ctx["mulOp"] && ctx["mulOp"].length > 0) {
+            for (let i = 0; i < ctx["mulOp"].length; i++) {
+                const op = this.visit(ctx["mulOp"][i]);
 
-        e = this.visit(ctx["powFactor"][0]);
+                const e2 = this.visit(ctx["powFactor"][i + 1]);
 
-        if (ctx["mulOp"]) {
-            op = this.visit(ctx["mulOp"]);
-            e2 = this.visit(ctx["powFactor"][1]);
-            e = FunCall.Make(op, [e, e2]);
-            return e;
-        } else {
-            return e;
+                e = FunCall.Make(op, [e, e2]);
+            }
         }
+
+        return e;
     }
 
     protected expression(ctx: any): Expr {
@@ -341,7 +340,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     protected cellContents(ctx: any): Cell {
         const e:any = this.visit(ctx.expression);
 
-        console.log(JSON.stringify(ctx, null, 2));
 
         if (ctx.QuoteCell) {
             const helperConst = ctx["QuoteCell"][0].image
