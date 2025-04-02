@@ -227,7 +227,7 @@ export class A1RARef extends SuperRARef {
     readonly row: number;
 
     constructor(a1ref: string, col: number, row: number) {
-        super(false, 0, false, 0);
+        super(true, 0, true, 0);
         this.a1ref = a1ref;
         this.col = col;
         this.row = row;
