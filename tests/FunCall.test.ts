@@ -593,11 +593,19 @@ describe("Formula.js", () => {
 
         // NOTE: right now there may not be a cyclic dependency because it isn't tracked right:
         const funCall7 = FunCall.Make("IF", [trueExpr, cellRef3, expr3])
+        const cell4 = Formula.Make(workbook, funCall7);
+        sheet.SetCell(cell4, 1, 0) // Creating a cyclic dependency on purpose to check that it won't cause problems for IF in this scenario.
+
         console.log(sheet.Get(1,0).Eval(sheet,1,0))
         workbook.Recalculate();
 
-        expect(sheet.Get(1,0).Eval(sheet,1,0).ToObject()).toBeInstanceOf(CyclicException);
 
+        expect(() => {
+            sheet.Get(1, 0).Eval(sheet, 1, 0).ToObject();
+        }).toThrowError(CyclicException);
+
+        //expect(sheet.Get(1,0).Eval(sheet,1,0)).toThrow("CyclicException: ### CYCLE in cell TestSheet!B1 formula =func(1, TestSheet!C1, 42) \n")
+        //console.log(sheet.Get(1,0).Eval(sheet,0,0))
         // When we insert "true" as the first expressions the second expression
         // should be evaluated and then a cyclic dependency should be detected.
         // But it just gives 0.
