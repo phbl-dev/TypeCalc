@@ -276,8 +276,9 @@ export class FunCall extends Expr {
         if (name === "NEG") {return this.NEG(es)}
         if (name === "EQUALS") {return this.EQUALS(es);}
         if (name === "DIVIDE") {return this.DIVIDE(es);}
-        if (name === "-") {return this.SUB(es);}
-        if (name === "IF") {return this.IF(es);}
+        if (name === "SUB") {return this.SUB(es)}
+        if (name === "ADD") {return this.ADD(es)}
+
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
@@ -296,7 +297,6 @@ export class FunCall extends Expr {
             return new FunCall(func, es);
         }
     }
-
     /**
      * EQUALS is a function that we implemented ourselves to check if two values are equal.
      * The method creates a "lambda" function and stores it in "func". So we don't evaluate
@@ -332,14 +332,25 @@ export class FunCall extends Expr {
     }
 
     /**
-     * SUB is a function that we implemented ourselves to subtract two numbers
+     * ADD is a function that we implemented ourselves to add two or more numbers
      */
-    private static SUB(es: Expr[]) {
+
+    private static ADD(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return (args[0] as number)-(args[1] as number);
+            return args.reduce((acc, curr) => (acc as number) + (curr as number),0)
         }
         return new FunCall(func, es)
     }
+    /**
+     * SUB is a function that we implemented ourselves to subtract two or more numbers
+     */
+    private static SUB(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return args.reduce((acc, curr) => (acc as number) - (curr as number));
+        };
+        return new FunCall(func, es);
+    }
+
 
     /**
      * IF is a function that we implemented ourselves to ...
@@ -362,8 +373,6 @@ export class FunCall extends Expr {
 
 
 
-// Arguments are passed unevaluated to cater for non-strict IF
-    // (Work in progress):
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         // Special case for lazy evaluation functions like IF and CHOOSE
         if (this.nonStrict) {
@@ -614,12 +623,12 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
 
-        // console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
-        // console.log(sheet.Get(col,row))
+        console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
+        console.log(sheet.Get(col,row))
 
-        // console.log(`Found values, col: ${col}, row: ${row}`);
+        console.log(`Found values, col: ${col}, row: ${row}`);
         const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef)!; // ca.col = 0, ca.row = 0
-        // console.log(`Cell return ${cell}`);
+        console.log(`Cell return ${cell}`);
         return cell.Eval(sheet, col, row) as Value;
     }
 

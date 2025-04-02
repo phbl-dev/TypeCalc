@@ -4,11 +4,19 @@
     white-space: normal;
     font-family: Arial, sans-serif;
 }
-
-*::-webkit-scrollbar :not(#gridBody){
+*::-webkit-scrollbar {
     display: none;
 }
+button {
+    background: #4a7e76;
+    color: white;
+    border: none;
+    border-radius: 6px;
+}
+button:hover {background-color: #243d3d;}
 
+
+/* ------------------------------------------ */
 header {
     display: flex;
     align-items: center;
@@ -20,17 +28,12 @@ header {
     height: 46px;
     width: 100%;
     padding-left: 5px;
-    border-bottom: 1px solid black;
 }
 
-button {
-    background: lightgray;
-    color: black;
-    border: solid black 1px;
-    border-radius: 5px;
+header button {
     height: 30px;
+    width: 80px;
 }
-button:hover {background-color: rgba(0, 100, 50, 1);}
 
 input {
     height: 25px;
@@ -61,48 +64,53 @@ header h4 {
 }
 
 #headerCorner {
-    background: #3b3b3b;
+    background: black;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    border-right: 1px solid black;
-    border-bottom: 1px solid black;
+    border-left: 1px solid grey;
+    border-top: 1px solid grey;
 }
 
 #columnHeaders {
+    background-color: #3b3b3b;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    background-color: grey;
-    color: white;
     font-weight: bold;
-    border: 1px solid white;
+    width: 100%;
+    border: 1px solid grey;
     z-index: 2;
 }
 
 #rowHeaders {
+    background-color: #3b3b3b;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: grey;
-    color: white;
     font-weight: bold;
     z-index: 2;
-    border: 1px solid white;
+    border: 1px solid grey;
 }
 
-.gridBody {
+#gridBody {
     display: flex;
+    scrollbar-width: auto; !important; /* Doesn't work */
+}
+
+#gridBody::-webkit-scrollbar {
+    display: block !important; /* Doesn't work */
 }
 
 .Cell {
     display: flex;
     align-items: center;
     justify-content: start;
-    border: white 1px solid;
+    border: grey 1px solid;
     font-size: small;
     text-indent: 5px;
     z-index: 1;
@@ -113,12 +121,24 @@ footer {
     height: 25px;
     width: 100%;
     display: flex;
-    align-items: center;
-    padding-left: 5px;
+    align-items: start;
+    padding-left: 40px;
     column-gap: 0;
     background-color: darkslategrey;
     position: fixed;
     bottom: 0;
     z-index: 2;
-    border-top: 1px solid black;
+}
+
+footer button {
+    height: 20px;
+    width: 79px;
+    cursor: pointer;
+    border-radius: 0 0 6px 6px;
+    font-weight: bold;
+}
+
+#createSheetButton {
+    width: 50px;
+    color: white;
 }

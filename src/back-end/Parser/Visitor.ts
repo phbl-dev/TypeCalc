@@ -70,23 +70,30 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected logicalTerm(ctx: any): Expr {
-
         let e: Expr;
-        let e2: Expr;
-        let op: string;
 
+        // Get the first term
         e = this.visit(ctx["term"][0]);
 
-        if (ctx["addOp"]) {
-            op = this.visit(ctx["addOp"]);
+        // Process all subsequent term-operator pairs
+        if (ctx["addOp"] && ctx["addOp"].length > 0) {
+            for (let i = 0; i < ctx["addOp"].length; i++) {
+                // Get the operator
+                let op = this.visit(ctx["addOp"][i]);
 
-            if (op === "+" || op === '-'  ) {
-                op = "SUM";
+                // Transform the operator name as needed
+                if (op === "+") {
+                    op = "ADD";
+                } else if (op === "-") {
+                    op = "SUB";
+                }
+
+                // Get the next term
+                const e2 = this.visit(ctx["term"][i + 1]);
+
+                // Create a function call for this operation
+                e = FunCall.Make(op, [e, e2]);
             }
-
-            e2 = this.visit(ctx["term"][1]);
-            e = FunCall.Make(op, [e, e2]);
-
         }
 
         return e;
@@ -202,23 +209,25 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     protected expression(ctx: any): Expr {
         let e: Expr;
-        let e2;
-        let op;
 
         e = this.visit(ctx["logicalTerm"][0]);
-        op = this.visit(ctx["logicalTerm"][0]);
-        if (ctx["logicalTerm"][1]) {
-            e2 = this.visit(ctx["logicalTerm"][1]);
 
-            e = FunCall.Make(op, [e, e2 as NumberConst]);
+        if (ctx["Operator"] && ctx["logicalTerm"].length > 1) {
+            for (let i = 0; i < ctx["Operator"].length; i++) {
+                const op = this.visit(ctx["Operator"][i]);
+
+                const nextTerm = this.visit(ctx["logicalTerm"][i + 1]);
+
+                e = FunCall.Make(op, [e, nextTerm]);
+            }
         }
 
         return e;
     }
 
+
     protected factor(ctx: any): Expr {
 
-        //console.log(JSON.stringify(ctx, null, 2));
 
         let r1, r2;
         let s1 = null;
@@ -265,7 +274,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             if (innerExpr instanceof NumberConst) {
                 e = new NumberConst(-innerExpr.value.value);
             } else {
-                e = FunCall.Make("PRODUCT", [new NumberConst(-1),NumberConst.Make(innerExpr)]);
+                e = FunCall.Make("SUB", [e]);
             }
 
 
@@ -297,6 +306,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         if (ctx["A1Ref"]) {
             const token = ctx["A1Ref"][0].image
             raref = new A1RARef(token, 0,0);
+            console.log("this is the value of raref: \n")
+            console.log({raref});
         } else if (ctx["XMLSSRARef11"]) {
             const token = ctx["XMLSSRARef11"][0];
             raref = new R1C1RARef(token.image);
@@ -329,21 +340,56 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected cellContents(ctx: any): Cell {
-
         const e:any = this.visit(ctx.expression);
 
+        console.log(JSON.stringify(ctx, null, 2));
 
         if (ctx.QuoteCell) {
-            this.cell = new QuoteCell(e.image.substring(1));
+            const helperConst = ctx["QuoteCell"][0].image
+            this.cell = new QuoteCell(ctx["QuoteCell"][0].image.substring(1, helperConst.length - 1));
         } else if (ctx.StringLiteral) {
-            console.log(e)
-            //this.cell = new TextCell(e.image.substring(1, e.image.length - 2));
+            const helperConst = ctx["StringLiteral"][0].image
+
+            this.cell = new TextCell(ctx["StringLiteral"][0].image.substring(1, helperConst.length - 1 ));
         } else if (ctx.number) {
-            this.cell = new NumberCell(Number.parseInt(e.image));
+            console.log(ctx["number"][0].children["Number"][0].image)
+            this.cell = new NumberCell(Number.parseInt(ctx["number"][0].children["Number"][0].image));
         } else if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.Datetime) {
-            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(BigInt((ctx.Datetime[0].image as Date).getTime()) * 10_000n + 621355968000000000n));
+            // Get the datetime string
+            let dateTimeStr = ctx["Datetime"][0].image;
+            console.log("Original datetime string:", dateTimeStr);
+
+            try {
+                // Remove the square brackets while preserving the content
+                dateTimeStr = dateTimeStr.replace(/\[/g, '').replace(/\]/g, '');
+                console.log("Cleaned datetime string:", dateTimeStr);
+
+                // Parse the date
+                const dateObj = new Date(dateTimeStr);
+
+                if (!isNaN(dateObj.getTime())) {
+                    // In Excel, dates are stored as days since December 31, 1899
+                    // 25569 is the number of days between Jan 1, 1900 and Jan 1, 1970 (Unix epoch)
+                    const excelDate = dateObj.getTime() / (24 * 60 * 60 * 1000) + 25569;
+
+                    // Add the fractional day for time
+                    const timeOfDay = (dateObj.getHours() * 3600 + dateObj.getMinutes() * 60 + dateObj.getSeconds()) / 86400;
+                    const excelDateTime = excelDate + timeOfDay;
+
+                    console.log("Excel datetime value:", excelDateTime);
+
+                    // Create the number cell with the Excel date value
+                    this.cell = new NumberCell(excelDateTime);
+                } else {
+                    console.error("Invalid date after cleaning:", dateTimeStr);
+                    this.cell = new NumberCell(0); // Fallback
+                }
+            } catch (error) {
+                console.error("Error processing datetime:", error);
+                this.cell = new NumberCell(0); // Fallback
+            }
         }
 
         return this.cell;

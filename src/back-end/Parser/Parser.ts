@@ -309,7 +309,6 @@ export class SpreadsheetParser extends CstParser {
                 },
                 {
                     ALT: () => {
-                        $.CONSUME(SpreadsheetLexer.NUMBER);
                         $.SUBRULE($.number);
                     },
                 },

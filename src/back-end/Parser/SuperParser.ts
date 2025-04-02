@@ -28,19 +28,9 @@ A3.EnqueueForEvaluation(sheet,1,1)
 
 A3.Eval(sheet,1,1)
 */
-const A4:Cell = Cell.Parse('="Philip" ',workbook, 1,1)!
+
+const A1:Cell = Cell.Parse('"QuoteCell"',workbook, 0,0)!
 
 
 
-
-
-
-
-/**
 console.log(A1)
-//console.log(A2)
-console.log(A3)
-
-console.log(A3.Show(0,0,workbook.format))
-*/
-console.log(A4)

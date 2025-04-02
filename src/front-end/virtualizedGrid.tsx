@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {forwardRef,  useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {NumberCell, QuoteCell, Cell as BackendCell} from "../back-end/Cells";
@@ -15,6 +15,7 @@ interface GridInterface {
     rowHeaderWidth?: number;
     width?: number;
     height?: number;
+    ref?: React.Ref<any>;
 }
 
 /** Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
@@ -29,6 +30,19 @@ export function numberToLetters(n: number) {
         n = Math.floor(n / 26);
     }
     return letter;
+}
+
+function lettersToNumber(letters:string):number {
+    let output = 0;
+    for (let i = 0; i < letters.length; i++) {
+        const charCode = letters.charCodeAt(i) - 65;
+        output = output * 26 + (charCode + 1);
+    }
+    return output;
+}
+
+export function getCell(cellID:string):HTMLElement|null{
+    return document.getElementById(cellID);
 }
 
 /** Defines the column headers as a div with ID, style, and contents
@@ -62,10 +76,6 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
         {rowIndex + 1} {/* +1 since its 0-indexed */}
     </div>
 );
-
-export function getCell(cellID:string):HTMLElement|null{
-    return document.getElementById(cellID);
-}
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
@@ -154,6 +164,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
+                     ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
                  }
              }}
         >
@@ -161,28 +172,27 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     );
 };
 
-const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames }) => {
+const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
     return (
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+        <footer style={{ display: 'flex', gap: '1px'}}>
             {sheetNames.map((name) => (
                 <button
                     key={name}
-                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name)}}
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); ShowWindowInGUI(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30, true)}}
                     style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid #ccc',
-                        backgroundColor: activeSheet === name ? '#007bff' : '#f0f0f0',
-                        color: activeSheet === name ? 'white' : 'black',
-                        fontWeight: activeSheet === name ? 'bold' : 'normal',
-                        cursor: 'pointer',
+                        backgroundColor: activeSheet === name ? 'darkslategrey' : '',
+                        color: activeSheet === name ? '' : '',
+                        fontWeight: activeSheet === name ? '' : 'normal',
+                        borderBottom: activeSheet === name ? '3px solid #4a7e76' : '',
+                        borderRadius: activeSheet === name ? '0' : '',
+                        height: activeSheet === name ? '19px' : '',
                     }}
                 >
                     {name}
                 </button>
 
             ))}
-            <button
+            <button id="createSheetButton"
                 onClick={() => {
                     const newSheetName = window.prompt("Enter an unused Sheet Name");
                     if (newSheetName && !sheetNames.includes(newSheetName) && newSheetName.trim() !== "") {
@@ -192,18 +202,12 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames 
                     }
                 }}
                 style={{
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid #ccc',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
+                    /*backgroundColor: '#28a745',*/
                 }}
             >
-                + New Sheet
+                +
             </button>
-        </div>
+        </footer>
     );
 };
 
@@ -218,15 +222,15 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames 
  * additional grids; one for the row headers and one for the regular cells.
  */
 export const VirtualizedGrid: React.FC<GridInterface> = (({
-                                                              columnCount,
-                                                              rowCount,
-                                                              columnWidth = 80,
-                                                              rowHeight = 30,
-                                                              colHeaderHeight = rowHeight * 1.2,
-                                                              rowHeaderWidth = columnWidth * 0.65,
-                                                              width = window.innerWidth,
-                                                              height = window.innerHeight * 0.92,
-                                                          }) => {
+     columnCount,
+     rowCount,
+     columnWidth = 80,
+     rowHeight = 30,
+     colHeaderHeight = 40,
+     rowHeaderWidth = 40,
+     width = window.innerWidth,
+     height = window.innerHeight * 0.92,
+ }) => {
     // Used to synchronize scrolling between the referenced objects
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
@@ -236,6 +240,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
     useEffect(() => {
+        const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
+        const input = document.getElementById("jumpToInput") as HTMLInputElement;
+        if (!jumpButton || !input) return; // In case either element doesn't exist/is null
+
         // Handle file drop events entirely in React
         function handleDrop(event: DragEvent) {
             event.preventDefault();
@@ -255,7 +263,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                         setSheetNames(sheetNames);
                         setActiveSheet(sheetNames[0]);
                         WorkbookManager.setActiveSheet(sheetNames[0]);
-                        ShowWindowInGUI(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+                        ShowWindowInGUI(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30, false);
                     } catch (error) {
                         console.error("Error during load:", error);
                     }
@@ -267,26 +275,62 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             event.preventDefault();
         }
 
-        window.addEventListener("drop", handleDrop);
-        window.addEventListener("dragover", handleDragOver);
+        // Handles the "Go to"/jump to a specific cell
+        const handleJump = () => {
+            const cellID = input.value.trim();
+            const headerCorner = document.getElementById("headerCorner");
+
+            if(cellID) {
+                const idSplit = cellID.match(/[A-Za-z]+|\d+/g) || [];
+                const targetCell = getCell(cellID);
+
+                if(idSplit.length === 2) {
+                    const col = lettersToNumber(idSplit[0]);
+                    const row = parseInt(idSplit[1], 10);
+
+                    if (bodyRef.current) {
+                        bodyRef.current.scrollToItem({
+                            align: "start",
+                            columnIndex: col,
+                            rowIndex: row
+                        });
+                        if (targetCell && headerCorner) {
+                            targetCell.focus(); //TODO: Needs to fire event twice for targetCell.focus to focus a cell
+                            headerCorner.textContent = cellID;
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        window.addEventListener("drop", handleDrop); // Drag and drop
+        window.addEventListener("dragover", handleDragOver); // Drag and drop
+        jumpButton.addEventListener("click", handleJump); // Jump to cell
+        input.addEventListener("keydown", (e) => { // Jump to cell
+            if(e.key === "Enter") handleJump();
+        })
 
         return () => {
-            window.removeEventListener("drop", handleDrop);
-            window.removeEventListener("dragover", handleDragOver);
+            window.removeEventListener("drop", handleDrop); // Drag and drop
+            window.removeEventListener("dragover", handleDragOver); // Drag and drop
+            jumpButton.removeEventListener("click", handleJump); // Jump to cell
         };
     }, [scrollOffset]);
 
-    useEffect(() => {
-        if (activeSheet) {
-            ShowWindowInGUI(
-                activeSheet,
-                scrollOffset.left,
-                scrollOffset.left + 30,
-                scrollOffset.top,
-                scrollOffset.top + 30
-            );
-        }
-    }, [activeSheet]);
+    // useEffect(() => {
+    //     if (activeSheet) {
+    //         ShowWindowInGUI(
+    //             activeSheet,
+    //             scrollOffset.left,
+    //             scrollOffset.left + 30,
+    //             scrollOffset.top,
+    //             scrollOffset.top + 30,
+    //             false
+    //         );
+    //     }
+    // }, [activeSheet]);
 
 
     /** Synchronizes scrolling between the grid body and the headers so that it works
@@ -295,13 +339,17 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      * @param scrollLeft Horizontal scrolling value
      * @param scrollTop Vertical scrolling value
      */
-    function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }) {
+    function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }):void {
+        //console.log(scrollOffset);
         if (colHeaderRef.current && scrollLeft !== undefined) {
             colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
+            scrollOffset.left = Math.floor(scrollLeft/columnWidth);
         }
         if (rowHeaderRef.current && scrollTop !== undefined) {
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
+            scrollOffset.top = Math.floor(scrollTop/rowHeight);
         }
+
     }
 
     return (
@@ -312,6 +360,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 activeSheet={activeSheet}
                 setActiveSheet={setActiveSheet}
                 setSheetNames={setSheetNames}
+                scrollOffset = {scrollOffset}
             />
             {/* Header row as a 1-row grid */}
             <div style={{ display: "flex" }}>
@@ -326,13 +375,14 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 </div>
                 {/* Column headers as a grid */}
                 <Grid
-                    ref={colHeaderRef}
                     columnCount={columnCount}
                     columnWidth={() => columnWidth}
                     height={colHeaderHeight}
                     rowCount={1}
                     rowHeight={() => colHeaderHeight}
                     width={width - rowHeaderWidth}
+                    overscanColumnCount={10}
+                    ref={colHeaderRef}
                 >
                     {ColumnHeader}
                 </Grid>
@@ -342,13 +392,14 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             <div style={{ display: "flex" }}>
                 {/* Row headers */}
                 <Grid
-                    ref={rowHeaderRef}
                     columnCount={1}
                     columnWidth={() => rowHeaderWidth}
                     height={height - colHeaderHeight}
                     rowCount={rowCount}
                     rowHeight={() => rowHeight}
                     width={rowHeaderWidth}
+                    overscanRowCount={10}
+                    ref={rowHeaderRef}
                 >
                     {RowHeader}
                 </Grid>
@@ -356,13 +407,15 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 {/* Grid body */}
                 <div id="gridBody">
                     <Grid
-                        ref={bodyRef}
                         columnCount={columnCount}
                         columnWidth={() => columnWidth}
                         height={height - colHeaderHeight}
                         rowCount={rowCount}
                         rowHeight={() => rowHeight}
                         width={width - rowHeaderWidth}
+                        overscanColumnCount={10}
+                        overscanRowCount={10}
+                        ref={bodyRef}
                         onScroll={syncScroll}
                         onItemsRendered={({
                                               visibleRowStartIndex,
@@ -375,7 +428,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                                 visibleColumnStartIndex,
                                 visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
                                 visibleRowStartIndex,
-                                visibleRowStopIndex + 1
+                                visibleRowStopIndex + 1,
+                                false
                             );
                         }}
                     >

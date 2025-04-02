@@ -293,7 +293,8 @@ export class BlankCell extends ConstCell {
     }
 
     Reset(): void {
-        throw new Error("Method not implemented (BlankCell Reset).");
+        console.log("Trying to reset BlankCell")
+        //throw new Error("Method not implemented (BlankCell Reset).");
     }
 
 
@@ -335,7 +336,8 @@ export class NumberCell extends ConstCell {
 
     // We have to implement these methods from the ConstCell as well:
     Reset(): void {
-        throw new Error("Method not implemented (NumberCell Reset)");
+        console.log("Trying to reset NumberCell")
+        //throw new Error("Method not implemented (NumberCell Reset)");
     }
 
 }
