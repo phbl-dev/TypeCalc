@@ -195,27 +195,16 @@ describe("Parse Strings", () => {
 
     })
 
-    test("Parse CellArea", () => {
-        const A2 = Cell.Parse("=2", workbook,0,1) as NumberCell
-        sheet.SetCell(A2,0,1)
-
-        const cellArea = Cell.Parse("=SUM(A1:A2))", workbook,0,0) as Cell
-        sheet.SetCell(cellArea,0,0)
-        workbook.Recalculate()
-
-        console.log(sheet.Get(0,0).Eval(sheet,0,0).ToObject())
-    })
-
     test("Parse SUM a CellArea", () => {
-        const sumOfCellArea = Cell.Parse("=SUM(A2:A10)", workbook,0,0) as Formula
-        const A2 = Cell.Parse("=1", workbook,0,1) as NumberCell
-        const A3 = Cell.Parse("=2", workbook,0,2) as NumberCell
+        const A2 = Cell.Parse("1", workbook,0,0)
+        const A3 = Cell.Parse("2", workbook,0,0)
+        const A1 = Cell.Parse("=SUM(A2:A4)", workbook,0,0)
 
-        sheet.SetCell(sumOfCellArea,0,0)
+        sheet.SetCell(A1,0,0)
         sheet.SetCell(A2,0,1)
         sheet.SetCell(A3,0,2)
 
         workbook.Recalculate()
-        console.log(sheet.Get(0,0).Eval(sheet,0,0).ToObject()) // should print 3
+        console.log("result: " + sheet.Get(0,0).Eval(sheet,0,0).ToObject()) // should print 3
     })
 })
