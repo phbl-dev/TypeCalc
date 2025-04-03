@@ -315,6 +315,16 @@ export class FunCall extends Expr {
         if (name === "ADD") {return this.ADD(es)}
         if (name === "IF") {return this.IF(es)}
         if (name === "CHOOSE") {return this.CHOOSE(es)}
+        if (name === "NOTEQUALS") {return this.NOTEQUALS(es)}
+        if (name === "GEQ") {return this.GEQ(es)}
+        if (name === "GEQUALS") {return this.GEQUALS(es)}
+        if (name === "LEQUALS") {return this.LEQUALS(es)}
+        if (name === "LEQ") {return this.LEQ(es)}
+        if (name === "CONCATENATE") {return this.CONCATENATE(es)}
+
+
+
+
 
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
@@ -333,6 +343,8 @@ export class FunCall extends Expr {
         } else {
             return new FunCall(func, es);
         }
+
+
     }
 
     /**
@@ -342,9 +354,18 @@ export class FunCall extends Expr {
      */
     private static EQUALS(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return args[0] === args[1];
-        }
+                return args[0] === args[1];
+            }
+
         return new FunCall(func, es)
+    }
+
+    private static CONCATENATE(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+
+            return args.join('');  // Join all arguments as strings
+        }
+        return new FunCall(func, es);
     }
 
     /**
@@ -358,6 +379,61 @@ export class FunCall extends Expr {
         }
         return new FunCall(func, es)
     }
+
+    /**
+     * NOT EQUALS is a function that we implemented ourselves to check if two variables are not the same
+     */
+
+    private static NOTEQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return args[0] !== args[1];
+        }
+        return new FunCall(func, es)
+    }
+
+    private static GEQ(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+
+                return (args[0] as number) > (args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+    private static LEQ(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return (args[0] as number) < (
+                    args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+
+    private static LEQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return (args[0] as number) <= (
+                    args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+
+    private static GEQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return (args[0] as number) >= (
+                    args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+
 
     /**
      * DIVIDE is a function that we implemented ourselves to divide two numbers
@@ -375,7 +451,7 @@ export class FunCall extends Expr {
 
     private static ADD(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return args.reduce((acc, curr) => (acc as number) + (curr as number),0)
+            return (args[0] as number) + (args[1] as number);
         }
         return new FunCall(func, es)
     }
@@ -384,7 +460,7 @@ export class FunCall extends Expr {
      */
     private static SUB(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return args.reduce((acc, curr) => (acc as number) - (curr as number));
+            return (args[0] as number) - (args[1] as number);
         };
         return new FunCall(func, es);
     }
@@ -494,6 +570,7 @@ export class FunCall extends Expr {
                 for (let r = 0; r < value.Rows; r++) {
                     for (let c = 0; c < value.Cols; c++) {
                         const cellValue = value.Get(c, r);
+                        console.log(`Look here ${cellValue}`);
                         if (cellValue instanceof NumberValue) {
                             result.push(NumberValue.ToNumber(cellValue));
                         }
@@ -868,32 +945,32 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
         }
     }
 
-    public AddToSupport(supported:Sheet, col: number, row: number, cols: number, rows: number) {
-        const referredSheet = this.sheet ?? supported
-        let referredRows:Interval, referredCols:Interval;
+    public AddToSupport(supported: Sheet, col: number, row: number, cols: number, rows: number) {
+        const referredSheet = this.sheet ?? supported;
+        let referredRows: Interval, referredCols: Interval;
         let supportedCols: (arg: number) => Interval;
         let supportedRows: (arg: number) => Interval;
-        const ra = this.ul.rowRef, rb = this.lr.rowRef, r1 = row, r2 = row + rows -1
-        const ca =this.ul.colRef, cb = this.lr.colRef, c1 = col, c2 = col + cols - 1;
+        const ra = this.ul.rowRef, rb = this.lr.rowRef, r1 = row, r2 = row + rows - 1;
+        const ca = this.ul.colRef, cb = this.lr.colRef, c1 = col, c2 = col + cols - 1;
 
         [referredRows, supportedRows] = CellArea.RefAndSupp(this.ul.rowAbs, this.lr.rowAbs, ra, rb, r1, r2);
-       [referredCols, supportedCols] =  CellArea.RefAndSupp(this.ul.colAbs, this.lr.colAbs, ca, cb, c1, c2,);
+        [referredCols, supportedCols] = CellArea.RefAndSupp(this.ul.colAbs, this.lr.colAbs, ca, cb, c1, c2);
 
-       if(referredCols.length() < referredRows.length()) {
-           referredCols.forEach((col) => {
-               const suppCols = supportedCols(col)
-               referredRows.forEach((row) => {
-                   referredSheet.AddSupport(col, row, supported, suppCols, supportedRows(row))
-               })
-           })
-       } else {
-           referredRows.forEach((row) => {
-               const suppRows = supportedRows(col)
-               referredCols.forEach((col) => {
-                   referredSheet.AddSupport(col, row, supported, supportedCols(col), suppRows)
-               })
-           })
-       }
+        if(referredCols.length() < referredRows.length()) {
+            referredCols.forEach((c) => {
+                const suppCols = supportedCols(c);
+                referredRows.forEach((r) => {
+                    referredSheet.AddSupport(c, r, supported, suppCols, supportedRows(r));
+                });
+            });
+        } else {
+            referredRows.forEach((r) => {
+                const suppRows = supportedRows(r);
+                referredCols.forEach((c) => {
+                    referredSheet.AddSupport(c, r, supported, supportedCols(c), suppRows);
+                });
+            });
+        }
     }
 
     private static RefAndSupp(ulAbs:boolean, lrAbs:boolean, ra:number, rb:number, r1:number, r2:number):  [Interval, (arg: number) => Interval] {

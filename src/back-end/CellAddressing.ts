@@ -227,12 +227,16 @@ export class A1RARef extends SuperRARef {
     readonly row: number;
 
     constructor(a1ref: string, col: number, row: number) {
-        super(false, 0, false, 0);
+        super(true, col, true, row);  // Start with absolute references
         this.a1ref = a1ref;
         this.col = col;
         this.row = row;
 
         if (a1ref.toLocaleLowerCase() == "rc".toLocaleLowerCase()) {
+            this.colAbs = false;
+            this.rowAbs = false;
+            this.colRef = 0;
+            this.rowRef = 0;
             return;
         }
 
@@ -240,22 +244,30 @@ export class A1RARef extends SuperRARef {
         if (i < this.a1ref.length && this.a1ref[i] == "$") {
             this.colAbs = true;
             i++;
+        } else {
+
+            this.colAbs = true;
         }
 
         let val = -1;
-        //proceed from here
         while (i < a1ref.length && this.isAToZ(this.a1ref[i])) {
             val = (val + 1) * 26 + this.aToZValue(this.a1ref[i]);
             i++;
         }
 
-        this.colRef = this.colAbs ? val : val - this.col;
+
+        this.colRef = val;
+
         if (i < this.a1ref.length && this.a1ref[i] == "$") {
             this.rowAbs = true;
             i++;
+        } else {
+            this.rowAbs = true;
         }
+
         val = this.parseIntWithIndex(this.a1ref, i).value;
-        this.rowRef = (this.rowAbs ? val : val - this.row) - 1;
+
+        this.rowRef = val - 1;
     }
 }
 

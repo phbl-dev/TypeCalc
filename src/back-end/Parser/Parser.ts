@@ -50,7 +50,6 @@ export class SpreadsheetParser extends CstParser {
                     },
                 },
                 {
-                    // Doesn't work?
                     ALT: (): void => {
                         $.CONSUME(SpreadsheetLexer.Ampersand);
                     },
