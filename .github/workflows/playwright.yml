@@ -9,19 +9,56 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # Explicitly install Playwright Test if needed
+      - name: Install Playwright Test
+        run: npm install -D @playwright/test
+
+      # Install Playwright browsers
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      # Install wait-on
+      - name: Install wait-on
+        run: npm install -g wait-on
+
+      # Crucial - create a clean node_modules for Playwright only
+      # This isolates Playwright from Vitest's expect implementation
+      - name: Create isolated Playwright environment
+        run: |
+          mkdir -p playwright-tests
+          cp -r e2e playwright-tests/
+          cp playwright.config.ts playwright-tests/
+          cd playwright-tests
+          npm init -y
+          npm install -D @playwright/test
+          npx playwright install
+
+      # Start the server and run tests in the isolated environment
+      - name: Start server and run tests
+        run: |
+          # Start the dev server in the background
+          npm run dev &
+          
+          # Wait for the server to be ready
+          npx wait-on http://localhost:5173
+          
+          # Run Playwright tests from the isolated directory
+          cd playwright-tests
+          npx playwright test
+
+      # Upload test results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-tests/playwright-report/
+          retention-days: 30
