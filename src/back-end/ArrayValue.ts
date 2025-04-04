@@ -264,6 +264,10 @@ export class ArrayView extends ArrayValue {
                 r = this.ulCa.row + row;
             const cell: Cell | null = this.sheet.Get(c, r);
             if (cell != null) {
+                console.log("reached get in array view")
+                console.log("cell type: ");
+                console.log(  cell);
+                console.log("c: " + c)
                 return cell.Eval(this.sheet, c, r)!;
             } else {
                 return null as unknown as Value;

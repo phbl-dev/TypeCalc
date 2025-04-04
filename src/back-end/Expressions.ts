@@ -470,6 +470,7 @@ export class FunCall extends Expr {
 
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
+
         // Special case for lazy evaluation functions like IF and CHOOSE
         if (this.nonStrict) {
             if (!this.isChoose) {
@@ -483,7 +484,7 @@ export class FunCall extends Expr {
             }
         }
 
-        const args = FunCall.extracted(sheet, col, row, this.es);
+        const args = FunCall.getExprValues(sheet, col, row, this.es);
 
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
@@ -511,6 +512,11 @@ export class FunCall extends Expr {
             return TextValue.Make((result as boolean).toString());
         }
 
+        if (Array.isArray(result)) {
+            // return ArrayView.Make // How to handle this?
+        }
+
+
         return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
     }
 
@@ -532,11 +538,11 @@ export class FunCall extends Expr {
     }
 
     /**
-     * extracted() is a helper method we made for Eval(). Its purpose is to return an array of the
+     * getExprValues() is a helper method we made for Eval(). Its purpose is to return an array of the
      * expression values (in their primitive form). We use map() to call the Eval() function on all
      * the expressions in the es-array.
      * - If the expr is an instance of ExprArray then we are dealing with a nested array. Therefore,
-     * we call extracted recursively on this expr and return the resulting array from this call.
+     * we call getExprValues() recursively on this expr and return the resulting array from this call.
      * - If the value is an instance of NumberValue we extract the number from them using ToNumber().
      * - If the expr holds a TextValue we extract the string from it using ToString().
      * - Otherwise, we return null.
@@ -548,12 +554,12 @@ export class FunCall extends Expr {
      * @param es
      * @public
      */
-    public static extracted(sheet: Sheet, col: number, row: number, es: Expr[]) {
+    public static getExprValues(sheet: Sheet, col: number, row: number, es: Expr[]) {
 
         const args: (string | number | object | null | undefined)[] = es.map(expr => {
 
             if (expr instanceof ExprArray) {
-                return FunCall.extracted(sheet, col, row, expr.GetExprArray());
+                return FunCall.getExprValues(sheet, col, row, expr.GetExprArray());
             }
             const value = expr.Eval(sheet, col, row);
 
@@ -564,12 +570,18 @@ export class FunCall extends Expr {
                 return TextValue.ToString(value)
             }
             if (value instanceof ArrayView) {
-
+                console.log("reached array view")
                 const result = [];
 
                 for (let r = 0; r < value.Rows; r++) {
+                    console.log("reached loop")
+
                     for (let c = 0; c < value.Cols; c++) {
+                        console.log("reached next loop")
+
                         const cellValue = value.Get(c, r);
+                        console.log("cellValue:");
+                        console.log(cellValue);
                         console.log(`Look here ${cellValue}`);
                         if (cellValue instanceof NumberValue) {
                             result.push(NumberValue.ToNumber(cellValue));
@@ -868,8 +880,8 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
     public readonly sheet: Sheet;
     constructor(
         sheet: Sheet,
-        ul: SuperRARef | boolean,
-        lr: SuperRARef | number,
+        ulColAbs: SuperRARef | boolean,
+        ulColRef: SuperRARef | number,
         ulRowAbs?: boolean,
         ulRowRef?: number,
         lrColAbs?: boolean,
@@ -880,12 +892,12 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
         super();
         this.sheet = sheet;
 
-        if (ul instanceof SuperRARef) {
-            this.ul = ul;
-            this.lr = lr as SuperRARef;
+        if (ulColAbs instanceof SuperRARef) {
+            this.ul = ulColAbs;
+            this.lr = ulColRef as SuperRARef;
         } else {
 
-            this.ul = new SuperRARef(ul as boolean, lr as number, ulRowAbs as boolean, ulRowRef as number);
+            this.ul = new SuperRARef(ulColAbs as boolean, ulColRef as number, ulRowAbs as boolean, ulRowRef as number);
             this.lr = new SuperRARef(lrColAbs as boolean, lrColRef as number, lrRowAbs as boolean, lrRowRef as number);
         }
     }
