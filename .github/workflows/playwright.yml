@@ -35,7 +35,7 @@ jobs:
       - name: Create isolated Playwright environment
         run: |
           mkdir -p playwright-tests
-          cp -r e2e playwright-tests/
+          cp -r tests playwright-tests/
           cp playwright.config.ts playwright-tests/
           cd playwright-tests
           npm init -y
