@@ -42,16 +42,8 @@ jobs:
           npm install -D @playwright/test
           npx playwright install
 
-      # Start the server and run tests in the isolated environment
       - name: Start server and run tests
         run: |
-          # Start the dev server in the background
-          npm run dev &
-          
-          # Wait for the server to be ready
-          npx wait-on http://localhost:5173
-          
-          # Run Playwright tests from the isolated directory
           cd playwright-tests
           npx playwright test
 
