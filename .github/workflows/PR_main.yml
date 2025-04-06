@@ -27,6 +27,12 @@ jobs:
       - name: Run tests
         run: npm run test
 
+      - name: Setup Playwright
+        run: npx playwright install --with-deps
+
+      - name: Run E2E
+        run: npm run test:e2e
+
 #  BiomeLinter:
  #   runs-on: ubuntu-latest
   #  steps:
