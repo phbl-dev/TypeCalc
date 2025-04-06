@@ -467,11 +467,8 @@ export class Formula extends Cell {
      * @constructor
      */
     public override Eval(sheet: Sheet, col: number, row: number): Value {
-        console.log("Formula Eval invoked")
         switch (this.state) {
             case CellState.Uptodate:
-                console.log("reached uptodate");
-
                 break;
 
             case CellState.Computing:
@@ -486,7 +483,6 @@ export class Formula extends Cell {
             case CellState.Dirty:
             case CellState.Enqueued:
                 this.state = CellState.Computing;
-                console.log("reached eval");
                 this.v = this.e.Eval(sheet, col, row);
                 this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {

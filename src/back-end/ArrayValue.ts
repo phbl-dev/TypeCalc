@@ -264,10 +264,6 @@ export class ArrayView extends ArrayValue {
                 r = this.ulCa.row + row;
             const cell: Cell | null = this.sheet.Get(c, r);
             if (cell != null) {
-                console.log("reached get in array view")
-                console.log("cell type: ");
-                console.log(  cell);
-                console.log("c: " + c)
                 return cell.Eval(this.sheet, c, r)!;
             } else {
                 return null as unknown as Value;
@@ -319,7 +315,7 @@ export class ArrayView extends ArrayValue {
     }
 }
 
-class ArrayExplicit extends ArrayValue {
+export class ArrayExplicit extends ArrayValue {
     public ulCellAddress!: SuperCellAddress;
     public lrCellAddress!: SuperCellAddress;
     private cols!: number;

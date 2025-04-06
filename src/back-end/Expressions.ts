@@ -6,7 +6,7 @@ import { type Formats, type IEquatable, ImpossibleException, Applier } from "./T
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ErrorValue } from "./ErrorValue";
-import { ArrayView } from "./ArrayValue";
+import {ArrayExplicit, ArrayValue, ArrayView} from "./ArrayValue";
 import * as formulajs from '@formulajs/formulajs' // Importing formulajs
 
 
@@ -223,11 +223,11 @@ export class ExprArray extends Const {
     }
 
     Eval(sheet: Sheet, col: number, row: number): Value {
-        throw new Error("Not implemented");
+        throw new Error("Not implemented"); // this is most likely a problem
     }
 
     Show(col: number, row: number, ctxpre: number, fo: Formats): string {
-        throw new Error("Not implemented");
+        return this.es.toString()
     }
 
     VisitorCall(visitor: IExpressionVisitor): void {
@@ -513,9 +513,16 @@ export class FunCall extends Expr {
         }
 
         if (Array.isArray(result)) {
+            // console.log("Matched array")
+            // console.log("Result: " + result);
+            // return ArrayView.Make(new SuperCellAddress(col, row), new SuperCellAddress(col, row+result.length), sheet)
             // return ArrayView.Make // How to handle this?
-        }
+            // Convert flat number[] like [2,2,5] to vertical 2D Value[][]
+            // TODO: THIS IS PROBABLY NOT CORRECT!:
+            const values: Value[][] = result.map(num => [NumberValue.Make(num)]);
 
+            return new ArrayExplicit(values);
+        }
 
         return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
     }
@@ -570,17 +577,13 @@ export class FunCall extends Expr {
                 return TextValue.ToString(value)
             }
             if (value instanceof ArrayView) {
-                console.log("reached array view")
                 const result = [];
 
                 for (let r = 0; r < value.Rows; r++) {
-                    console.log("reached loop")
 
                     for (let c = 0; c < value.Cols; c++) {
-                        console.log("reached next loop")
 
                         const cellValue = value.Get(c, r);
-                        console.log("cellValue:");
                         console.log(cellValue);
                         console.log(`Look here ${cellValue}`);
                         if (cellValue instanceof NumberValue) {

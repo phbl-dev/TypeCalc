@@ -21,20 +21,40 @@ describe("ArrayFormula", () => {
                 sheet.SetCell(new NumberCell(val++), i, j)
             }
         }
-        cellArea = new CellArea(sheet, false, 0, false, 0, false, 2, false, 2); // Creating a cell area from A1:C3 with relative references.
+
+        // forstår ikke hvorfor det kun virker når referencen er absoloute og ikke relative
+        cellArea = new CellArea(sheet, true, 0, true, 0, true, 2, true, 2); // Creating a cell area from A1:C3 with relative references.
         funCall = FunCall.Make("FREQUENCY", [cellArea, ExprArray.MakeExprArray([new NumberConst(2), new NumberConst(4)])])                         // Creating a function call to FREQUENCY
         formula = Formula.Make(workbook, funCall)                               // Creating a Formula Cell containing the function call
         sheet.SetCell(formula, 3, 0)
+        workbook.Recalculate()
+
 
     })
 
     test("constructor and eval", () => {
         // Creating a cached array formula stored in A4 and holding a reference to the cell area A1:C3:
         let cachedArrayFormula = new CachedArrayFormula(formula, sheet, 3, 0, new SuperCellAddress(0,0), new SuperCellAddress(2,2));
+
+        // Place the CAF in the top-left formula cell
+        sheet.SetCell(formula, 3, 0);
+
+        // Then apply ArrayFormula wrapper cells to all output locations
+            for (let r = 0; r <= 2; r++) {
+                sheet.SetCell(new ArrayFormula(cachedArrayFormula, 3, r), 3, r);
+            }
+
         workbook.Recalculate()
 
-        const result = cachedArrayFormula.Eval();
-        console.log("Result:", result);
+        console.log("print result: ")
+        // Evaluate and print result values from D1 to D3
+        for (let r = 0; r <= 2; r++) {
+            const cell = sheet.Get(3, r);
+            const val = cell?.Eval(sheet, 3, r);
+
+            console.log(`D${r + 1}:`, val?.toString?.() ?? "[null]");  // TODO: THE RESULT IS PROBABLY NOT CORRECT!:
+
+        }
     })
 
 
