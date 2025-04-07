@@ -184,6 +184,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                      }
                  }
                  e.currentTarget.classList.add("active-cell");
+                 e.currentTarget.classList.add("hide-caret");
                  // e.currentTarget.style.outline = "2px solid #007bff";
                  // e.currentTarget.style.backgroundColor = "#d0e8ff";
                  let rawCellContent:string | null = GetRawCellContent(ID);
@@ -216,6 +217,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onInput={(e) => {
                  updateFormulaBox(ID, (e.target as HTMLElement).innerText);
+                 e.currentTarget.classList.remove("hide-caret");
+                 e.currentTarget.classList.add("show-caret");
              }}
         >
         </div>

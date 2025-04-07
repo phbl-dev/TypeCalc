@@ -129,6 +129,14 @@ header h4 {
     z-index: 2;
 }
 
+.hide-caret {
+    caret-color: transparent;
+}
+
+.show-caret {
+    caret-color: black;
+}
+
 /* ------------------------------------------ */
 footer {
     height: 25px;
