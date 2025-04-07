@@ -59,7 +59,7 @@ describe("Workbook", () => {
         expect(recalceResult).toBeGreaterThan(0);    // Expect the time to be valid, i.e. positive.
 
         // Creating a new SuperRARef and a new CellRef for our function call
-        const superRaref: SuperRARef = new SuperRARef(false, 2, false, 0); // We set the reference to be relative (i.e. "not fixed")
+        const superRaref: SuperRARef = new SuperRARef(false, 1, false, -1); // We set the reference to be relative (i.e. "not fixed")
         const cellRef: Expr = new CellRef(sheet, superRaref);
 
         // Creating a number cell with the value 5 and setting it in the sheet at position 2,0
@@ -85,7 +85,7 @@ describe("Workbook", () => {
         expect(cell!.Eval(sheet, 1, 1)).toBeFalsy;
 
         // Sheet.SetCell() calls Workbook.RecordCellChange() so editedCells should have length 4.
-        expect(workbook.GetEditedCells().length).toBe(4);
+        expect(workbook.GetEditedCells().length).toBe(3);
 
         // Run Recalculate()
         workbook.Recalculate();

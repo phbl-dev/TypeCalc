@@ -251,4 +251,18 @@ describe("Parse Strings", () => {
         workbook.Recalculate()
         expect(sheet.Get(0,0).Eval(sheet,0,0).ToObject()).toBe(8)
     })
+
+    test("Check for relative references", () => {
+        const A1 = Cell.Parse("1", workbook,0,0)
+        sheet.SetCell(A1,0,0)
+
+        const C2 = Cell.Parse("=R[-1]C[-2]", workbook,0,0)
+
+        sheet.SetCell(C2,2,1)
+
+        workbook.Recalculate()
+
+        console.log(sheet.Get(2,1))
+
+    })
 })
