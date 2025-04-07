@@ -280,7 +280,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
-    let [scrollOffset] = useState({ left: 0, top: 0 });
+    let [scrollOffset] = useState({left: 0, top: 0});
     let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
@@ -295,7 +295,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             const file = event.dataTransfer?.files?.[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = async(e) => {
+                reader.onload = async (e) => {
                     const content = e.target?.result as string;
                     WorkbookManager.createNewWorkbook(); // or call createNewWorkbook()
                     const xmlReader = new XMLReader();
@@ -316,6 +316,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 reader.readAsText(file);
             }
         }
+
         function handleDragOver(event: DragEvent) {
             event.preventDefault();
         }
@@ -325,11 +326,11 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             const cellID = input.value.trim();
             const headerCorner = document.getElementById("headerCorner");
 
-            if(cellID) {
+            if (cellID) {
                 const idSplit = cellID.match(/[A-Za-z]+|\d+/g) || [];
                 const targetCell = getCell(cellID);
 
-                if(idSplit.length === 2) {
+                if (idSplit.length === 2) {
                     const col = lettersToNumber(idSplit[0]);
                     const row = parseInt(idSplit[1], 10);
 
@@ -352,7 +353,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         window.addEventListener("dragover", handleDragOver); // Drag and drop
         jumpButton.addEventListener("click", handleJump); // Jump to cell
         input.addEventListener("keydown", (e) => { // Jump to cell
-            if(e.key === "Enter") handleJump();
+            if (e.key === "Enter") handleJump();
         })
 
         return () => {
@@ -368,8 +369,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         const formulaBox = document.getElementById("formulaBox") as HTMLInputElement;
         if (!formulaBox) return;
 
-        let value:string;
-        let valueChanged:boolean = false;
+        let value: string;
+        let valueChanged: boolean = false;
 
         const handleFormulaChange = (e: Event) => {
             value = (e.target as HTMLInputElement).value;
@@ -398,7 +399,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         const updateCellContents = () => {
             valueChanged = false;
             ParseToActiveCell(value);
-            ShowWindowInGUI(WorkbookManager.getActiveSheetName(),scrollOffset.left,scrollOffset.left+30,scrollOffset.top,scrollOffset.top+30, false);
+            ShowWindowInGUI(WorkbookManager.getActiveSheetName(), scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30, false);
         }
 
         formulaBox.addEventListener("keydown", handleKeyDown);
@@ -419,14 +420,24 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      * @param scrollLeft Horizontal scrolling value
      * @param scrollTop Vertical scrolling value
      */
-    function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }):void {
-        if (colHeaderRef.current && scrollLeft !== undefined) {
-            colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
-            scrollOffset.left = Math.floor(scrollLeft/columnWidth);
+    function syncScroll({scrollLeft, scrollTop}: { scrollLeft?: number; scrollTop?: number }): void {
+        if (scrollLeft !== undefined) {
+            if (colHeaderRef.current) {
+                colHeaderRef.current.scrollTo({scrollLeft});
+            }
+            if (bodyRef.current) {
+                bodyRef.current.scrollTo({scrollLeft});
+            }
         }
-        if (rowHeaderRef.current && scrollTop !== undefined) {
-            rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
-            scrollOffset.top = Math.floor(scrollTop/rowHeight);
+
+        if (scrollTop !== undefined) {
+            if (rowHeaderRef.current) {
+                rowHeaderRef.current.scrollTo({scrollTop});
+            }
+            if (bodyRef.current) {
+                bodyRef.current.scrollTo({scrollTop});
+            }
+            scrollOffset.top = Math.floor(scrollTop / rowHeight);
         }
     }
 
@@ -461,6 +472,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     width={width - rowHeaderWidth}
                     overscanColumnCount={10}
                     ref={colHeaderRef}
+                    onScroll={syncScroll}
                 >
                     {ColumnHeader}
                 </Grid>
@@ -478,6 +490,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     width={rowHeaderWidth}
                     overscanRowCount={10}
                     ref={rowHeaderRef}
+                    onScroll={syncScroll}
                 >
                     {RowHeader}
                 </Grid>
