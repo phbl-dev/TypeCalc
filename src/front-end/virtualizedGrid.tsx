@@ -1,7 +1,7 @@
 import React, {forwardRef,  useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {GetRawCellContent, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
-import {NumberCell, QuoteCell, Cell as BackendCell} from "../back-end/Cells";
+import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
+import {Cell as BackendCell} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
 
@@ -93,6 +93,7 @@ const formulaBox = ({ cell, style}: {cell:BackendCell, style:any}) => (
  */
 const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: number, style:any}) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
+    let isActive = ID == WorkbookManager.getActiveCell();
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
 
@@ -144,15 +145,22 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
-        // const cellToBeAdded: QuoteCell | NumberCell =
-        //     typeof content === "number" ? new NumberCell(content as number) : new QuoteCell(content as string);
         if (!cellToBeAdded) {return}
         let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
-        console.log("I'm trying to add the value:");
-        console.log(content);
-        console.log("To the address:")
-        console.log(newCellAddress.toString());
+        // console.log("I'm trying to add the value:");
+        // console.log(content);
+        // console.log("To the address:")
+        // console.log(newCellAddress.toString());
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
+    }
+
+    const updateFormulaBox = (cellID:string, content:string|null):void => {
+        const formulaBox = document.getElementById("formulaBox");
+        if (!formulaBox) {
+            console.log("[virtualizedGrid.tsx Cell] FormulaBox not found");
+            return;
+        }
+        (formulaBox as HTMLInputElement).value = content as string;
     }
 
     return (
@@ -162,33 +170,51 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
              onFocus={(e) => {
-                 let c = 0;
-                 // Save the initial value on focus
-                 let rawCellContent = GetRawCellContent(1, 1, ID);
+                 //All of this is to add and remove styling from the active cell
+                 const prev = WorkbookManager.getActiveCell();
+                 if (prev && prev !== ID) {
+                     const old = document.getElementById(prev);
+                     if (old) {
+                         old.classList.remove("active-cell");
+                     }
+                 }
+                 e.currentTarget.classList.add("active-cell");
+                 e.currentTarget.classList.add("hide-caret");
+
+                 // Save the initial value on focus and display it
+                 let rawCellContent:string | null = GetRawCellContent(ID);
+                 WorkbookManager.setActiveCell(ID);
                  if (!rawCellContent) {
                      console.log("[virtualizedGrid.tsx Cell] Cell Content not updated");
+                     updateFormulaBox(ID, rawCellContent);
                      return;
                  }
                  valueHolder = (e.target as HTMLElement).innerText;
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
 
-                 //console.log("yo");
+                 //Also write the content in the formula box at the top
+                 updateFormulaBox(ID, rawCellContent);
+
              }}
              onMouseMove={handleHover} // Gets the cellID when moving the mouse
              onKeyDown={(e) => {
                  keyNav(e);
              }}
              onBlur={(e) => {
+                 //Only update cell if the contents have changed!
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
                      ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
-                    console.log("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
-
-
+             }}
+             onInput={(e) => {
+                 //Update formula box alongside cell input, also show caret (text cursor) once writing starts
+                 updateFormulaBox(ID, (e.target as HTMLElement).innerText);
+                 e.currentTarget.classList.remove("hide-caret");
+                 e.currentTarget.classList.add("show-caret");
              }}
         >
         </div>
@@ -233,10 +259,6 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
         </footer>
     );
 };
-
-// function updateCell(cellID:string, cellValue:string):void {
-//
-// }
 
 /** Creates the sheet itself with headers and body. It extends the GridInterface so that
  * we can create a sheet with a self-defined amount of rows and columns.
@@ -326,8 +348,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             }
         }
 
-
-
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
         jumpButton.addEventListener("click", handleJump); // Jump to cell
@@ -342,18 +362,55 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         };
     }, [scrollOffset]);
 
-    // useEffect(() => {
-    //     if (activeSheet) {
-    //         ShowWindowInGUI(
-    //             activeSheet,
-    //             scrollOffset.left,
-    //             scrollOffset.left + 30,
-    //             scrollOffset.top,
-    //             scrollOffset.top + 30,
-    //             false
-    //         );
-    //     }
-    // }, [activeSheet]);
+
+    //Handling the formulabox input
+    useEffect(() => {
+        const formulaBox = document.getElementById("formulaBox") as HTMLInputElement;
+        if (!formulaBox) return;
+
+        let value:string;
+        let valueChanged:boolean = false;
+
+        const handleFormulaChange = (e: Event) => {
+            value = (e.target as HTMLInputElement).value;
+            valueChanged = true;
+            let activeCell = document.getElementById(WorkbookManager.getActiveCell()!);
+            if (activeCell) {
+                activeCell.innerHTML = value;
+            }
+            //console.log("Formula changed:", value);
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Enter") {
+                if (valueChanged) {
+                    updateCellContents();
+                }
+            }
+        }
+
+        const handleBlur = () => {
+            if (valueChanged) {
+                updateCellContents();
+            }
+        }
+
+        const updateCellContents = () => {
+            valueChanged = false;
+            ParseToActiveCell(value);
+            ShowWindowInGUI(WorkbookManager.getActiveSheetName(),scrollOffset.left,scrollOffset.left+30,scrollOffset.top,scrollOffset.top+30, false);
+        }
+
+        formulaBox.addEventListener("keydown", handleKeyDown);
+        formulaBox.addEventListener("blur", handleBlur);
+        formulaBox.addEventListener("input", handleFormulaChange);
+
+        return () => {
+            formulaBox.removeEventListener("input", handleFormulaChange);
+            formulaBox.removeEventListener("keydown", handleKeyDown);
+            formulaBox.removeEventListener("blur", handleBlur);
+        };
+    }, []);
 
 
     /** Synchronizes scrolling between the grid body and the headers so that it works
@@ -363,7 +420,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      * @param scrollTop Vertical scrolling value
      */
     function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }):void {
-        //console.log(scrollOffset);
         if (colHeaderRef.current && scrollLeft !== undefined) {
             colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
             scrollOffset.left = Math.floor(scrollLeft/columnWidth);
@@ -372,8 +428,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
             scrollOffset.top = Math.floor(scrollTop/rowHeight);
         }
-        //console.log(scrollLeft, scrollTop);
-
     }
 
     return (

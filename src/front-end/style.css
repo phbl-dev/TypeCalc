@@ -42,6 +42,13 @@ input {
     text-align: center;
 }
 
+input.formulaBox {
+    height: 25px;
+    width: 200px;
+    border-radius: 5px;
+    text-align: center;
+}
+
 header h4 {
     margin-right: 10px;
     margin-left: auto;
@@ -114,6 +121,20 @@ header h4 {
     font-size: small;
     text-indent: 5px;
     z-index: 1;
+}
+
+.active-cell {
+    background-color: #7CB9E8 !important;
+    outline: 2px solid #007bff !important;
+    z-index: 2;
+}
+
+.hide-caret {
+    caret-color: transparent;
+}
+
+.show-caret {
+    caret-color: black;
 }
 
 /* ------------------------------------------ */
