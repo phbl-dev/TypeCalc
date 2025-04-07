@@ -208,7 +208,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
                         fontWeight: activeSheet === name ? '' : 'normal',
                         borderBottom: activeSheet === name ? '3px solid #4a7e76' : '',
                         borderRadius: activeSheet === name ? '0' : '',
-                        height: activeSheet === name ? '19px' : '',
+                        height: activeSheet === name ? '23px' : '',
                     }}
                 >
                     {name}
@@ -252,7 +252,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      colHeaderHeight = 40,
      rowHeaderWidth = 40,
      width = window.innerWidth,
-     height = window.innerHeight * 0.92,
+     height = window.innerHeight,
  }) => {
     // Used to synchronize scrolling between the referenced objects
     const colHeaderRef = useRef<Grid>(null);
@@ -364,12 +364,22 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      */
     function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }):void {
         //console.log(scrollOffset);
-        if (colHeaderRef.current && scrollLeft !== undefined) {
-            colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
+        if (scrollLeft !== undefined) {
+            if(colHeaderRef.current) {
+                colHeaderRef.current.scrollTo({ scrollLeft });
+            }
+            if(bodyRef.current) {
+                bodyRef.current.scrollTo({ scrollLeft });
+            }
             scrollOffset.left = Math.floor(scrollLeft/columnWidth);
         }
-        if (rowHeaderRef.current && scrollTop !== undefined) {
-            rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
+        if (scrollTop !== undefined) {
+            if(rowHeaderRef.current) {
+                rowHeaderRef.current.scrollTo({ scrollTop });
+            }
+            if(bodyRef.current) {
+                bodyRef.current.scrollTo({ scrollTop });
+            }
             scrollOffset.top = Math.floor(scrollTop/rowHeight);
         }
         //console.log(scrollLeft, scrollTop);
@@ -407,6 +417,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     width={width - rowHeaderWidth}
                     overscanColumnCount={10}
                     ref={colHeaderRef}
+                    /*onScroll={syncScroll}*/
                 >
                     {ColumnHeader}
                 </Grid>
@@ -424,6 +435,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     width={rowHeaderWidth}
                     overscanRowCount={10}
                     ref={rowHeaderRef}
+                    /*onScroll={syncScroll}*/
                 >
                     {RowHeader}
                 </Grid>
