@@ -172,21 +172,18 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
              onFocus={(e) => {
-                 // Save the initial value on focus and display it
+                 //All of this is to add and remove styling from the active cell
                  const prev = WorkbookManager.getActiveCell();
                  if (prev && prev !== ID) {
                      const old = document.getElementById(prev);
                      if (old) {
                          old.classList.remove("active-cell");
-                         // old.style.outline = "";
-                         // old.style.background = rowIndex % 2 === 0 ? "lightgrey" : "white";
-                         //old.style.zIndex = 1;
                      }
                  }
                  e.currentTarget.classList.add("active-cell");
                  e.currentTarget.classList.add("hide-caret");
-                 // e.currentTarget.style.outline = "2px solid #007bff";
-                 // e.currentTarget.style.backgroundColor = "#d0e8ff";
+
+                 // Save the initial value on focus and display it
                  let rawCellContent:string | null = GetRawCellContent(ID);
                  WorkbookManager.setActiveCell(ID);
                  if (!rawCellContent) {
@@ -197,8 +194,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  valueHolder = (e.target as HTMLElement).innerText;
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
+
+                 //Also write the content in the formula box at the top
                  updateFormulaBox(ID, rawCellContent);
-                 // Show the content in the formulaBar as well
 
              }}
              onMouseMove={handleHover} // Gets the cellID when moving the mouse
@@ -206,16 +204,16 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  keyNav(e);
              }}
              onBlur={(e) => {
+                 //Only update cell if the contents have changed!
                  const newValue = (e.target as HTMLElement).innerText;
-                 //e.currentTarget.classList.remove("active-cell");
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
                      ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
-                    console.log("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
              }}
              onInput={(e) => {
+                 //Update formula box alongside cell input, also show caret (text cursor) once writing starts
                  updateFormulaBox(ID, (e.target as HTMLElement).innerText);
                  e.currentTarget.classList.remove("hide-caret");
                  e.currentTarget.classList.add("show-caret");
@@ -391,6 +389,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             console.log("Formula changed:", value);
             // You can do something like update the selected cell here
         };
+
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Enter") {
                 if (valueChanged) {
@@ -452,40 +451,11 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
             scrollOffset.top = Math.floor(scrollTop/rowHeight);
         }
-        //console.log(scrollLeft, scrollTop);
-
     }
 
     return (
         // Container that wraps around all parts of the sheet
-
         <div id="sheet">
-            <input
-                id="formulaBar"
-                //value={getCell}
-                // onChange={(e) => setFormulaContent(e.target.value)}
-                // onKeyDown={(e) => {
-                //     if (e.key === "Enter" && selectedCellID) {
-                //         const match = selectedCellID.match(/([A-Z]+)(\d+)/);
-                //         if (match) {
-                //             const col = lettersToNumber(match[1]) - 1;
-                //             const row = parseInt(match[2]) - 1;
-                //             const cell = BackendCell.Parse(e.target.value, WorkbookManager.getWorkbook(), col, row);
-                //             if (cell) {
-                //                 WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cell, col, row);
-                //                 ShowWindowInGUI(WorkbookManager.getActiveSheetName(), col, col + 1, row, row + 1, false);
-                //             }
-                //         }
-                //     }
-                // }}
-                style={{
-                    width: "100%",
-                    padding: "8px",
-                    fontSize: "14px",
-                    border: "1px solid lightgray",
-                    boxSizing: "border-box",
-                }}
-            />
             <SheetSelector
                 sheetNames={sheetNames}
                 activeSheet={activeSheet}
