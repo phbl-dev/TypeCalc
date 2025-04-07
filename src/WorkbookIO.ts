@@ -131,6 +131,7 @@ export class XMLReader {
 export class WorkbookManager {
     private static instance: Workbook | null = null;
     private static activeSheet:string = "Sheet1";
+    private static activeCell:string = "A1";
 
     static getWorkbook(): Workbook {
         //console.log("[WorkbookManager] getWorkbook ->", this.instance);
@@ -149,6 +150,15 @@ export class WorkbookManager {
             //this.activeSheet = "Sheet1";
         }
         return this.instance.get(this.activeSheet);
+    }
+
+    static getActiveCell():string | null {
+        return this.activeCell;
+    }
+
+    static setActiveCell(cell:string):void {
+        this.activeCell = cell;
+        console.log("[WorkbookManager] This is the active cell:" + this.activeCell);
     }
 
     //static addSheet(sheetName:string):void {}
@@ -188,10 +198,32 @@ export class WorkbookManager {
     }
 }
 
-export function GetRawCellContent(cellCol:number, cellRow:number, cellID:string):string|null {
-    let ca:A1RefCellAddress = new A1RefCellAddress(cellID);
-    cellCol = ca.col;
-    cellRow = ca.row;
+export function ParseToActiveCell(content:string):void {
+    const a1Address:string | null = WorkbookManager.getActiveCell();
+    if (!a1Address) {
+        console.log("[WorkbookIO] ParseToActiveCell cant find active cell");
+        return;
+    }
+    const activeSheet:Sheet|null= WorkbookManager.getActiveSheet();
+    if (!activeSheet) {
+        console.log("[WorkbookIO] ParseToActiveCell No activeSheet found!");
+        return;
+    }
+    const ca:A1RefCellAddress = new A1RefCellAddress(a1Address);
+    const cellCol:number = ca.col;
+    const cellRow:number = ca.row;
+    const cellToBeAdded:Cell | null = Cell.Parse(content, WorkbookManager.getWorkbook(), cellCol, cellRow);
+    if (!cellToBeAdded) {
+        console.log("[WorkbookIO] ParseToActiveCell cellToBeAdded not found!");
+        return;
+    }
+    WorkbookManager.getWorkbook().get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, cellCol, cellRow);
+}
+
+export function GetRawCellContent(cellID:string):string|null {
+    const ca:A1RefCellAddress = new A1RefCellAddress(cellID);
+    const cellCol:number = ca.col;
+    const cellRow:number = ca.row;
     const wb:Workbook = WorkbookManager.getWorkbook();
     if (!wb) {
         console.log("[GetRawCellContent] No workbook found!");

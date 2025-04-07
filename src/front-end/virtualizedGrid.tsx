@@ -1,6 +1,6 @@
 import React, {forwardRef,  useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {GetRawCellContent, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
+import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {NumberCell, QuoteCell, Cell as BackendCell} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
@@ -93,6 +93,7 @@ const formulaBox = ({ cell, style}: {cell:BackendCell, style:any}) => (
  */
 const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: number, style:any}) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
+    let isActive = ID == WorkbookManager.getActiveCell();
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
 
@@ -155,6 +156,15 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
     }
 
+    const updateFormulaBox = (cellID:string, content:string|null):void => {
+        const formulaBox = document.getElementById("formulaBox");
+        if (!formulaBox) {
+            console.log("[virtualizedGrid.tsx Cell] FormulaBox not found");
+            return;
+        }
+        (formulaBox as HTMLInputElement).value = content as string;
+    }
+
     return (
         <div className="Cell" contentEditable={true} id={ID}
              style={{
@@ -162,18 +172,33 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
              onFocus={(e) => {
-                 let c = 0;
-                 // Save the initial value on focus
-                 let rawCellContent = GetRawCellContent(1, 1, ID);
+                 // Save the initial value on focus and display it
+                 const prev = WorkbookManager.getActiveCell();
+                 if (prev && prev !== ID) {
+                     const old = document.getElementById(prev);
+                     if (old) {
+                         old.classList.remove("active-cell");
+                         // old.style.outline = "";
+                         // old.style.background = rowIndex % 2 === 0 ? "lightgrey" : "white";
+                         //old.style.zIndex = 1;
+                     }
+                 }
+                 e.currentTarget.classList.add("active-cell");
+                 // e.currentTarget.style.outline = "2px solid #007bff";
+                 // e.currentTarget.style.backgroundColor = "#d0e8ff";
+                 let rawCellContent:string | null = GetRawCellContent(ID);
+                 WorkbookManager.setActiveCell(ID);
                  if (!rawCellContent) {
                      console.log("[virtualizedGrid.tsx Cell] Cell Content not updated");
+                     updateFormulaBox(ID, rawCellContent);
                      return;
                  }
                  valueHolder = (e.target as HTMLElement).innerText;
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
+                 updateFormulaBox(ID, rawCellContent);
+                 // Show the content in the formulaBar as well
 
-                 //console.log("yo");
              }}
              onMouseMove={handleHover} // Gets the cellID when moving the mouse
              onKeyDown={(e) => {
@@ -181,14 +206,16 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onBlur={(e) => {
                  const newValue = (e.target as HTMLElement).innerText;
+                 //e.currentTarget.classList.remove("active-cell");
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
                      ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
                     console.log("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
-
-
+             }}
+             onInput={(e) => {
+                 updateFormulaBox(ID, (e.target as HTMLElement).innerText);
              }}
         >
         </div>
@@ -342,6 +369,56 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         };
     }, [scrollOffset]);
 
+
+    //Handling the formulabox input
+    useEffect(() => {
+        const formulaBox = document.getElementById("formulaBox") as HTMLInputElement;
+        if (!formulaBox) return;
+
+        let value:string;
+        let valueChanged:boolean = false;
+
+        const handleFormulaChange = (e: Event) => {
+            value = (e.target as HTMLInputElement).value;
+            valueChanged = true;
+            let activeCell = document.getElementById(WorkbookManager.getActiveCell()!);
+            if (activeCell) {
+                activeCell.innerHTML = value;
+            }
+            console.log("Formula changed:", value);
+            // You can do something like update the selected cell here
+        };
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Enter") {
+                if (valueChanged) {
+                    updateCellContents();
+                }
+            }
+        }
+
+        const handleBlur = () => {
+            if (valueChanged) {
+                updateCellContents();
+            }
+        }
+
+        const updateCellContents = () => {
+            valueChanged = false;
+            ParseToActiveCell(value);
+            ShowWindowInGUI(WorkbookManager.getActiveSheetName(),scrollOffset.left,scrollOffset.left+30,scrollOffset.top,scrollOffset.top+30, false);
+        }
+
+        formulaBox.addEventListener("keydown", handleKeyDown);
+        formulaBox.addEventListener("blur", handleBlur);
+        formulaBox.addEventListener("input", handleFormulaChange);
+
+        return () => {
+            formulaBox.removeEventListener("input", handleFormulaChange);
+            formulaBox.removeEventListener("keydown", handleKeyDown);
+            formulaBox.removeEventListener("blur", handleBlur);
+        };
+    }, []);
+
     // useEffect(() => {
     //     if (activeSheet) {
     //         ShowWindowInGUI(
@@ -378,7 +455,34 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
     return (
         // Container that wraps around all parts of the sheet
+
         <div id="sheet">
+            <input
+                id="formulaBar"
+                //value={getCell}
+                // onChange={(e) => setFormulaContent(e.target.value)}
+                // onKeyDown={(e) => {
+                //     if (e.key === "Enter" && selectedCellID) {
+                //         const match = selectedCellID.match(/([A-Z]+)(\d+)/);
+                //         if (match) {
+                //             const col = lettersToNumber(match[1]) - 1;
+                //             const row = parseInt(match[2]) - 1;
+                //             const cell = BackendCell.Parse(e.target.value, WorkbookManager.getWorkbook(), col, row);
+                //             if (cell) {
+                //                 WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cell, col, row);
+                //                 ShowWindowInGUI(WorkbookManager.getActiveSheetName(), col, col + 1, row, row + 1, false);
+                //             }
+                //         }
+                //     }
+                // }}
+                style={{
+                    width: "100%",
+                    padding: "8px",
+                    fontSize: "14px",
+                    border: "1px solid lightgray",
+                    boxSizing: "border-box",
+                }}
+            />
             <SheetSelector
                 sheetNames={sheetNames}
                 activeSheet={activeSheet}
