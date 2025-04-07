@@ -110,7 +110,7 @@ describe("Formula.js", () => {
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(9);  // Works with expressions
         expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe(9); // Works with cell references that are linked to number cells
-        expect(sheet.Get(1,6).Eval(sheet,1,1).ToObject()).toBe(9);
+        expect(sheet.Get(1,6).Eval(sheet,0,0).ToObject()).toBe(9);
     });
 
     test("Eval with ABS", () => {
@@ -583,7 +583,7 @@ describe("Formula.js", () => {
         // If cell A1 holds the formula =IF(FALSE, A1, 42) then there should not be
         // detected a cycle because the reference to A1 in the formula should not
         // even be evaluated.
-        const cellRef3 = new CellRef(sheet, new SuperRARef(false, 1, false, 0));
+        const cellRef3 = new CellRef(sheet, new SuperRARef(false, 0, false, 0));
         const funCall6 = FunCall.Make("IF", [falseExpr, cellRef3, expr3])
         const cell3 = Formula.Make(workbook, funCall6);
         sheet.SetCell(cell3, 1, 0) // Creating a cyclic dependency on purpose to check that it won't cause problems for IF in this scenario.
@@ -601,7 +601,7 @@ describe("Formula.js", () => {
 
 
         expect(() => {
-            sheet.Get(1, 0).Eval(sheet, 1, 0).ToObject();
+            sheet.Get(1, 0).Eval(sheet, 1, 0);
         }).toThrowError(CyclicException);
 
         //expect(sheet.Get(1,0).Eval(sheet,1,0)).toThrow("CyclicException: ### CYCLE in cell TestSheet!B1 formula =func(1, TestSheet!C1, 42) \n")
