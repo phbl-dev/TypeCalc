@@ -14,7 +14,6 @@ import { json } from "node:stream/consumers";
  * @class
  * @desc <b>Visitor Class </b>.This class relies on the implementation of the SpreadSheetParser class to generate a CST (Concrete Syntax Tree),
  * to which is it traversing the tree, and manipulates the outcome.
- * @todo look there are some issues with multiple statement as of now.
  * @example new SpreadsheetVisitor().ParseCell("= 10 + 10)", new Workbook(), 1, 1); // Can be used to parse the input "= 10 + 10".
  */
 export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisitorConstructor() {
@@ -70,27 +69,32 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected logicalTerm(ctx: any): Expr {
-
         let e: Expr;
-        let e2: Expr;
-        let op: string;
 
+        // Get the first term
         e = this.visit(ctx["term"][0]);
 
-        if (ctx["addOp"]) {
-            op = this.visit(ctx["addOp"]);
+        // Process all subsequent term-operator pairs
+        if (ctx["addOp"] && ctx["addOp"].length > 0) {
+            for (let i = 0; i < ctx["addOp"].length; i++) {
+                // Get the operator
+                let op = this.visit(ctx["addOp"][i]);
 
-            if (op === "+" ) {
-                op = "SUM";
+                // Transform the operator name as needed
+                if (op === "+") {
+                    op = "ADD";
+                } else if (op === "-") {
+                    op = "SUB";
+                } else if (op === "&") {
+                    op = "CONCATENATE";
+                }
+
+                // Get the next term
+                const e2 = this.visit(ctx["term"][i + 1]);
+
+                // Create a function call for this operation
+                e = FunCall.Make(op, [e, e2]);
             }
-
-            if (op === "-") {
-                op = "SUB"
-            }
-
-            e2 = this.visit(ctx["term"][1]);
-            e = FunCall.Make(op, [e, e2]);
-
         }
 
         return e;
@@ -159,20 +163,20 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected logicalOp(ctx: any): string {
-
+        console.log(ctx)
         let op = "";
         if (ctx.Equals) {
-            op = "SUM";
+            op = "EQUALS";
         } else if (ctx.NotEqual) {
-            op = "<>";
+            op = "NOTEQUALS";
         } else if (ctx.LessThan) {
-            op = "<";
+            op = "LEQ";
         } else if (ctx.LessThanOrEqual) {
-            op = "<=";
+            op = "LEQUALS";
         } else if (ctx.GreaterThan) {
-            op = ">";
+            op = "GEQ";
         } else if (ctx.GreaterThanOrEqual) {
-            op = ">=";
+            op = "GEQUALS";
         }
         return op;
     }
@@ -187,42 +191,42 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected term(ctx: any): Expr {
+        let e = this.visit(ctx["powFactor"][0]);
 
-        let e;
-        let e2;
-        let op: string;
+        if (ctx["mulOp"] && ctx["mulOp"].length > 0) {
+            for (let i = 0; i < ctx["mulOp"].length; i++) {
+                const op = this.visit(ctx["mulOp"][i]);
 
-        e = this.visit(ctx["powFactor"][0]);
+                const e2 = this.visit(ctx["powFactor"][i + 1]);
 
-        if (ctx["mulOp"]) {
-            op = this.visit(ctx["mulOp"]);
-            e2 = this.visit(ctx["powFactor"][1]);
-            e = FunCall.Make(op, [e, e2]);
-            return e;
-        } else {
-            return e;
-        }
-    }
-
-    protected expression(ctx: any): Expr {
-        let e: Expr;
-        let e2;
-        let op;
-
-        e = this.visit(ctx["logicalTerm"][0]);
-        op = this.visit(ctx["logicalTerm"][0]);
-        if (ctx["logicalTerm"][1]) {
-            e2 = this.visit(ctx["logicalTerm"][1]);
-
-            e = FunCall.Make(op, [e, e2 as NumberConst]);
+                e = FunCall.Make(op, [e, e2]);
+            }
         }
 
         return e;
     }
 
+    protected expression(ctx: any): Expr {
+        let e: Expr;
+
+        e = this.visit(ctx["logicalTerm"][0]);
+
+        if (ctx["Operator"] && ctx["logicalTerm"].length > 1) {
+            for (let i = 0; i < ctx["Operator"].length; i++) {
+                const op = this.visit(ctx["Operator"][i]);
+
+                const nextTerm = this.visit(ctx["logicalTerm"][i + 1]);
+
+                e = FunCall.Make(op, [e, nextTerm]);
+            }
+        }
+
+        return e;
+    }
+
+
     protected factor(ctx: any): Expr {
 
-        //console.log(JSON.stringify(ctx, null, 2));
 
         let r1, r2;
         let s1 = null;
@@ -269,7 +273,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             if (innerExpr instanceof NumberConst) {
                 e = new NumberConst(-innerExpr.value.value);
             } else {
-                e = FunCall.Make("PRODUCT", [new NumberConst(-1),NumberConst.Make(innerExpr)]);
+                e = FunCall.Make("NEG", [e]);
             }
 
 
@@ -300,9 +304,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         if (ctx["A1Ref"]) {
             const token = ctx["A1Ref"][0].image
-            raref = new A1RARef(token, 0,0);
-            console.log("this is the value of raref: \n")
-            console.log({raref});
+            raref = new A1RARef(token, this.col,this.row);
+
         } else if (ctx["XMLSSRARef11"]) {
             const token = ctx["XMLSSRARef11"][0];
             raref = new R1C1RARef(token.image);
@@ -311,7 +314,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef13"]) {
             const token = ctx["XMLSSRARef13"][0];
-            raref = new A1RefCellAddress(token.image);
+            raref = new R1C1RARef(token.image);
         } else if (ctx["XMLSSRARef21"]) {
             const token = ctx["XMLSSRARef21"][0];
             raref = new R1C1RARef(token.image);
@@ -337,7 +340,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     protected cellContents(ctx: any): Cell {
         const e:any = this.visit(ctx.expression);
 
-        console.log(JSON.stringify(ctx, null, 2));
 
         if (ctx.QuoteCell) {
             const helperConst = ctx["QuoteCell"][0].image
@@ -352,9 +354,39 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         } else if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.Datetime) {
-            console.log(ctx["Datetime"][0].image)
+            // Get the datetime string
+            let dateTimeStr = ctx["Datetime"][0].image;
+            console.log("Original datetime string:", dateTimeStr);
 
-            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(BigInt((ctx.Datetime[0].image).getTime()) * 10_000n + 621355968000000000n));
+            try {
+                // Remove the square brackets while preserving the content
+                dateTimeStr = dateTimeStr.replace(/\[/g, '').replace(/\]/g, '');
+                console.log("Cleaned datetime string:", dateTimeStr);
+
+                // Parse the date
+                const dateObj = new Date(dateTimeStr);
+
+                if (!isNaN(dateObj.getTime())) {
+                    // In Excel, dates are stored as days since December 31, 1899
+                    // 25569 is the number of days between Jan 1, 1900 and Jan 1, 1970 (Unix epoch)
+                    const excelDate = dateObj.getTime() / (24 * 60 * 60 * 1000) + 25569;
+
+                    // Add the fractional day for time
+                    const timeOfDay = (dateObj.getHours() * 3600 + dateObj.getMinutes() * 60 + dateObj.getSeconds()) / 86400;
+                    const excelDateTime = excelDate + timeOfDay;
+
+                    console.log("Excel datetime value:", excelDateTime);
+
+                    // Create the number cell with the Excel date value
+                    this.cell = new NumberCell(excelDateTime);
+                } else {
+                    console.error("Invalid date after cleaning:", dateTimeStr);
+                    this.cell = new NumberCell(0); // Fallback
+                }
+            } catch (error) {
+                console.error("Error processing datetime:", error);
+                this.cell = new NumberCell(0); // Fallback
+            }
         }
 
         return this.cell;

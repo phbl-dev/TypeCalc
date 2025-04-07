@@ -2,7 +2,7 @@
 import type { Sheet } from "./Sheet";
 import type { Value } from "./Value";
 import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
-import { Error, type Expr, NumberConst } from "./Expressions"; // This should be imported when it's done
+import {Error, type Expr, FunCall, NumberConst} from "./Expressions"; // This should be imported when it's done
 import { CyclicException, Formats } from "./Types";
 import type { Workbook } from "./Workbook"; // This should be imported when it's done
 import { SpreadsheetVisitor} from "./Parser/Visitor";
@@ -25,6 +25,7 @@ export enum CellState {
 // of a spreadsheet cell.
 export abstract class Cell {
     private supportSet: SupportSet | null = null;
+    private ogText:string|null = null;
 
     // Method made for testing:
     public GetSupportSet(): SupportSet | null {
@@ -150,10 +151,16 @@ export abstract class Cell {
         if (text) {
             const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
             let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
+            if (cellToBeAdded == null) {return null}
+            cellToBeAdded.ogText = text;
             console.log("this is what is being returned from Cell: ");
             console.log(cellToBeAdded);
             return cellToBeAdded; // We call the parseCell() method to return a readable Cell.
         } else return null;
+    }
+
+    public GetText():string|null {
+        return this.ogText;
     }
 
     // Add the support range to the cell, avoiding direct self-support at sheet[col,row]
@@ -464,12 +471,14 @@ export class Formula extends Cell {
             case CellState.Uptodate:
                 break;
             case CellState.Computing:
-                //console.log("Computing");
-                /**
+                console.log("Computing");
+
+                // if(this.Show(col, row, this.workbook.format).substring(0,3)) {break}
+
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
                 throw new CyclicException(msg, culprit); // Culprit should be added to this.
-*/
+
             case CellState.Dirty:
             case CellState.Enqueued:
                 this.state = CellState.Computing;
@@ -602,6 +611,7 @@ export class Formula extends Cell {
      * @constructor
      */
     public override Show(col: number, row: number, fo: Formats): string {
+        //return "=" + this.showValue().toString();
         return "=" + this.e.Show(col, row, 0, fo);
     }
 
@@ -620,6 +630,14 @@ export class Formula extends Cell {
         this.e.DependsOn(here, dependsOn);
     }
 }
+
+/**
+ * An ArrayFormula is a cached array formula shared among several
+ * cells, each cell accessing one part of the result array.  Several
+ * ArrayFormula cells share one CachedArrayFormula cell; evaluation
+ * of one cell will evaluate the formula and cache its (array) value
+ * for the other cells to use.
+ */
 
 export class ArrayFormula extends Cell {
     public readonly caf: CachedArrayFormula;

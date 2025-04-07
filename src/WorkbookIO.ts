@@ -6,6 +6,7 @@ import {Workbook} from "./back-end/Workbook";
 import {Sheet} from "./back-end/Sheet";
 import {Cell, NumberCell, QuoteCell} from "./back-end/Cells";
 import {numberToLetters} from "./front-end/virtualizedGrid.tsx";
+import {A1RefCellAddress} from "./back-end/CellAddressing.ts";
 
 //The XMLReader is used to read an XML file via the method readFile(xml_filename)
 /*More in-depth explanation is as follows:
@@ -135,10 +136,19 @@ export class WorkbookManager {
         //console.log("[WorkbookManager] getWorkbook ->", this.instance);
         if (!this.instance) {
             this.instance = new Workbook();
-            const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", true);
+            const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", 65536, 1048576, true);
             this.instance.AddSheet(baseSheet);
         }
         return this.instance;
+    }
+
+    static getActiveSheet():Sheet |null {
+        if (!this.instance || !this.activeSheet) {
+            this.instance = new Workbook();
+            console.log("[WorkbookManager] Creating Workbook");
+            //this.activeSheet = "Sheet1";
+        }
+        return this.instance.get(this.activeSheet);
     }
 
     //static addSheet(sheetName:string):void {}
@@ -176,6 +186,35 @@ export class WorkbookManager {
     static notifyUpdate() {
         window.dispatchEvent(new Event("workbookUpdated"));
     }
+}
+
+export function GetRawCellContent(cellCol:number, cellRow:number, cellID:string):string|null {
+    let ca:A1RefCellAddress = new A1RefCellAddress(cellID);
+    cellCol = ca.col;
+    cellRow = ca.row;
+    const wb:Workbook = WorkbookManager.getWorkbook();
+    if (!wb) {
+        console.log("[GetRawCellContent] No workbook found!");
+        return null;
+    }
+    const activeSheet:Sheet|null= WorkbookManager.getActiveSheet();
+    if (!activeSheet) {
+        console.log("[GetRawCellContent] No activeSheet found!");
+        return null;
+    }
+    const cellContent:string | null | undefined = activeSheet.getCells().Get(cellCol,cellRow)?.GetText();
+    if (!cellContent && cellContent != "0") {
+        console.log("[GetRawCellContent] No cell found!");
+        return null;
+    }
+    const colChar:string = numberToLetters(cellCol);
+    const cellHTML = document.getElementById(colChar + cellRow);
+    if (!cellHTML) {
+        console.log("[GetRawCellContent] No cell found in frontend!");
+        return null;
+    }
+    //cellHTML.innerText = cellContent;
+    return cellContent
 }
 
 //This is the method for retrieving cell data for the current view-port in the front-end.

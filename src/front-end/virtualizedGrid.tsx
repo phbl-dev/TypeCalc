@@ -1,6 +1,6 @@
 import React, {forwardRef,  useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
+import {GetRawCellContent, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {NumberCell, QuoteCell, Cell as BackendCell} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
@@ -77,6 +77,14 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
     </div>
 );
 
+const formulaBox = ({ cell, style}: {cell:BackendCell, style:any}) => (
+    <div id="formulaBox"
+         style={{
+             ...style,
+         }}>
+    </div>
+);
+
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
@@ -86,6 +94,7 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
 const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: number, style:any}) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
     let initialValueRef = useRef<string>("");
+    let valueHolder:string = "";
 
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
     const handleHover = () => {
@@ -153,8 +162,18 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
              onFocus={(e) => {
+                 let c = 0;
                  // Save the initial value on focus
-                 initialValueRef.current = (e.target as HTMLElement).innerText;
+                 let rawCellContent = GetRawCellContent(1, 1, ID);
+                 if (!rawCellContent) {
+                     console.log("[virtualizedGrid.tsx Cell] Cell Content not updated");
+                     return;
+                 }
+                 valueHolder = (e.target as HTMLElement).innerText;
+                 initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
+                 (e.target as HTMLInputElement).innerText = rawCellContent;
+
+                 //console.log("yo");
              }}
              onMouseMove={handleHover} // Gets the cellID when moving the mouse
              onKeyDown={(e) => {
@@ -165,7 +184,11 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
                      ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
+                    console.log("Cell Updated");
                  }
+                 else {(e.target as HTMLElement).innerText = valueHolder}
+
+
              }}
         >
         </div>
@@ -196,7 +219,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
                 onClick={() => {
                     const newSheetName = window.prompt("Enter an unused Sheet Name");
                     if (newSheetName && !sheetNames.includes(newSheetName) && newSheetName.trim() !== "") {
-                        let newSheet = new Sheet(WorkbookManager.getWorkbook(), newSheetName, false);
+                        let newSheet = new Sheet(WorkbookManager.getWorkbook(), newSheetName, 65536, 1048576, false);
                         WorkbookManager.getWorkbook().AddSheet(newSheet);
                         setSheetNames([...sheetNames, newSheetName]);
                     }
@@ -349,6 +372,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
             scrollOffset.top = Math.floor(scrollTop/rowHeight);
         }
+        //console.log(scrollLeft, scrollTop);
 
     }
 

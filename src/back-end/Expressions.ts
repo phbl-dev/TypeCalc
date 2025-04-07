@@ -247,6 +247,8 @@ export class FunCall extends Expr {
     // containing various spreadsheet functions:
     public readonly function: (...args: unknown[]) => unknown;
     public es: Expr[];           // Non-null, elements non-null
+    public nonStrict: boolean;        // We implemented a flag for non-strict functions such that we know if some of their arguments should not be evaluated.
+    public isChoose: boolean
 
     private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[]) {
         super();
@@ -256,6 +258,8 @@ export class FunCall extends Expr {
             this.function = FunCall.getFunctionByName(name);
         }
         this.es = es;
+        this.nonStrict = false;
+        this.isChoose = false;
     }
 
     public static getFunctionByName(name: string): (...args: unknown[]) => unknown {
@@ -269,12 +273,58 @@ export class FunCall extends Expr {
         throw new Error(`Function ${name} not found in formulajs`);
     }
 
+    private static IF(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            if (args[0]) {
+                return args[1];
+            } else {
+                return args[2];
+            }
+        }
+
+        // We create a new instance of FunCall, such that we can update our non-strict flag to true.
+        // This is important for methods such as IF and CHOOSE, where lazy evaluation is desired.
+        const funCall = new FunCall(func, es);
+        funCall.nonStrict = true;
+        return funCall;
+    }
+
+
+    private static CHOOSE(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            if((args[0] as Value).ToObject() as number >= 1 && (args[0] as Value).ToObject() as number <= args.length) {
+                return args[0];
+            }
+        }
+
+
+        const funCall = new FunCall(func, es);
+        funCall.nonStrict = true;
+        funCall.isChoose = true;
+        return funCall;
+    }
+
+
+
     public static Make(name: string, es: Expr[]): Expr {
 
         if (name === "NEG") {return this.NEG(es)}
         if (name === "EQUALS") {return this.EQUALS(es);}
         if (name === "DIVIDE") {return this.DIVIDE(es);}
         if (name === "SUB") {return this.SUB(es)}
+        if (name === "ADD") {return this.ADD(es)}
+        if (name === "IF") {return this.IF(es)}
+        if (name === "CHOOSE") {return this.CHOOSE(es)}
+        if (name === "NOTEQUALS") {return this.NOTEQUALS(es)}
+        if (name === "GEQ") {return this.GEQ(es)}
+        if (name === "GEQUALS") {return this.GEQUALS(es)}
+        if (name === "LEQUALS") {return this.LEQUALS(es)}
+        if (name === "LEQ") {return this.LEQ(es)}
+        if (name === "CONCATENATE") {return this.CONCATENATE(es)}
+
+
+
+
 
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
@@ -293,7 +343,10 @@ export class FunCall extends Expr {
         } else {
             return new FunCall(func, es);
         }
+
+
     }
+
     /**
      * EQUALS is a function that we implemented ourselves to check if two values are equal.
      * The method creates a "lambda" function and stores it in "func". So we don't evaluate
@@ -301,9 +354,18 @@ export class FunCall extends Expr {
      */
     private static EQUALS(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return args[0] === args[1];
-        }
+                return args[0] === args[1];
+            }
+
         return new FunCall(func, es)
+    }
+
+    private static CONCATENATE(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+
+            return args.join('');  // Join all arguments as strings
+        }
+        return new FunCall(func, es);
     }
 
     /**
@@ -319,6 +381,61 @@ export class FunCall extends Expr {
     }
 
     /**
+     * NOT EQUALS is a function that we implemented ourselves to check if two variables are not the same
+     */
+
+    private static NOTEQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return args[0] !== args[1];
+        }
+        return new FunCall(func, es)
+    }
+
+    private static GEQ(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+
+                return (args[0] as number) > (args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+    private static LEQ(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return (args[0] as number) < (
+                    args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+
+    private static LEQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return (args[0] as number) <= (
+                    args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+
+    private static GEQUALS(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+                return (args[0] as number) >= (
+                    args[1] as number);
+
+
+        }
+        return new FunCall(func, es);
+
+    }
+
+
+    /**
      * DIVIDE is a function that we implemented ourselves to divide two numbers
      */
     private static DIVIDE(es: Expr[]) {
@@ -329,18 +446,43 @@ export class FunCall extends Expr {
     }
 
     /**
-     * SUB is a function that we implemented ourselves to subtract two numbers
+     * ADD is a function that we implemented ourselves to add two or more numbers
      */
-    private static SUB(es: Expr[]) {
+
+    private static ADD(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
-            return (args[0] as number)-(args[1] as number);
+            return (args[0] as number) + (args[1] as number);
         }
         return new FunCall(func, es)
     }
+    /**
+     * SUB is a function that we implemented ourselves to subtract two or more numbers
+     */
+    private static SUB(es: Expr[]) {
+        const func = (...args: unknown[]): unknown => {
+            return (args[0] as number) - (args[1] as number);
+        };
+        return new FunCall(func, es);
+    }
 
-    // Arguments are passed unevaluated to cater for non-strict IF
-    // (Work in progress):
+
+
+
+
     public override Eval(sheet: Sheet, col: number, row: number): Value {
+        // Special case for lazy evaluation functions like IF and CHOOSE
+        if (this.nonStrict) {
+            if (!this.isChoose) {
+                if (this.FindBoolValue(sheet, col, row)) {
+                    return this.es[1].Eval(sheet, col, row);
+                } else {
+                    return this.es[2].Eval(sheet, col, row);
+                }
+            } else {
+                return this.es[(this.es[0].Eval(sheet,col,row).ToObject() as number)].Eval(sheet, col, row);
+            }
+        }
+
         const args = FunCall.extracted(sheet, col, row, this.es);
 
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
@@ -370,6 +512,23 @@ export class FunCall extends Expr {
         }
 
         return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
+    }
+
+    private FindBoolValue(sheet: Sheet, col: number, row: number) {
+        let conditionValue = false;
+
+        const args_0: Value = this.es[0].Eval(sheet, col, row);
+
+
+        console.log(`Look here ${args_0.ToObject()}`);
+
+        if (args_0 instanceof NumberValue) {
+            conditionValue = NumberValue.ToBoolean(args_0) as unknown as boolean;
+        } else if (args_0 instanceof TextValue) {
+            const text: string = TextValue.ToString(args_0)!;
+            conditionValue = text.toLowerCase() === "true" || text === "1";
+        }
+        return conditionValue;
     }
 
     /**
@@ -404,8 +563,22 @@ export class FunCall extends Expr {
             if (value instanceof TextValue) {
                 return TextValue.ToString(value)
             }
-            return null;
+            if (value instanceof ArrayView) {
 
+                const result = [];
+
+                for (let r = 0; r < value.Rows; r++) {
+                    for (let c = 0; c < value.Cols; c++) {
+                        const cellValue = value.Get(c, r);
+                        console.log(`Look here ${cellValue}`);
+                        if (cellValue instanceof NumberValue) {
+                            result.push(NumberValue.ToNumber(cellValue));
+                        }
+                    }
+                }
+                return result;
+            }
+            return null;
         });
         return args;
     }
@@ -561,13 +734,18 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
 
+
         console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
         console.log(sheet.Get(col,row))
 
         console.log(`Found values, col: ${col}, row: ${row}`);
         const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.colRef, this.raref.rowRef)!; // ca.col = 0, ca.row = 0
-        console.log(`Cell return ${cell}`);
-        return cell.Eval(sheet, col, row) as Value;
+        if(cell !== undefined && cell !== null) {
+            return cell.Eval(sheet, col, row) as Value;
+        }
+        else {
+            return TextValue.Make(ErrorValue.refError.message);
+        }
     }
 
     public GetAbsoluteAddr(sheet: Sheet | FullCellAddress, col?: number, row?: number): FullCellAddress {
@@ -726,15 +904,8 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
 
             const lrCa = this.lr.address(col as number,row as number);
 
-            const view = ArrayView.Make(ulCa,lrCa, this.sheet ?? fca as Sheet)
+            return ArrayView.Make(ulCa,lrCa, this.sheet ?? fca as Sheet)
 
-            for (let i = 0; i < view.Cols; i++) {
-                for (let j = 0; j < view.Rows; j++) {
-                    //Do nothing
-                }
-            }
-
-            return view
         }
     }
 
@@ -774,32 +945,32 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
         }
     }
 
-    public AddToSupport(supported:Sheet, col: number, row: number, cols: number, rows: number) {
-        const referredSheet = this.sheet ?? supported
-        let referredRows:Interval, referredCols:Interval;
+    public AddToSupport(supported: Sheet, col: number, row: number, cols: number, rows: number) {
+        const referredSheet = this.sheet ?? supported;
+        let referredRows: Interval, referredCols: Interval;
         let supportedCols: (arg: number) => Interval;
         let supportedRows: (arg: number) => Interval;
-        const ra = this.ul.rowRef, rb = this.lr.rowRef, r1 = row, r2 = row + rows -1
-        const ca =this.ul.colRef, cb = this.lr.colRef, c1 = col, c2 = col + cols - 1;
+        const ra = this.ul.rowRef, rb = this.lr.rowRef, r1 = row, r2 = row + rows - 1;
+        const ca = this.ul.colRef, cb = this.lr.colRef, c1 = col, c2 = col + cols - 1;
 
         [referredRows, supportedRows] = CellArea.RefAndSupp(this.ul.rowAbs, this.lr.rowAbs, ra, rb, r1, r2);
-       [referredCols, supportedCols] =  CellArea.RefAndSupp(this.ul.colAbs, this.lr.colAbs, ca, cb, c1, c2,);
+        [referredCols, supportedCols] = CellArea.RefAndSupp(this.ul.colAbs, this.lr.colAbs, ca, cb, c1, c2);
 
-       if(referredCols.length() < referredRows.length()) {
-           referredCols.forEach((col) => {
-               const suppCols = supportedCols(col)
-               referredRows.forEach((row) => {
-                   referredSheet.AddSupport(col, row, supported, suppCols, supportedRows(row))
-               })
-           })
-       } else {
-           referredRows.forEach((row) => {
-               const suppRows = supportedRows(col)
-               referredCols.forEach((col) => {
-                   referredSheet.AddSupport(col, row, supported, supportedCols(col), suppRows)
-               })
-           })
-       }
+        if(referredCols.length() < referredRows.length()) {
+            referredCols.forEach((c) => {
+                const suppCols = supportedCols(c);
+                referredRows.forEach((r) => {
+                    referredSheet.AddSupport(c, r, supported, suppCols, supportedRows(r));
+                });
+            });
+        } else {
+            referredRows.forEach((r) => {
+                const suppRows = supportedRows(r);
+                referredCols.forEach((c) => {
+                    referredSheet.AddSupport(c, r, supported, supportedCols(c), suppRows);
+                });
+            });
+        }
     }
 
     private static RefAndSupp(ulAbs:boolean, lrAbs:boolean, ra:number, rb:number, r1:number, r2:number):  [Interval, (arg: number) => Interval] {
