@@ -147,10 +147,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         if (!cellToBeAdded) {return}
         let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
-        console.log("I'm trying to add the value:");
-        console.log(content);
-        console.log("To the address:")
-        console.log(newCellAddress.toString());
+        // console.log("I'm trying to add the value:");
+        // console.log(content);
+        // console.log("To the address:")
+        // console.log(newCellAddress.toString());
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
     }
 
@@ -378,8 +378,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             if (activeCell) {
                 activeCell.innerHTML = value;
             }
-            console.log("Formula changed:", value);
-            // You can do something like update the selected cell here
+            //console.log("Formula changed:", value);
         };
 
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -421,7 +420,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      * @param scrollTop Vertical scrolling value
      */
     function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }):void {
-        //console.log(scrollOffset);
         if (colHeaderRef.current && scrollLeft !== undefined) {
             colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
             scrollOffset.left = Math.floor(scrollLeft/columnWidth);

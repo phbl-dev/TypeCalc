@@ -134,7 +134,6 @@ export class WorkbookManager {
     private static activeCell:string = "A1";
 
     static getWorkbook(): Workbook {
-        //console.log("[WorkbookManager] getWorkbook ->", this.instance);
         if (!this.instance) {
             this.instance = new Workbook();
             const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", 65536, 1048576, true);
@@ -147,7 +146,6 @@ export class WorkbookManager {
         if (!this.instance || !this.activeSheet) {
             this.instance = new Workbook();
             console.log("[WorkbookManager] Creating Workbook");
-            //this.activeSheet = "Sheet1";
         }
         return this.instance.get(this.activeSheet);
     }
@@ -158,7 +156,6 @@ export class WorkbookManager {
 
     static setActiveCell(cell:string):void {
         this.activeCell = cell;
-        console.log("[WorkbookManager] This is the active cell:" + this.activeCell);
     }
 
     //static addSheet(sheetName:string):void {}
@@ -172,7 +169,6 @@ export class WorkbookManager {
     }
 
     static createNewWorkbook(): void {
-        console.log("[WorkbookManager] createNewWorkbook");
         this.instance = new Workbook();
     }
 
@@ -267,21 +263,15 @@ export function ShowWindowInGUI(activeSheet:string, leftCornerCol: number, right
     if (sheet) {
         for (let col: number = startCol; col <= endCol ; col++) {
             for (let row: number = startRow; row <= endRow; row++) {
-                //console.log(col, row);
                 const colChar:string = numberToLetters(col);
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
                     WorkbookManager.getWorkbook().Recalculate();
                     let cellEval =  sheet.Get(col - 1,row - 1)?.Eval(sheet, 0, 0)?.ToObject();
                     if (cellEval != undefined) {
-                        // console.log("I found a cell at:");
-                        // console.log("Row:", row);
-                        // console.log("Col:", col);
                         cellHTML.innerText = cellEval as string;
-                        //console.log(cellEval as string);
                     }
                     else if (sheetSwap) {
-                        //console.log("Showing empty cell")
                         cellHTML.innerText = "";
                     }
                 }
