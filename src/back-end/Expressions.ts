@@ -782,7 +782,7 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
         const ca:number = this.raref.colRef,
             ra:number = this.raref.rowRef;
         const r1:number = row,
-            r2:number = row - 1,
+            r2:number = row +rows -  1,
             c1:number = col,
             c2:number = col + cols - 1;
         let referredCols: Interval, referredRows: Interval;
@@ -801,7 +801,7 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
         } else {
             referredRows.forEach((r) => {
                 const suppRows: Interval = supportedRows(r);
-                supportedRows(r).forEach((c) => {
+                supportedCols(r).forEach((c) => {
                     referredSheet.AddSupport(c, r, supported, supportedCols(c), suppRows);
                 });
             });
@@ -852,9 +852,8 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
             referred = new Interval(minRef, maxRef);
 
             supported = (r) => {
-                const minSup = Math.min(r - ra, r - ra);
-                const maxSup = Math.max(r - ra, r - ra);
-                return new Interval(minSup, maxSup);
+                return new Interval(Math.max(r1, r - ra), Math.min(r2, r - ra));
+
             };
         }
 
