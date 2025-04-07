@@ -523,6 +523,7 @@ export class FunCall extends Expr {
             // Fill the column with values
             for (let i = 0; i < result.length; i++) {
                 values[0][i] = NumberValue.Make(result[i]);
+                sheet.SetCell(new NumberCell(result[i]), col, row+i)
             }
 
             // Create ArrayExplicit with coordinates
