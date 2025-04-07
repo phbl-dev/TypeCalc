@@ -1,7 +1,7 @@
 import React, {forwardRef,  useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
-import {NumberCell, QuoteCell, Cell as BackendCell} from "../back-end/Cells";
+import {Cell as BackendCell} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
 
@@ -145,8 +145,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
-        // const cellToBeAdded: QuoteCell | NumberCell =
-        //     typeof content === "number" ? new NumberCell(content as number) : new QuoteCell(content as string);
         if (!cellToBeAdded) {return}
         let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
         console.log("I'm trying to add the value:");
@@ -262,10 +260,6 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
     );
 };
 
-// function updateCell(cellID:string, cellValue:string):void {
-//
-// }
-
 /** Creates the sheet itself with headers and body. It extends the GridInterface so that
  * we can create a sheet with a self-defined amount of rows and columns.
  * The sheet itself consists of a top row flexbox with a corner cell and a row of column
@@ -354,8 +348,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             }
         }
 
-
-
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
         jumpButton.addEventListener("click", handleJump); // Jump to cell
@@ -420,19 +412,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             formulaBox.removeEventListener("blur", handleBlur);
         };
     }, []);
-
-    // useEffect(() => {
-    //     if (activeSheet) {
-    //         ShowWindowInGUI(
-    //             activeSheet,
-    //             scrollOffset.left,
-    //             scrollOffset.left + 30,
-    //             scrollOffset.top,
-    //             scrollOffset.top + 30,
-    //             false
-    //         );
-    //     }
-    // }, [activeSheet]);
 
 
     /** Synchronizes scrolling between the grid body and the headers so that it works
