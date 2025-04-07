@@ -26,7 +26,7 @@ describe("ArrayFormula", () => {
         cellArea = new CellArea(sheet, true, 0, true, 0, true, 2, true, 2); // Creating a cell area from A1:C3 with relative references.
         funCall = FunCall.Make("FREQUENCY", [cellArea, ExprArray.MakeExprArray([new NumberConst(2), new NumberConst(4)])])                         // Creating a function call to FREQUENCY
         formula = Formula.Make(workbook, funCall)                               // Creating a Formula Cell containing the function call
-        sheet.SetCell(formula, 3, 0)
+        sheet.SetCell(formula, 0, 3)
         workbook.Recalculate()
 
 
@@ -34,25 +34,36 @@ describe("ArrayFormula", () => {
 
     test("constructor and eval", () => {
         // Creating a cached array formula stored in A4 and holding a reference to the cell area A1:C3:
-        let cachedArrayFormula = new CachedArrayFormula(formula, sheet, 3, 0, new SuperCellAddress(0,0), new SuperCellAddress(2,2));
+        // Creating a cached array formula:
+        let cachedArrayFormula = new CachedArrayFormula(
+            formula,            // Your FREQUENCY formula
+            sheet,              // The sheet
+            0, 3,               // Formula position (col=0, row=3) - A4
+            new SuperCellAddress(0, 3),  // Output range start (A4)
+            new SuperCellAddress(0, 5)   // Output range end (A6)
+        );
 
-        // Place the CAF in the top-left formula cell
-        sheet.SetCell(formula, 3, 0);
+        // Place ArrayFormula cells in the output range
+        // Place ArrayFormula cells in the output range
+        // Create array formulas with the EXACT structure that matches your array
+        const arrayFormula1 = new ArrayFormula(cachedArrayFormula, 0, 0); // First element
+        const arrayFormula2 = new ArrayFormula(cachedArrayFormula, 0, 1); // Second element
+        const arrayFormula3 = new ArrayFormula(cachedArrayFormula, 0, 2); // Third element
 
-        // Then apply ArrayFormula wrapper cells to all output locations
-            for (let r = 0; r <= 2; r++) {
-                sheet.SetCell(new ArrayFormula(cachedArrayFormula, 3, r), 3, r);
-            }
+        // Place these cells at their sheet positions
+        sheet.SetCell(arrayFormula1, 0, 3);
+        sheet.SetCell(arrayFormula2, 0, 4);
+        sheet.SetCell(arrayFormula3, 0, 5);
 
-        workbook.Recalculate()
+        workbook.Recalculate();
 
-        console.log("print result: ")
+        // console.log("print result: ")
         // Evaluate and print result values from D1 to D3
-        for (let r = 0; r <= 2; r++) {
-            const cell = sheet.Get(3, r);
-            const val = cell?.Eval(sheet, 3, r);
-
-            console.log(`D${r + 1}:`, val?.toString?.() ?? "[null]");  // TODO: THE RESULT IS PROBABLY NOT CORRECT!:
+        for (let r = 3; r <= 5; r++) {
+            const cell = sheet.Get(0, r);
+            const val = cell.Eval(sheet, 0, r);
+            console.log(val);
+            // console.log(`D${r + 1}:`, val?.toString?.() ?? "[null]");  // TODO: THE RESULT IS PROBABLY NOT CORRECT!:
 
         }
     })

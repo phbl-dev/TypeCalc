@@ -1,7 +1,7 @@
 import type { Sheet } from "./Sheet";
 import type { Value } from "./Value";
 import { Adjusted, FullCellAddress, Interval, type RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
-import type { Cell } from "./Cells";
+import {Cell, NumberCell} from "./Cells";
 import { type Formats, type IEquatable, ImpossibleException, Applier } from "./Types";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
@@ -513,15 +513,23 @@ export class FunCall extends Expr {
         }
 
         if (Array.isArray(result)) {
-            // console.log("Matched array")
-            // console.log("Result: " + result);
-            // return ArrayView.Make(new SuperCellAddress(col, row), new SuperCellAddress(col, row+result.length), sheet)
-            // return ArrayView.Make // How to handle this?
-            // Convert flat number[] like [2,2,5] to vertical 2D Value[][]
-            // TODO: THIS IS PROBABLY NOT CORRECT!:
-            const values: Value[][] = result.map(num => [NumberValue.Make(num)]);
 
-            return new ArrayExplicit(values);
+            // Important: we need a structure that matches how it will be accessed
+            const values: Value[][] = [];
+
+            // For a column-oriented result (which FREQUENCY typically is)
+            values[0] = [];
+
+            // Fill the column with values
+            for (let i = 0; i < result.length; i++) {
+                values[0][i] = NumberValue.Make(result[i]);
+            }
+
+            // Create ArrayExplicit with coordinates
+            const start = new SuperCellAddress(0, 0);
+            const end = new SuperCellAddress(0, result.length - 1);
+
+            return new ArrayExplicit(start, end, values);
         }
 
         return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
@@ -532,8 +540,6 @@ export class FunCall extends Expr {
 
         const args_0: Value = this.es[0].Eval(sheet, col, row);
 
-
-        console.log(`Look here ${args_0.ToObject()}`);
 
         if (args_0 instanceof NumberValue) {
             conditionValue = NumberValue.ToBoolean(args_0) as unknown as boolean;
@@ -584,8 +590,6 @@ export class FunCall extends Expr {
                     for (let c = 0; c < value.Cols; c++) {
 
                         const cellValue = value.Get(c, r);
-                        console.log(cellValue);
-                        console.log(`Look here ${cellValue}`);
                         if (cellValue instanceof NumberValue) {
                             result.push(NumberValue.ToNumber(cellValue));
                         }

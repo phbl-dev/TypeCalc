@@ -18,7 +18,8 @@ export abstract class ArrayValue extends Value {
      * @returns A value
      */
     public get(ca: SuperCellAddress): Value {
-        return [ca.col, ca.row] as unknown as Value;
+        // Call the Get method with the appropriate coordinates
+        return this.Get(ca.col, ca.row);
     }
 
     public abstract Get(col: number, row: number): Value;
@@ -357,9 +358,7 @@ export class ArrayExplicit extends ArrayValue {
 
     override Get(col: number, row: number): Value {
         if (0 <= col && col < this.Cols && 0 <= row && row < this.Rows) {
-            const c: number = this.ulCellAddress.col + col;
-            const r: number = this.ulCellAddress.row + row;
-            return this.values[c][r];
+            return this.values[col][row];
         } else {
             return ErrorValue.naError;
         }

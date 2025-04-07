@@ -484,6 +484,8 @@ export class Formula extends Cell {
             case CellState.Enqueued:
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
+                console.log("this.v in Formula.Eval():");
+                console.log(this.v as Value);
                 this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
                     this.ForEachSupported(Formula.EnqueueCellForEvaluation);
@@ -650,17 +652,25 @@ export class ArrayFormula extends Cell {
     constructor(caf: CachedArrayFormula, col: number | SuperCellAddress, row?: number) {
         super();
         this.caf = caf;
-        if (row) {
+        if (row !== undefined) {
             this.ca = new SuperCellAddress(col as number, row);
         } else {
             this.ca = col as SuperCellAddress;
         }
     }
 
+// In ArrayFormula.Eval method
     public override Eval(sheet: Sheet, col: number, row: number): Value | null {
         const v: Value = this.caf.Eval();
         if (v instanceof ArrayValue) {
-            return (v as ArrayValue).get(this.ca);
+            // Get the specific element for this cell from the array
+            const element = (v as ArrayValue).get(this.ca);
+
+            // If the element is a NumberValue, extract the numeric value
+            if (element && element instanceof NumberValue) {
+                return element; // Return the NumberValue itself
+            }
+            return element;
         } else if (v instanceof ErrorValue) {
             return v;
         } else {
