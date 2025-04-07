@@ -30,10 +30,10 @@ describe("Cell Addressing tests", () => {
 
     //Reevaluate this test
     test("R1C1RARef Cell Address construction", () => {
-        const r1c1raref = new R1C1RARef("R2C1");
+        const r1c1raref = new R1C1RARef("R[2]C[1]");
 
         const rarefCA = new RARefCellAddress(r1c1raref, 0, 0);
 
-        expect(rarefCA.toString()).toBe("A2");
+        expect(rarefCA.toString()).toBe("B3");
     });
 });
