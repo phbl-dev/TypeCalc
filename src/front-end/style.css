@@ -43,6 +43,13 @@ input {
     text-align: center;
 }
 
+input.formulaBox {
+    height: 25px;
+    width: 200px;
+    border-radius: 5px;
+    text-align: center;
+}
+
 header h4 {
     margin-right: 10px;
     margin-left: auto;
@@ -72,6 +79,7 @@ header h4 {
     justify-content: center;
     font-weight: bold;
     border-left: 1px solid grey;
+    border-top: 1px solid grey;
 }
 
 #columnHeaders {
@@ -118,11 +126,6 @@ header h4 {
     z-index: 1;
 }
 
-.Cell:focus {
-    z-index: 3;
-    outline-offset: -2px;
-}
-
 [contenteditable="true"] {
     display: flex;
     vertical-align: middle;
@@ -131,6 +134,19 @@ header h4 {
     justify-content: start;
 }
 
+.active-cell {
+    background-color: #7CB9E8 !important;
+    outline: 2px solid #007bff !important;
+    outline-offset: -2px;
+    z-index: 2;
+}
+.hide-caret {
+    caret-color: transparent;
+}
+
+.show-caret {
+    caret-color: black;
+}
 
 /* ------------------------------------------ */
 footer {
