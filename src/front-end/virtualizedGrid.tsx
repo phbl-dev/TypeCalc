@@ -1,7 +1,7 @@
 import React, {forwardRef,  useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
-import {Cell as BackendCell} from "../back-end/Cells";
+import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
 
@@ -145,6 +145,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
+
+
+
+
         if (!cellToBeAdded) {return}
         let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
         // console.log("I'm trying to add the value:");
@@ -202,14 +206,43 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  keyNav(e);
              }}
              onBlur={(e) => {
-                 //Only update cell if the contents have changed!
-                 const newValue = (e.target as HTMLElement).innerText + " "
-                 if (newValue !== initialValueRef.current) {
-                     handleInput(rowIndex, columnIndex, newValue.trim());
-                     ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
+                 const workbook = WorkbookManager.getWorkbook();
+                 const sheetName = WorkbookManager.getActiveSheetName();
+                 const sheet = workbook?.get(sheetName);
+
+                 const currCell = sheet?.Get(columnIndex, rowIndex) as Formula | null;
+
+                 if (currCell) {
+                     console.log("[onBlur] Current cell:", currCell.Cached.ToObject());
+                 } else {
+                     console.log("[onBlur] Current cell does not exist yet, skipping comparison.");
                  }
-                 else {(e.target as HTMLElement).innerText = valueHolder}
+
+                 const cellToCompareWith = BackendCell.Parse((e.target as HTMLElement).innerText, workbook, columnIndex, rowIndex) as Formula | null;
+
+                 if (cellToCompareWith) {
+                     cellToCompareWith.MarkDirty();
+                     cellToCompareWith.EnqueueForEvaluation(sheet!, 0, 0);
+                     cellToCompareWith.Eval(sheet!, 0, 0);
+
+                     console.log("[onBlur] New cell after eval:", cellToCompareWith.Cached.ToObject());
+                 } else {
+                     console.log("[onBlur] Parsed cell is invalid, skipping comparison.");
+                 }
+
+                 const newValue = (e.target as HTMLElement).innerText.trim();
+
+                 if (!currCell || !cellToCompareWith || currCell.Cached.ToObject() !== cellToCompareWith.Cached.ToObject()) {
+                     handleInput(rowIndex, columnIndex, newValue);
+                     ShowWindowInGUI(sheetName, columnIndex + 1, columnIndex + 1, rowIndex + 1, rowIndex + 1, false);
+                     console.log("[onBlur] Cell Updated (Recalculated after change)");
+                 } else {
+                     (e.target as HTMLElement).innerText = valueHolder;
+                 }
+
              }}
+
+
              onInput={(e) => {
                  //Update formula box alongside cell input, also show caret (text cursor) once writing starts
                  updateFormulaBox(ID, (e.target as HTMLElement).innerText);
