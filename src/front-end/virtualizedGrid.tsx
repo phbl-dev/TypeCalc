@@ -203,9 +203,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onBlur={(e) => {
                  //Only update cell if the contents have changed!
-                 const newValue = (e.target as HTMLElement).innerText;
+                 const newValue = (e.target as HTMLElement).innerText + " "
                  if (newValue !== initialValueRef.current) {
-                     handleInput(rowIndex, columnIndex, newValue);
+                     handleInput(rowIndex, columnIndex, newValue.trim());
                      ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
