@@ -276,7 +276,7 @@ export class R1C1RARef extends SuperRARef {
     r1c1: string;
 
     constructor(r1c1: string) {
-        super(true, 0, true, 0);
+        super(false, 0, false, 0);
         this.r1c1 = r1c1;
         let i = 0;
         if (i < this.r1c1.length && this.r1c1[i] == "R") {
