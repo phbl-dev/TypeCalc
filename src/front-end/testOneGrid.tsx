@@ -1,6 +1,6 @@
 import React, { createContext, forwardRef, useContext, useMemo } from "react";
 import ReactDOM from "react-dom/client";
-import "./testStyle.css";
+import "./testOneGridStyle.css";
 import { VariableSizeGrid as Grid, VariableSizeGridProps } from "react-window";
 
 // Define context type
@@ -51,7 +51,8 @@ const OuterElement = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>
         const positions: { [key: number]: number } = {};
         let currentPosition = 0;
 
-        for (let i = 0; i < rowCount; i++) {
+        // Start from 1 because corner is 0
+        for (let i = 1; i < rowCount; i++) {
             positions[i] = currentPosition;
             currentPosition += rowHeight(i);
         }
@@ -64,7 +65,7 @@ const OuterElement = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>
         const positions: { [key: number]: number } = {};
         let currentPosition = 0;
 
-        for (let i = 2; i < columnCount; i++) {
+        for (let i = 1; i < columnCount; i++) {
             positions[i] = currentPosition;
             currentPosition += columnWidth(i);
         }
@@ -74,10 +75,9 @@ const OuterElement = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>
 
     return (
         <div ref={ref} {...rest} style={{
-            ...rest.style,
-            display: 'flex', flexDirection: 'column',
+            position: "relative",
         }}>
-            {/* Corner cells - sticky at both top and left */}
+            {/* Corner cell */}
             {stickyRows.map(rowIndex =>
                 stickyColumns.map(colIndex => (
                     <div
@@ -85,10 +85,12 @@ const OuterElement = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>
                         className="corner-cell"
                         style={{
                             position: "sticky",
+                            top: 0,
+                            left: 0,
                             width: columnWidth(colIndex),
                             height: rowHeight(rowIndex),
                             background: "#e0e0e0",
-                            display: "flex",
+                            /*display: "flex",*/
                             alignItems: "center",
                             justifyContent: "center",
                             zIndex: 3
@@ -106,6 +108,7 @@ const OuterElement = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>
                     className="sticky-row"
                     style={{
                         display:"flex",
+                        /*flexDirection: "row",*/
                         position: "sticky",
                         top: 0,
                         height: rowHeight(rowIndex),
@@ -122,14 +125,13 @@ const OuterElement = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>
                                 key={`header-row-${rowIndex}-col-${colIndex}`}
                                 className="header-cell"
                                 style={{
+                                    display:"flex",
                                     left: columnPositions[colIndex],
                                     top: 0,
                                     width: columnWidth(colIndex),
                                     height: "100%",
                                     background: "#f0f0f0",
-                                    borderRight: "1px solid #ddd",
-                                    borderBottom: "1px solid #ddd",
-                                    display: "flex",
+                                    outline: "1px solid black",
                                     alignItems: "center",
                                     justifyContent: "center"
                                 }}
@@ -148,6 +150,7 @@ const OuterElement = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>
                     className="sticky-column"
                     style={{
                         display:"flex",
+                        flexDirection: "column",
                         position: "sticky",
                         left: 0,
                         width: columnWidth(colIndex),
@@ -159,18 +162,15 @@ const OuterElement = forwardRef<HTMLDivElement, React.HTMLProps<HTMLDivElement>>
                         if (stickyRows.includes(rowIndex)) return null;
 
                         return (
-                            <div
+                            <div // Row headers
                                 key={`header-col-${colIndex}-row-${rowIndex}`}
                                 className="header-cell"
                                 style={{
-                                    position: "absolute",
                                     top: rowPositions[rowIndex],
-                                    left: 0,
                                     height: rowHeight(rowIndex),
                                     width: "100%",
                                     background: "#f0f0f0",
-                                    borderRight: "1px solid #ddd",
-                                    borderBottom: "1px solid #ddd",
+                                    outline: "1px solid black",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center"
@@ -282,8 +282,8 @@ if (rootElement) {
     const root = ReactDOM.createRoot(rootElement);
     root.render(
         <StickyVariableSizeGrid
-            height={300}
-            width={600}
+            height={window.innerHeight}
+            width={window.innerWidth}
             columnCount={50}      // Increased to see horizontal scrolling
             rowCount={100}        // Increased to see vertical scrolling
             columnWidth={colIndex => (colIndex === 0 ? 100 : 80)} // Sticky column is wider
