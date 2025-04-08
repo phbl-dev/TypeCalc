@@ -460,7 +460,7 @@ export class SupportSet {
         const range: SupportRange = SupportRange.make(suppSheet, suppCols, suppRows);
 
         if (!range.removeCell(this, sheet, col, row)) {
-            this.add(range);
+            this.ranges.push(range);
         }
     }
 

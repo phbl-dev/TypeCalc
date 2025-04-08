@@ -10,7 +10,6 @@ import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ArrayValue } from "./ArrayValue";
 import { ErrorValue } from "./ErrorValue";
-import { N } from "@formulajs/formulajs";
 
 
 
@@ -24,7 +23,7 @@ export enum CellState {
 // The Cell class and its subclasses represent the possible contents
 // of a spreadsheet cell.
 export abstract class Cell {
-    private supportSet: SupportSet | null = null;
+    protected supportSet: SupportSet | null = null;
     private ogText:string|null = null;
 
     // Method made for testing:
@@ -167,8 +166,9 @@ export abstract class Cell {
     public AddSupport(sheet: Sheet, col: number, row: number, suppSheet: Sheet, suppCols: Interval, suppRows: Interval): void {
         if (this.supportSet === null) {
             this.supportSet = new SupportSet();
-            this.supportSet.addSupport(sheet, col, row, suppSheet, suppCols, suppRows);
         }
+        this.supportSet.addSupport(sheet, col, row, suppSheet, suppCols, suppRows);
+
     }
 
     // Remove sheet[col,row] from the support sets of cells that this cell refers to
@@ -244,11 +244,11 @@ export abstract class ConstCell extends Cell {
     public override ForEachReferred(sheet: Sheet, col: number, row: number, act: (addr: FullCellAddress) => void) {}
 
     public override MarkDirty(): void {
-        this.ForEachSupported(ConstCell.MarkCellDirty);
+        this.ForEachSupported(Cell.MarkCellDirty);
     }
 
     public override EnqueueForEvaluation(sheet: Sheet, col: number, row: number) {
-        this.ForEachSupported(this.EnqueueForEvaluation);
+        this.ForEachSupported(Cell.EnqueueCellForEvaluation);
     }
 
     public override MoveContents(deltaCol: number, deltaRow: number): Cell {
@@ -344,7 +344,6 @@ export class NumberCell extends ConstCell {
     // We have to implement these methods from the ConstCell as well:
     Reset(): void {
         console.log("Trying to reset NumberCell")
-        //throw new Error("Method not implemented (NumberCell Reset)");
     }
 
 }
@@ -411,7 +410,6 @@ export class TextCell extends ConstCell {
 
     // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
     Reset(): void {
-        throw new Error("Method not implemented. (TextCell Reset)");
     }
 
 }
@@ -467,6 +465,8 @@ export class Formula extends Cell {
      * @constructor
      */
     public override Eval(sheet: Sheet, col: number, row: number): Value {
+
+
         switch (this.state) {
             case CellState.Uptodate:
                 break;
@@ -474,7 +474,6 @@ export class Formula extends Cell {
             case CellState.Computing:
                 console.log("Computing");
 
-                // if(this.Show(col, row, this.workbook.format).substring(0,3)) {break}
 
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
@@ -489,10 +488,10 @@ export class Formula extends Cell {
                 this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
                     this.ForEachSupported(Formula.EnqueueCellForEvaluation);
-                    break;
 
                 }
-                break
+                break;
+
         }
         return this.v as Value;
     }
@@ -598,7 +597,7 @@ export class Formula extends Cell {
         return this.e.isVolatile;
     }
 
-    public override (here: FullCellAddress, dependsOn: (fullCellAddr: FullCellAddress) => void): void {
+    public override DependsOn(here: FullCellAddress, dependsOn: (fullCellAddr: FullCellAddress) => void): void {
         this.e.DependsOn(here, dependsOn);
     }
     // this does not need parameters?
@@ -629,9 +628,7 @@ export class Formula extends Cell {
         return this.state == CellState.Uptodate;
     }
 
-    DependsOn(here: FullCellAddress, dependsOn: (fullCellAddr: FullCellAddress) => void): void {
-        this.e.DependsOn(here, dependsOn);
-    }
+
 }
 
 /**
@@ -716,10 +713,10 @@ export class ArrayFormula extends Cell {
         switch (this.caf.formula.state) {
             case CellState.Uptodate:
                 this.caf.formula.MarkDirty();
-                this.ForEachSupported(this.MarkDirty); // weird recursion?
+                this.ForEachSupported(Cell.MarkCellDirty); // weird recursion?
                 break;
             case CellState.Dirty:
-                this.ForEachSupported(this.MarkDirty);
+                this.ForEachSupported(Cell.MarkCellDirty);
                 break;
         }
     }
@@ -728,10 +725,10 @@ export class ArrayFormula extends Cell {
         switch (this.caf.formula.state) {
             case CellState.Dirty:
                 this.caf.Eval();
-                this.ForEachSupported(this.EnqueueForEvaluation);
+                this.ForEachSupported(Cell.EnqueueCellForEvaluation);
                 break;
             case CellState.Uptodate:
-                this.ForEachSupported(this.EnqueueForEvaluation);
+                this.ForEachSupported(Cell.EnqueueCellForEvaluation);
                 break;
         }
     }

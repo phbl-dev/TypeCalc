@@ -78,7 +78,7 @@ export class Workbook {
 
     public constructor() {
         this._RecalcCount = 0;
-        this._UseSupportSets = false;
+        this._UseSupportSets = true;
     }
 
     public AddSheet(sheet: Sheet): void {
