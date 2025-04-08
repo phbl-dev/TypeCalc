@@ -234,7 +234,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
                         fontWeight: activeSheet === name ? '' : 'normal',
                         borderBottom: activeSheet === name ? '3px solid #4a7e76' : '',
                         borderRadius: activeSheet === name ? '0' : '',
-                        height: activeSheet === name ? '19px' : '',
+                        height: activeSheet === name ? '22px' : ''
                     }}
                 >
                     {name}
@@ -420,25 +420,18 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      * @param scrollLeft Horizontal scrolling value
      * @param scrollTop Vertical scrolling value
      */
-    function syncScroll({scrollLeft, scrollTop}: { scrollLeft?: number; scrollTop?: number }): void {
+    const syncScroll = ({scrollLeft, scrollTop}: {scrollLeft:any; scrollTop:any}) => {
         if (scrollLeft !== undefined) {
             if (colHeaderRef.current) {
                 colHeaderRef.current.scrollTo({scrollLeft});
             }
-            if (bodyRef.current) {
-                bodyRef.current.scrollTo({scrollLeft});
-            }
         }
-
         if (scrollTop !== undefined) {
             if (rowHeaderRef.current) {
                 rowHeaderRef.current.scrollTo({scrollTop});
             }
-            if (bodyRef.current) {
-                bodyRef.current.scrollTo({scrollTop});
-            }
-            scrollOffset.top = Math.floor(scrollTop / rowHeight);
         }
+        scrollOffset = { left: scrollLeft, top: scrollTop };
     }
 
     return (
@@ -472,7 +465,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     width={width - rowHeaderWidth}
                     overscanColumnCount={10}
                     ref={colHeaderRef}
-                    onScroll={syncScroll}
+                    /*onScroll={syncScroll}*/
                 >
                     {ColumnHeader}
                 </Grid>
@@ -490,7 +483,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     width={rowHeaderWidth}
                     overscanRowCount={10}
                     ref={rowHeaderRef}
-                    onScroll={syncScroll}
+                    /*onScroll={syncScroll}*/
                 >
                     {RowHeader}
                 </Grid>
