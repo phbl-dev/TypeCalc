@@ -332,7 +332,9 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             event.preventDefault();
         }
 
-        // Handles the "Go to"/jump to a specific cell.
+        // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
+        // and must trigger twice to do so.
+
         const handleJump = () => {
             const cellID = input.value.trim();
             const headerCorner = document.getElementById("headerCorner");
@@ -350,6 +352,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                             columnIndex: col,
                             rowIndex: row
                         });
+
 
                         // Delay in case the item needs to be rendered first
                         setTimeout(() => {
