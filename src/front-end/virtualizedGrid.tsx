@@ -1,4 +1,4 @@
-import React, {forwardRef,  useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {Cell as BackendCell} from "../back-end/Cells";
@@ -32,6 +32,10 @@ export function numberToLetters(n: number) {
     return letter;
 }
 
+/** Converts letters to a number, following the same formula as above.
+ *
+ * @param letters - The letters to convert
+ */
 function lettersToNumber(letters:string):number {
     let output = 0;
     for (let i = 0; i < letters.length; i++) {
@@ -147,10 +151,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         if (!cellToBeAdded) {return}
         let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
-        // console.log("I'm trying to add the value:");
-        // console.log(content);
-        // console.log("To the address:")
-        // console.log(newCellAddress.toString());
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
     }
 
@@ -234,7 +234,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
                         fontWeight: activeSheet === name ? '' : 'normal',
                         borderBottom: activeSheet === name ? '3px solid #4a7e76' : '',
                         borderRadius: activeSheet === name ? '0' : '',
-                        height: activeSheet === name ? '19px' : '',
+                        height: activeSheet === name ? '22px' : ''
                     }}
                 >
                     {name}
@@ -280,7 +280,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
-    let [scrollOffset] = useState({ left: 0, top: 0 });
+    let [scrollOffset] = useState({left: 0, top: 0});
     let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
@@ -295,7 +295,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             const file = event.dataTransfer?.files?.[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = async(e) => {
+                reader.onload = async (e) => {
                     const content = e.target?.result as string;
                     WorkbookManager.createNewWorkbook(); // or call createNewWorkbook()
                     const xmlReader = new XMLReader();
@@ -316,31 +316,33 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 reader.readAsText(file);
             }
         }
+
         function handleDragOver(event: DragEvent) {
             event.preventDefault();
         }
 
-        // Handles the "Go to"/jump to a specific cell
+        // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
+        // and must trigger twice to do so.
         const handleJump = () => {
             const cellID = input.value.trim();
             const headerCorner = document.getElementById("headerCorner");
 
-            if(cellID) {
+            if (cellID) {
                 const idSplit = cellID.match(/[A-Za-z]+|\d+/g) || [];
                 const targetCell = getCell(cellID);
 
-                if(idSplit.length === 2) {
+                if (idSplit.length === 2) {
                     const col = lettersToNumber(idSplit[0]);
                     const row = parseInt(idSplit[1], 10);
 
                     if (bodyRef.current) {
                         bodyRef.current.scrollToItem({
-                            align: "start",
+                            align: "smart",
                             columnIndex: col,
                             rowIndex: row
                         });
                         if (targetCell && headerCorner) {
-                            targetCell.focus(); //TODO: Needs to fire event twice for targetCell.focus to focus a cell
+                            targetCell.focus();
                             headerCorner.textContent = cellID;
                         }
                     }
@@ -352,7 +354,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         window.addEventListener("dragover", handleDragOver); // Drag and drop
         jumpButton.addEventListener("click", handleJump); // Jump to cell
         input.addEventListener("keydown", (e) => { // Jump to cell
-            if(e.key === "Enter") handleJump();
+            if (e.key === "Enter") handleJump();
         })
 
         return () => {
@@ -368,8 +370,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         const formulaBox = document.getElementById("formulaBox") as HTMLInputElement;
         if (!formulaBox) return;
 
-        let value:string;
-        let valueChanged:boolean = false;
+        let value: string;
+        let valueChanged: boolean = false;
 
         const handleFormulaChange = (e: Event) => {
             value = (e.target as HTMLInputElement).value;
@@ -398,7 +400,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         const updateCellContents = () => {
             valueChanged = false;
             ParseToActiveCell(value);
-            ShowWindowInGUI(WorkbookManager.getActiveSheetName(),scrollOffset.left,scrollOffset.left+30,scrollOffset.top,scrollOffset.top+30, false);
+            ShowWindowInGUI(WorkbookManager.getActiveSheetName(), scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30, false);
         }
 
         formulaBox.addEventListener("keydown", handleKeyDown);
@@ -419,15 +421,18 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      * @param scrollLeft Horizontal scrolling value
      * @param scrollTop Vertical scrolling value
      */
-    function syncScroll({ scrollLeft, scrollTop }: { scrollLeft?: number; scrollTop?: number }):void {
-        if (colHeaderRef.current && scrollLeft !== undefined) {
-            colHeaderRef.current.scrollTo({ scrollLeft, scrollTop: 0 });
-            scrollOffset.left = Math.floor(scrollLeft/columnWidth);
+    const syncScroll = ({scrollLeft, scrollTop}: {scrollLeft:any; scrollTop:any}) => {
+        if (scrollLeft !== undefined) {
+            if (colHeaderRef.current) {
+                colHeaderRef.current.scrollTo({scrollLeft});
+            }
         }
-        if (rowHeaderRef.current && scrollTop !== undefined) {
-            rowHeaderRef.current.scrollTo({ scrollTop, scrollLeft: 0 });
-            scrollOffset.top = Math.floor(scrollTop/rowHeight);
+        if (scrollTop !== undefined) {
+            if (rowHeaderRef.current) {
+                rowHeaderRef.current.scrollTo({scrollTop});
+            }
         }
+        scrollOffset = { left: scrollLeft, top: scrollTop };
     }
 
     return (
