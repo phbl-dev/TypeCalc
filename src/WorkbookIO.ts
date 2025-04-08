@@ -4,9 +4,11 @@
 import { XMLParser } from "fast-xml-parser";
 import {Workbook} from "./back-end/Workbook";
 import {Sheet} from "./back-end/Sheet";
-import {Cell, NumberCell, QuoteCell} from "./back-end/Cells";
+import {ArrayFormula, CachedArrayFormula, Cell, Formula, NumberCell, QuoteCell} from "./back-end/Cells";
 import {numberToLetters} from "./front-end/virtualizedGrid.tsx";
-import {A1RefCellAddress} from "./back-end/CellAddressing.ts";
+import {A1RefCellAddress, SuperCellAddress} from "./back-end/CellAddressing.ts";
+import {ArrayExplicit} from "./back-end/ArrayValue.ts";
+import {NumberValue} from "./back-end/NumberValue.ts";
 
 //The XMLReader is used to read an XML file via the method readFile(xml_filename)
 /*More in-depth explanation is as follows:
@@ -248,38 +250,79 @@ export function GetRawCellContent(cellID:string):string|null {
 //This is the method for retrieving cell data for the current view-port in the front-end.
 //Updates on every scroll, meaning that the values are stored only in back-end, and then repeatedly fetched
 //Makes sure that we only load data in the viewport, everything else stays in back-end.
-export function ShowWindowInGUI(activeSheet:string, leftCornerCol: number, rightCornerCol:number, topCornerRow: number, bottomCornerRow: number, sheetSwap:boolean):void {
+export function ShowWindowInGUI(activeSheet: string, leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number, sheetSwap: boolean): void {
     const wb = WorkbookManager.getWorkbook();
     if (!wb) {
         console.log("[ShowWindowInGUI] No workbook found!");
         return;
     }
 
-    const startCol:number = leftCornerCol;
-    const endCol:number = rightCornerCol;
-    const startRow:number = topCornerRow;
-    const endRow:number = bottomCornerRow;
-    const sheet:Sheet = wb.get(activeSheet) as Sheet; //This needs to be updated
-    if (sheet) {
-        for (let col: number = startCol; col <= endCol ; col++) {
-            for (let row: number = startRow; row <= endRow; row++) {
-                const colChar:string = numberToLetters(col);
-                const cellHTML = document.getElementById(colChar + row);
-                if (cellHTML != null) {
-                    WorkbookManager.getWorkbook().Recalculate();
-                    let cellEval =  sheet.Get(col - 1,row - 1)?.Eval(sheet, 0, 0)?.ToObject();
-                    if (cellEval != undefined) {
-                        cellHTML.innerText = cellEval as string;
-                    }
-                    else if (sheetSwap) {
+    const sheet: Sheet = wb.get(activeSheet) as Sheet;
+    if (!sheet) return;
+
+    wb.Recalculate(); // Recalculate once before rendering
+
+    // Process cells in the viewport
+    for (let col = leftCornerCol; col <= rightCornerCol; col++) {
+        for (let row = topCornerRow; row <= bottomCornerRow; row++) {
+            const colChar = numberToLetters(col);
+            const cellHTML = document.getElementById(colChar + row);
+            if (!cellHTML) continue;
+
+            try {
+                // Get the cell at this position
+                const cell = sheet.Get(col - 1, row - 1);
+
+                // If the cell has no content we set it to be an empty string
+                if (!cell) {
+                    if (sheetSwap) {
                         cellHTML.innerText = "";
                     }
+                    continue;
                 }
+
+                // Evaluate the cell
+                const result = cell.Eval(sheet, col - 1, row - 1);
+
+                // Handle array formula results
+                if (cell instanceof Formula && result instanceof ArrayExplicit) {
+
+                    // We need to instantiate a CAF to later instantiating our ArrayFormulas
+                    if (result.values[0] && result.values[0].length > 1) {
+                        const cachedArrayFormula = new CachedArrayFormula(
+                            cell as Formula,
+                            sheet,
+                            col - 1, row - 1,
+                            new SuperCellAddress(col - 1, row - 1),
+                            new SuperCellAddress(col - 1, row - 1 + result.values[0].length - 1)
+                        );
+
+                        // Only set ArrayFormula cells if they don't already exist
+                        for (let i = 0; i < result.values[0].length; i++) {
+                            const nextCell = sheet.Get(col - 1, row - 1 + i);
+                            if (!(nextCell instanceof ArrayFormula)) {
+                                const arrayFormula = new ArrayFormula(cachedArrayFormula, 0, i);
+                                sheet.SetCell(arrayFormula, col - 1, row - 1 + i);
+                            }
+                        }
+                    }
+                }
+                // Display regular cell values
+                else if (result) {
+                    const value = result.ToObject();
+                    if (value != undefined) {
+                        cellHTML.innerText = value.toString();
+                    }
+                }
+                else if (sheetSwap) {
+                    cellHTML.innerText = "";
+                }
+            } catch (error) {
+                console.error(`Error processing cell ${colChar}${row}:`, error);
             }
         }
     }
 }
-
 //Interfaces for different datatypes used in the implementation.
 interface CellData {
     "#text": string | number;
