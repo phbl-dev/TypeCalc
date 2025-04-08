@@ -98,7 +98,7 @@ export class NumberValue extends Value {
 
     // Cannot be tested. Uses the current date.
     public static DoubleFromDateTimeTicks(ticks: number | bigint): number {
-        return (ticks as number - this.basedate) * this.daysPerTick;
+        return (ticks as number - this.basedate) / this.daysPerTick;
     }
 
     // tested internally.

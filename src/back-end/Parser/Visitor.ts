@@ -7,8 +7,7 @@ import type { Sheet } from "../Sheet";
 import { SpreadsheetParser } from "./Parser";
 import { type CstNode, Lexer } from "chevrotain";
 import { SpreadsheetLexer } from "./Lexer";
-import { NumberValue } from "../NumberValue";
-import { json } from "node:stream/consumers";
+import {NumberValue} from "../NumberValue.ts";
 
 /**
  * @class
@@ -292,6 +291,23 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             e = new TextConst(textValue.substring(1, textValue.length - 1));
         }
 
+        /**
+         * Custom case where we want arrays to be inserted.
+         */
+        if (ctx["LBracket"]) {
+            const elements: Expr[] = [];
+
+            if (ctx["ArrayElement"]) {
+                for (let i = 0; i < ctx["ArrayElement"].length; i++) {
+                    const element = this.visit(ctx["ArrayElement"][i]);
+                    elements.push(element);
+                }
+            }
+            //TODO: THIS DOES NOT WORK AS INTENDED, but we can get our references correctly.
+            // Probably a fix on the functions side.
+            e = FunCall.Make("SUM", elements);
+        }
+
         if (ctx["LParen"]) {
             e = this.visit(ctx["expression"][0]);
         }
@@ -340,6 +356,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     protected cellContents(ctx: any): Cell {
         const e:any = this.visit(ctx.expression);
 
+        console.log(JSON.stringify(ctx, null, 2));
 
         if (ctx.QuoteCell) {
             const helperConst = ctx["QuoteCell"][0].image
@@ -354,40 +371,10 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         } else if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.Datetime) {
-            // Get the datetime string
-            let dateTimeStr = ctx["Datetime"][0].image;
-            console.log("Original datetime string:", dateTimeStr);
-
-            try {
-                // Remove the square brackets while preserving the content
-                dateTimeStr = dateTimeStr.replace(/\[/g, '').replace(/\]/g, '');
-                console.log("Cleaned datetime string:", dateTimeStr);
-
-                // Parse the date
-                const dateObj = new Date(dateTimeStr);
-
-                if (!isNaN(dateObj.getTime())) {
-                    // In Excel, dates are stored as days since December 31, 1899
-                    // 25569 is the number of days between Jan 1, 1900 and Jan 1, 1970 (Unix epoch)
-                    const excelDate = dateObj.getTime() / (24 * 60 * 60 * 1000) + 25569;
-
-                    // Add the fractional day for time
-                    const timeOfDay = (dateObj.getHours() * 3600 + dateObj.getMinutes() * 60 + dateObj.getSeconds()) / 86400;
-                    const excelDateTime = excelDate + timeOfDay;
-
-                    console.log("Excel datetime value:", excelDateTime);
-
-                    // Create the number cell with the Excel date value
-                    this.cell = new NumberCell(excelDateTime);
-                } else {
-                    console.error("Invalid date after cleaning:", dateTimeStr);
-                    this.cell = new NumberCell(0); // Fallback
+            const time:number = NumberValue.DoubleFromDateTimeTicks(ctx["Datetime"][0].image)
+            this.cell = new NumberCell(time);
                 }
-            } catch (error) {
-                console.error("Error processing datetime:", error);
-                this.cell = new NumberCell(0); // Fallback
-            }
-        }
+
 
         return this.cell;
     }

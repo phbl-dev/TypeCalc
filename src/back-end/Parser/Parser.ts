@@ -139,6 +139,23 @@ export class SpreadsheetParser extends CstParser {
                     },
                 },
 
+                {
+                    ALT: () => {
+                        $.CONSUME(SpreadsheetLexer.LBracket);
+
+                        $.OPTION2(() => {
+                            $.SUBRULE2($.factor, { LABEL: "ArrayElement" });
+
+                            $.MANY(() => {
+                                $.CONSUME(SpreadsheetLexer.Comma);
+                                $.SUBRULE3($.factor,  { LABEL: "ArrayElement" });
+                            });
+                        });
+
+                        $.CONSUME(SpreadsheetLexer.RBracket);
+                    }
+                },
+
 
 
 

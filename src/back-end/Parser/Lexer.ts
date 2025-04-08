@@ -18,7 +18,8 @@ export class SpreadsheetLexer {
     static StringLiteral: TokenType = createToken({ name: "StringLiteral", pattern: /"([^"\\]|\\.)*"/ });
 
     static QuoteCell: TokenType = createToken({ name: "QuoteCell", pattern: /'([^'\\]|\\.)*'/ , longer_alt:SpreadsheetLexer.StringLiteral});
-
+    static LBracket: TokenType = createToken({ name: "LBracket", pattern: /\[/ });
+    static RBracket: TokenType = createToken({ name: "RBracket", pattern: /]/ });
     static Ampersand: TokenType = createToken({ name: "Ampersand", pattern: /&/ });
     static LParen: TokenType = createToken({ name: "LParen", pattern: /\(/ });
     static RParen: TokenType = createToken({ name: "RParen", pattern: /\)/ });
@@ -72,6 +73,8 @@ export class SpreadsheetLexer {
         SpreadsheetLexer.Ampersand,
         SpreadsheetLexer.Identifier,
 
+        SpreadsheetLexer.LBracket,
+        SpreadsheetLexer.RBracket,
         SpreadsheetLexer.WhiteSpace,
         SpreadsheetLexer.Datetime,
 
