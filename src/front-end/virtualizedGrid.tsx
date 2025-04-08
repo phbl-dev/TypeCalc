@@ -340,6 +340,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                             rowIndex: row
                         });
 
+                        // Delay in case the item needs to be rendered first
                         setTimeout(() => {
                             const targetCell = getCell(cellID);
                             if (targetCell && headerCorner) {
