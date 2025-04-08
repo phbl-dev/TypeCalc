@@ -217,7 +217,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
 
-
+                 ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20, false);
              }}
 
 
