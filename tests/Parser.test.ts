@@ -199,12 +199,6 @@ describe("Parse Strings", () => {
         const cell:NumberCell = Cell.Parse("10",workbook,0,0) as NumberCell
     })
 
-    test("Parse date", () => {
-        const cell = Cell.Parse("2004-12-10[T12:10:10[.200123123]]",workbook,0,0) as NumberCell
-
-        console.log(cell)
-
-    })
 
     test("Parse SUM a CellArea", () => {
         const A2 = Cell.Parse("1", workbook,0,0)
