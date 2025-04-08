@@ -321,15 +321,13 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             event.preventDefault();
         }
 
-        // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
-        // and must trigger twice to do so.
+        // Handles the "Go to"/jump to a specific cell.
         const handleJump = () => {
             const cellID = input.value.trim();
             const headerCorner = document.getElementById("headerCorner");
 
             if (cellID) {
                 const idSplit = cellID.match(/[A-Za-z]+|\d+/g) || [];
-                const targetCell = getCell(cellID);
 
                 if (idSplit.length === 2) {
                     const col = lettersToNumber(idSplit[0]);
@@ -341,10 +339,14 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                             columnIndex: col,
                             rowIndex: row
                         });
-                        if (targetCell && headerCorner) {
-                            targetCell.focus();
-                            headerCorner.textContent = cellID;
-                        }
+
+                        setTimeout(() => {
+                            const targetCell = getCell(cellID);
+                            if (targetCell && headerCorner) {
+                                targetCell.focus();
+                                headerCorner.textContent = cellID;
+                            }
+                        }, 50);
                     }
                 }
             }
