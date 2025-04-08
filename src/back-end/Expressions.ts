@@ -1,5 +1,5 @@
-import type { Sheet } from "./Sheet";
-import type { Value } from "./Value";
+import  { Sheet } from "./Sheet";
+import  { Value } from "./Value";
 import { Adjusted, FullCellAddress, Interval, type RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
 import {Cell, NumberCell} from "./Cells";
 import { type Formats, type IEquatable, ImpossibleException, Applier } from "./Types";
@@ -207,7 +207,7 @@ export class Error extends Const {
  * these nested arrays.
  */
 //TODO: Should extend expr instead of Const because it should also be able to take cellrefs
-export class ExprArray extends Const {
+export class ExprArray extends Expr {
     public readonly es: Expr[];
 
     private constructor(es: Expr[]) {
@@ -234,6 +234,28 @@ export class ExprArray extends Const {
     VisitorCall(visitor: IExpressionVisitor): void {
         throw new Error("Not implemented");
     }
+
+    CopyTo(col: number, row: number): Expr {
+        throw new Error("CopyTo Not implemented");
+    }
+
+    DependsOn(here: FullCellAddress, dependsOn: (fca: FullCellAddress) => void): void {
+    }
+
+    InsertRowCols(modSheet: Sheet, thisSheet: boolean, R: number, N: number, r: number, doRows: boolean): Adjusted<Expr> {
+        throw new Error("InsertRowCols Not implemented");
+    }
+
+    Move(deltaCol: number, deltaRow: number): Expr {
+        throw new Error("Move Not implemented");
+    }
+
+    VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void): void {
+    }
+
+    get isVolatile(): boolean {
+        // Check if any of the expressions in the array are volatile
+        return this.es.some(expr => expr.isVolatile);    }
 }
 
 /**

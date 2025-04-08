@@ -28,8 +28,8 @@ describe("ArrayFormula", () => {
         funCall = FunCall.Make("FREQUENCY", [cellArea, ExprArray.MakeExprArray([new NumberConst(2), new NumberConst(4)])])                         // Creating a function call to FREQUENCY
         formula = Formula.Make(workbook, funCall)                           // Creating a Formula Cell containing the function call
         sheet.SetCell(formula, 0, 3)                                        // Setting the formula in A4
-        workbook.Recalculate()
 
+        workbook.Recalculate()
 
     })
 
@@ -56,9 +56,9 @@ describe("ArrayFormula", () => {
 
         workbook.Recalculate();
 
-        expect(sheet.Get(0, 3).Eval(sheet, 0, 0).ToObject()).toBe(2);
-        expect(sheet.Get(0, 4).Eval(sheet, 0, 0).ToObject()).toBe(2);
-        expect(sheet.Get(0, 5).Eval(sheet, 0, 0).ToObject()).toBe(5);
+        expect(sheet.Get(0, 3).Eval(sheet, 0, 3).ToObject()).toBe(2);
+        expect(sheet.Get(0, 4).Eval(sheet, 0, 4).ToObject()).toBe(2);
+        expect(sheet.Get(0, 5).Eval(sheet, 0, 5).ToObject()).toBe(5);
 
 
     })
