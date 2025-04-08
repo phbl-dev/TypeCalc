@@ -757,7 +757,7 @@ class RefSet {
         if (arg1 instanceof CellRef) {
             return !this.cellRefsSeen.add(arg1 as CellRef);
         } else {
-            return !this.cellAreasSeen.has(arg1 as CellArea);
+            return !this.cellAreasSeen.add(arg1 as CellArea);
         }
     }
 }
@@ -884,10 +884,10 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
         let referred: Interval;
         let supported: (arg: number) => Interval;
 
-        if (abs) { // case abs
+        if (abs) {
             referred = new Interval(ra, ra);
             supported = (_r) => new Interval(r1, r2);
-        } else {   // case rel
+        } else {
             referred = new Interval(r1 + ra, r2 + ra);
             supported = (r) => new Interval(r - ra, r - ra);
         }
@@ -896,7 +896,6 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
     }
 }
 
-// Should it inherit from IEquatable<CellArea>?
 export class CellArea extends Expr implements IEquatable<CellArea> {
     private readonly ul: SuperRARef;
     private readonly lr: SuperRARef;
@@ -993,14 +992,14 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
 
         if(referredCols.length() < referredRows.length()) {
             referredCols.forEach((c) => {
-                const suppCols = supportedCols(c);
+                let suppCols = supportedCols(c);
                 referredRows.forEach((r) => {
                     referredSheet.AddSupport(c, r, supported, suppCols, supportedRows(r));
                 });
             });
         } else {
             referredRows.forEach((r) => {
-                const suppRows = supportedRows(r);
+                let suppRows = supportedRows(r);
                 referredCols.forEach((c) => {
                     referredSheet.AddSupport(c, r, supported, supportedCols(c), suppRows);
                 });
@@ -1012,7 +1011,7 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
         if (ulAbs) {
             if (lrAbs) {
                 [ra, rb] = [Math.min(ra, rb), Math.max(ra, rb)];
-                return [new Interval(ra, rb), (r) => new Interval(ra, rb)];
+                return [new Interval(ra, rb), _ => new Interval(r1, r2)];
             } else {
                 return [new Interval(Math.min(ra, r1 + rb), Math.max(ra, r2 + rb )),
                     (r) => ra < r ? new Interval(Math.max(r1, r - rb),r2):
@@ -1020,7 +1019,6 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
                             new Interval(r1 ,r2)
                 ]
             }
-
         } else {
             if (lrAbs) {
                 return [new Interval(Math.min(ra, r1 + rb),
@@ -1031,7 +1029,6 @@ export class CellArea extends Expr implements IEquatable<CellArea> {
                 [ra, rb] = [Math.min(ra, rb), Math.max(ra, rb)];
                 return [new Interval(r1 +ra, r2 + rb), (r) => new Interval(Math.max(r1, r - rb), Math.min(r2, r - ra))]
             }
-
         }
     }
 
