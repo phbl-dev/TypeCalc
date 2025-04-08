@@ -290,6 +290,7 @@ export class FunCall extends Expr {
     }
 
 
+
     private static CHOOSE(es: Expr[]) {
         const func = (...args: unknown[]): unknown => {
             if((args[0] as Value).ToObject() as number >= 1 && (args[0] as Value).ToObject() as number <= args.length) {
@@ -464,6 +465,7 @@ export class FunCall extends Expr {
         };
         return new FunCall(func, es);
     }
+
 
 
 
@@ -675,15 +677,14 @@ export class FunCall extends Expr {
     }
 
     public override get isVolatile(): boolean {
-        /* IMPLEMENT LATER
-        if (this.function.isVolatile(this.es))
-            return true;
+        if (this.function.name == "RAND" || this.function.name == "NOW") {
+            return true
+
+        }
         this.es.forEach(e => {
-            if (e.isVolatile) {
+            if(e.isVolatile)
                 return true;
-            }
-        });
-         */
+        })
         return false;
     }
 
