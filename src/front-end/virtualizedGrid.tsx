@@ -1,4 +1,4 @@
-import React, {forwardRef,  useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
 import {Cell as BackendCell} from "../back-end/Cells";
@@ -32,6 +32,10 @@ export function numberToLetters(n: number) {
     return letter;
 }
 
+/** Converts letters to a number, following the same formula as above.
+ *
+ * @param letters - The letters to convert
+ */
 function lettersToNumber(letters:string):number {
     let output = 0;
     for (let i = 0; i < letters.length; i++) {
@@ -147,10 +151,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         if (!cellToBeAdded) {return}
         let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
-        // console.log("I'm trying to add the value:");
-        // console.log(content);
-        // console.log("To the address:")
-        // console.log(newCellAddress.toString());
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
     }
 
@@ -321,7 +321,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             event.preventDefault();
         }
 
-        // Handles the "Go to"/jump to a specific cell
+        // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
+        // and must trigger twice to do so.
         const handleJump = () => {
             const cellID = input.value.trim();
             const headerCorner = document.getElementById("headerCorner");
@@ -336,12 +337,12 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
                     if (bodyRef.current) {
                         bodyRef.current.scrollToItem({
-                            align: "start",
+                            align: "smart",
                             columnIndex: col,
                             rowIndex: row
                         });
                         if (targetCell && headerCorner) {
-                            targetCell.focus(); //TODO: Needs to fire event twice for targetCell.focus to focus a cell
+                            targetCell.focus();
                             headerCorner.textContent = cellID;
                         }
                     }
@@ -465,7 +466,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     width={width - rowHeaderWidth}
                     overscanColumnCount={10}
                     ref={colHeaderRef}
-                    /*onScroll={syncScroll}*/
                 >
                     {ColumnHeader}
                 </Grid>
@@ -483,7 +483,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     width={rowHeaderWidth}
                     overscanRowCount={10}
                     ref={rowHeaderRef}
-                    /*onScroll={syncScroll}*/
                 >
                     {RowHeader}
                 </Grid>

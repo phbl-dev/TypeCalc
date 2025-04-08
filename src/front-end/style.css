@@ -13,7 +13,7 @@ button {
     border: none;
     border-radius: 6px;
 }
-button:hover {background-color: #243d3d;}
+button:hover {background-color: #243d3d; !important;}
 
 
 /* ------------------------------------------ */
@@ -155,7 +155,6 @@ footer {
     display: flex;
     align-items: start;
     padding-left: 40px;
-    column-gap: 0;
     background-color: darkslategrey;
     position: fixed;
     bottom: 0;
