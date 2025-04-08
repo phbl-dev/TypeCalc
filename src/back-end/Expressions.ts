@@ -736,16 +736,15 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
 
 
         console.log(`Entered CellRef eval with values, col: ${col}, row: ${row}`)
-        console.log(sheet.Get(col,row))
+        console.log(sheet.Get(col, row))
 
         console.log(`Found values, col: ${col}, row: ${row}`);
-        console.log(this.raref.address(col,row))
-        const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.address(col,row).col, this.raref.address(col,row).row)!; // ca.col = 0, ca.row = 0
+        console.log(this.raref.address(col, row))
+        const cell: Cell | null = (this.sheet ?? sheet).Get(this.raref.address(col, row).col, this.raref.address(col, row).row)!; // ca.col = 0, ca.row = 0
         console.log(this.raref.colRef, this.raref.rowRef);
-        if(cell !== undefined && cell !== null) {
+        if (cell !== undefined && cell !== null) {
             return cell.Eval(sheet, col, row) as Value;
-        }
-        else {
+        } else {
             return TextValue.Make(ErrorValue.refError.message);
         }
     }
@@ -777,14 +776,15 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
             return new Adjusted<Expr>(this);
         }
     }
+
     public AddToSupport(supported: Sheet, col: number, row: number, cols: number, rows: number) {
         const referredSheet = this.sheet ?? supported;
-        const ca:number = this.raref.colRef,
-            ra:number = this.raref.rowRef;
-        const r1:number = row,
-            r2:number = row +rows -  1,
-            c1:number = col,
-            c2:number = col + cols - 1;
+        const ca: number = this.raref.colRef,
+            ra: number = this.raref.rowRef;
+        const r1: number = row,
+            r2: number = row + rows - 1,
+            c1: number = col,
+            c2: number = col + cols - 1;
         let referredCols: Interval, referredRows: Interval;
         let supportedCols: (arg: number) => Interval;
         let supportedRows: (arg: number) => Interval;
@@ -793,15 +793,15 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
 
         if (referredCols.length() < referredRows.length()) {
             referredCols.forEach((c) => {
-                const suppCols: Interval = supportedCols(c);
+                let suppCols: Interval = supportedCols(c);
                 referredRows.forEach((r) => {
                     referredSheet.AddSupport(c, r, supported, suppCols, supportedRows(r));
                 });
             });
         } else {
             referredRows.forEach((r) => {
-                const suppRows: Interval = supportedRows(r);
-                supportedCols(r).forEach((c) => {
+                let suppRows: Interval = supportedRows(r);
+                referredCols.forEach((c) => {
                     referredSheet.AddSupport(c, r, supported, supportedCols(c), suppRows);
                 });
             });
@@ -843,23 +843,16 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
         let referred: Interval;
         let supported: (arg: number) => Interval;
 
-        if (abs) {
+        if (abs) { // case abs
             referred = new Interval(ra, ra);
-            supported = (_r) => new Interval(Math.min(r1, r2), Math.max(r1, r2)); // Ensure valid order
-        } else {
-            const minRef = Math.min(r1 + ra, r2 + ra);
-            const maxRef = Math.max(r1 + ra, r2 + ra);
-            referred = new Interval(minRef, maxRef);
-
-            supported = (r) => {
-                return new Interval(Math.max(r1, r - ra), Math.min(r2, r - ra));
-
-            };
+            supported = (_r) => new Interval(r1, r2);
+        } else {   // case rel
+            referred = new Interval(r1 + ra, r2 + ra);
+            supported = (r) => new Interval(r - ra, r - ra);
         }
 
         return [referred, supported];
     }
-
 }
 
 // Should it inherit from IEquatable<CellArea>?

@@ -90,12 +90,12 @@ describe("Formula.js", () => {
         let expr2: Expr = new NumberConst(2);
 
         // Setting a number cell to be 10 and creating a reference for it:
-        const cellRef1 = new CellRef(sheet, new SuperRARef(false, 0, false, 5));
+        const cellRef1 = new CellRef(sheet, new SuperRARef(true, 0, true, 5));
         const cell1 = new NumberCell(3)
         sheet.SetCell(cell1, 0, 5)
 
         // Setting a number cell to be 5 and creating a reference for it:
-        const cellRef2 = new CellRef(sheet, new SuperRARef(false, 0, false, 6));
+        const cellRef2 = new CellRef(sheet, new SuperRARef(true, 0, true, 6));
         const cell2 = new NumberCell(2)
         sheet.SetCell(cell2, 0, 6)
 

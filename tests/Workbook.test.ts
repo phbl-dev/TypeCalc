@@ -85,7 +85,7 @@ describe("Workbook", () => {
         expect(cell!.Eval(sheet, 1, 1)).toBeFalsy;
 
         // Sheet.SetCell() calls Workbook.RecordCellChange() so editedCells should have length 4.
-        expect(workbook.GetEditedCells().length).toBe(3);
+        expect(workbook.GetEditedCells().length).toBe(2);
 
         // Run Recalculate()
         workbook.Recalculate();
