@@ -15,6 +15,8 @@ describe("ArrayFormula", () => {
     beforeEach(() => {
         workbook = new Workbook();
         sheet = new Sheet(workbook, "testSheet", false)
+
+        // Setting cells A1:C3 to contain the numbers 1-9
         let val = 1;
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
@@ -22,11 +24,10 @@ describe("ArrayFormula", () => {
             }
         }
 
-        // forstår ikke hvorfor det kun virker når referencen er absoloute og ikke relative
-        cellArea = new CellArea(sheet, true, 0, true, 0, true, 2, true, 2); // Creating a cell area from A1:C3 with relative references.
+        cellArea = new CellArea(sheet, true, 0, true, 0, true, 2, true, 2); // Creating a cell area from A1:C3 with absolute references.
         funCall = FunCall.Make("FREQUENCY", [cellArea, ExprArray.MakeExprArray([new NumberConst(2), new NumberConst(4)])])                         // Creating a function call to FREQUENCY
-        formula = Formula.Make(workbook, funCall)                               // Creating a Formula Cell containing the function call
-        sheet.SetCell(formula, 0, 3)
+        formula = Formula.Make(workbook, funCall)                           // Creating a Formula Cell containing the function call
+        sheet.SetCell(formula, 0, 3)                                        // Setting the formula in A4
         workbook.Recalculate()
 
 
@@ -34,7 +35,6 @@ describe("ArrayFormula", () => {
 
     test("constructor and eval", () => {
         // Creating a cached array formula stored in A4 and holding a reference to the cell area A1:C3:
-        // Creating a cached array formula:
         let cachedArrayFormula = new CachedArrayFormula(
             formula,            // Your FREQUENCY formula
             sheet,              // The sheet
@@ -43,7 +43,6 @@ describe("ArrayFormula", () => {
             new SuperCellAddress(0, 5)   // Output range end (A6)
         );
 
-        // Place ArrayFormula cells in the output range
         // Place ArrayFormula cells in the output range
         // Create array formulas with the EXACT structure that matches your array
         const arrayFormula1 = new ArrayFormula(cachedArrayFormula, 0, 0); // First element
@@ -60,5 +59,7 @@ describe("ArrayFormula", () => {
         expect(sheet.Get(0, 3).Eval(sheet, 0, 0).ToObject()).toBe(2);
         expect(sheet.Get(0, 4).Eval(sheet, 0, 0).ToObject()).toBe(2);
         expect(sheet.Get(0, 5).Eval(sheet, 0, 0).ToObject()).toBe(5);
+
+
     })
 })

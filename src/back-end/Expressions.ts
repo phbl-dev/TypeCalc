@@ -206,6 +206,7 @@ export class Error extends Const {
  * like AGGREGATE takes arrays as arguments. And ExprArray is then the type we use for
  * these nested arrays.
  */
+//TODO: Should extend expr instead of Const because it should also be able to take cellrefs
 export class ExprArray extends Const {
     public readonly es: Expr[];
 
@@ -513,17 +514,14 @@ export class FunCall extends Expr {
         }
 
         if (Array.isArray(result)) {
-
-            // Important: we need a structure that matches how it will be accessed
             const values: Value[][] = [];
 
-            // For a column-oriented result (which FREQUENCY typically is)
+            // Works for a column-oriented result:
             values[0] = [];
 
             // Fill the column with values
             for (let i = 0; i < result.length; i++) {
                 values[0][i] = NumberValue.Make(result[i]);
-                sheet.SetCell(new NumberCell(result[i]), col, row+i)
             }
 
             // Create ArrayExplicit with coordinates

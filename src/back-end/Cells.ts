@@ -484,8 +484,8 @@ export class Formula extends Cell {
             case CellState.Enqueued:
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
-                console.log("this.v in Formula.Eval():");
-                console.log(this.v as Value);
+                // console.log("this.v in Formula.Eval():");
+                // console.log(this.v as Value);
                 this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
                     this.ForEachSupported(Formula.EnqueueCellForEvaluation);
