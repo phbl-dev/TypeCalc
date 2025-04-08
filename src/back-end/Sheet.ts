@@ -479,13 +479,12 @@ export class Sheet {
     }
 
     public AddSupport(col: number, row: number, supportedSheet: Sheet, supportedCols: Interval, supportedRows: Interval) {
-        const cell: Cell | null = this.Get(col, row);
+        let cell: Cell | null = this.Get(col, row);
         if (cell == null) {
-            this.Set(col, new BlankCell(), row);
+            cell = new BlankCell();
+            this.Set(col, cell, row);
         }
-        if (cell != null) {
-            cell.AddSupport(this, col, row, supportedSheet, supportedCols, supportedRows);
-        }
+        cell.AddSupport(this, col, row, supportedSheet, supportedCols, supportedRows);
     }
 
     public IncreaseVolatileSet(): void {
