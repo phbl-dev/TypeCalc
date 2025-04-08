@@ -206,39 +206,15 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  keyNav(e);
              }}
              onBlur={(e) => {
-                 const workbook = WorkbookManager.getWorkbook();
-                 const sheetName = WorkbookManager.getActiveSheetName();
-                 const sheet = workbook?.get(sheetName);
-
-                 const currCell = sheet?.Get(columnIndex, rowIndex) as Formula | null;
-
-                 if (currCell) {
-                     console.log("[onBlur] Current cell:", currCell.Cached.ToObject());
-                 } else {
-                     console.log("[onBlur] Current cell does not exist yet, skipping comparison.");
-                 }
-
-                 const cellToCompareWith = BackendCell.Parse((e.target as HTMLElement).innerText, workbook, columnIndex, rowIndex) as Formula | null;
-
-                 if (cellToCompareWith) {
-                     cellToCompareWith.MarkDirty();
-                     cellToCompareWith.EnqueueForEvaluation(sheet!, 0, 0);
-                     cellToCompareWith.Eval(sheet!, 0, 0);
-
-                     console.log("[onBlur] New cell after eval:", cellToCompareWith.Cached.ToObject());
-                 } else {
-                     console.log("[onBlur] Parsed cell is invalid, skipping comparison.");
-                 }
-
-                 const newValue = (e.target as HTMLElement).innerText.trim();
-
-                 if (!currCell || !cellToCompareWith || currCell.Cached.ToObject() !== cellToCompareWith.Cached.ToObject()) {
+                 //Only update cell if the contents have changed!
+                 const newValue = (e.target as HTMLElement).innerText;
+                 if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
-                     ShowWindowInGUI(sheetName, columnIndex + 1, columnIndex + 1, rowIndex + 1, rowIndex + 1, false);
-                     console.log("[onBlur] Cell Updated (Recalculated after change)");
-                 } else {
-                     (e.target as HTMLElement).innerText = valueHolder;
+                     ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
+                     console.log("Cell Updated");
                  }
+                 else {(e.target as HTMLElement).innerText = valueHolder}
+
 
              }}
 
