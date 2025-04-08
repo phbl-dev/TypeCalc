@@ -470,6 +470,7 @@ export class Formula extends Cell {
         switch (this.state) {
             case CellState.Uptodate:
                 break;
+
             case CellState.Computing:
                 console.log("Computing");
 
@@ -483,6 +484,8 @@ export class Formula extends Cell {
             case CellState.Enqueued:
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
+                // console.log("this.v in Formula.Eval():");
+                // console.log(this.v as Value);
                 this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
                     this.ForEachSupported(Formula.EnqueueCellForEvaluation);
@@ -649,17 +652,25 @@ export class ArrayFormula extends Cell {
     constructor(caf: CachedArrayFormula, col: number | SuperCellAddress, row?: number) {
         super();
         this.caf = caf;
-        if (row) {
+        if (row !== undefined) {
             this.ca = new SuperCellAddress(col as number, row);
         } else {
             this.ca = col as SuperCellAddress;
         }
     }
 
+// In ArrayFormula.Eval method
     public override Eval(sheet: Sheet, col: number, row: number): Value | null {
         const v: Value = this.caf.Eval();
         if (v instanceof ArrayValue) {
-            return (v as ArrayValue).get(this.ca);
+            // Get the specific element for this cell from the array
+            const element = (v as ArrayValue).get(this.ca);
+
+            // If the element is a NumberValue, extract the numeric value
+            if (element && element instanceof NumberValue) {
+                return element; // Return the NumberValue itself
+            }
+            return element;
         } else if (v instanceof ErrorValue) {
             return v;
         } else {
@@ -769,13 +780,30 @@ export class ArrayFormula extends Cell {
     }
 }
 
+/**
+ * CachedArrayFormula (CAF) is used to calculate the results of a formula that outputs
+ * the result to multiple cells.
+ *
+ * Instead of recalculating the formula for each output cell individually, CAF
+ * evaluates it once and stores the result, making the rest of the dependent
+ * cells refer to this cached result.
+ *
+ * For example, the function FREQUENCY outputs its result to three different cells
+ * so CAF calculates the results once and store the results in the cached value
+ * of the formula.
+ */
 export class CachedArrayFormula {
     public readonly formula: Formula;
     public readonly sheet: Sheet;
+
+    // Column and row of the formula:
     public readonly formulaCol: number;
     public readonly formulaRow: number;
+
+    // Upper left corner and lower right corner of the cell area that should receive the result.
     public readonly ulCa: SuperCellAddress;
     public readonly lrCa: SuperCellAddress;
+
     private supportAdded: boolean;
     private supportRemoved: boolean;
 
@@ -790,25 +818,30 @@ export class CachedArrayFormula {
     }
 
     /**
-     * Uses the formulas evaluation function to return a value
-     * @see formula#Eval
-     * @constructor
+     * Evaluates the formula once — from the top-left formula cell.
+     * Result is stored in the formula's internal cache.
      */
     public Eval(): Value {
         return this.formula.Eval(this.sheet, this.formulaCol, this.formulaRow);
     }
 
+    /**
+     * Moves the formula (not the result area) and returns a new CAF.
+     */
     public MoveContents(deltaCol: number, deltaRow: number): CachedArrayFormula {
         return new CachedArrayFormula(
             this.formula.MoveContents(deltaCol, deltaRow) as Formula,
             this.sheet,
             this.formulaCol,
-            this.formulaCol,
+            this.formulaRow,
             this.ulCa,
             this.lrCa,
         );
     }
 
+    /**
+     * Returns the cached result value from the formula.
+     */
     public get CachedArray(): Value {
         return this.formula.Cached;
     }
