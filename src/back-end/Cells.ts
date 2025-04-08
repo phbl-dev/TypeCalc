@@ -344,7 +344,6 @@ export class NumberCell extends ConstCell {
     // We have to implement these methods from the ConstCell as well:
     Reset(): void {
         console.log("Trying to reset NumberCell")
-        //throw new Error("Method not implemented (NumberCell Reset)");
     }
 
 }
@@ -411,7 +410,6 @@ export class TextCell extends ConstCell {
 
     // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
     Reset(): void {
-        throw new Error("Method not implemented. (TextCell Reset)");
     }
 
 }
@@ -467,9 +465,7 @@ export class Formula extends Cell {
      * @constructor
      */
     public override Eval(sheet: Sheet, col: number, row: number): Value {
-        if (this.supportSet === null || this.supportSet.ranges.length === 0) {
-            this.AddToSupportSets(sheet, col, row, 1, 1);
-        }
+
 
         switch (this.state) {
             case CellState.Uptodate:
