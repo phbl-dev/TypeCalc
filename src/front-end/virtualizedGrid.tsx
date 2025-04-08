@@ -4,6 +4,7 @@ import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, 
 import {Cell as BackendCell} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
+import {AutoSizer} from "react-virtualized";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -454,41 +455,53 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 <div id="headerCorner"
                      style={{ // Has to be defined here to use dimensions of the sheet
                          width: rowHeaderWidth-1,
-                         height: colHeaderHeight,
+                         height: colHeaderHeight-1,
                      }}
                 >
                     {"#"}
                 </div>
-                {/* Column headers as a grid */}
-                <Grid
-                    columnCount={columnCount}
-                    columnWidth={() => columnWidth}
-                    height={colHeaderHeight}
-                    rowCount={1}
-                    rowHeight={() => colHeaderHeight}
-                    width={width - rowHeaderWidth}
-                    overscanColumnCount={10}
-                    ref={colHeaderRef}
-                >
-                    {ColumnHeader}
-                </Grid>
+                <div style={{flex: "1 1 auto"}}>
+                    <AutoSizer>
+                        {({ width }) => (
+                        <Grid
+                            columnCount={columnCount}
+                            columnWidth={() => columnWidth}
+                            height={colHeaderHeight}
+                            rowCount={1}
+                            rowHeight={() => colHeaderHeight}
+                            width={width}
+                            overscanColumnCount={10}
+                            ref={colHeaderRef}
+                        >
+                            {ColumnHeader}
+                        </Grid>
+                    )}
+                    </AutoSizer>
+                </div>
             </div>
 
             {/* Remaining grid */}
             <div style={{ display: "flex" }}>
                 {/* Row headers */}
-                <Grid
-                    columnCount={1}
-                    columnWidth={() => rowHeaderWidth}
-                    height={height - colHeaderHeight}
-                    rowCount={rowCount}
-                    rowHeight={() => rowHeight}
-                    width={rowHeaderWidth}
-                    overscanRowCount={10}
-                    ref={rowHeaderRef}
-                >
-                    {RowHeader}
-                </Grid>
+
+                <div style={{flex: "1 1 auto"}}>
+                    <AutoSizer>
+                        {({ height }) => (
+                            <Grid
+                                columnCount={1}
+                                columnWidth={() => rowHeaderWidth}
+                                height={height}
+                                rowCount={rowCount}
+                                rowHeight={() => rowHeight}
+                                width={rowHeaderWidth}
+                                overscanRowCount={10}
+                                ref={rowHeaderRef}
+                            >
+                                {RowHeader}
+                            </Grid>
+                        )}
+                    </AutoSizer>
+                </div>
 
                 {/* Grid body */}
                 <div id="gridBody">
