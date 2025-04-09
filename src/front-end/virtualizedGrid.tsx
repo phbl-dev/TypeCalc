@@ -481,11 +481,11 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             </div>
 
             {/* Remaining grid */}
-            <div style={{ display: "flex" }}>
+            <div style={{ display: "flex", flexGrow: "1", height:"100%"}}>
                 {/* Row headers */}
 
-                <div style={{flex: "1 1 auto"}}>
-                    <AutoSizer>
+                <div>
+                    <AutoSizer disableWidth >
                         {({ height }) => (
                             <Grid
                                 columnCount={1}
@@ -508,10 +508,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     <Grid
                         columnCount={columnCount}
                         columnWidth={() => columnWidth}
-                        height={height - colHeaderHeight}
+                        height={height}
                         rowCount={rowCount}
                         rowHeight={() => rowHeight}
-                        width={width - rowHeaderWidth}
+                        width={width}
                         overscanColumnCount={10}
                         overscanRowCount={10}
                         ref={bodyRef}
