@@ -10,7 +10,7 @@ import {
 } from "../WorkbookIO";
 import {ArrayFormula, CachedArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
-import {SuperCellAddress} from "../back-end/CellAddressing.ts";
+import {A1RARef, A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
 
 
@@ -129,6 +129,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         let nextRow = rowIndex;
         let nextCol = columnIndex;
 
+
         switch (event.key) {
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1); //Needed to not go too far up
@@ -146,11 +147,44 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 nextRow = rowIndex + 1;
                 break;
             case "F1":
-                WorkbookManager.getActiveSheet()?.MoveCell(columnIndex,rowIndex,columnIndex+1,rowIndex);
-                document.getElementById(ID)!.innerText = ""
-                ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20, false);
+                const tmpRef = new A1RefCellAddress(ID)
+                sessionStorage.setItem('tmpCellRef', JSON.stringify({
+                    ID: ID,
+                    col: tmpRef.col,
+                    row: tmpRef.row
+                }));
+
                 break
-            default:
+
+            case "F2":
+
+                const storedRef = sessionStorage.getItem('tmpCellRef');
+                if (storedRef) {
+                    const parsedRef = JSON.parse(storedRef);
+
+                    WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
+
+                    document.getElementById(parsedRef.ID)!.innerText = ""
+                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                }
+                break
+
+            case "F3":
+                const storedRef2 = sessionStorage.getItem('tmpCellRef');
+                if (storedRef2) {
+                    const parsedRef = JSON.parse(storedRef2);
+
+                    WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
+                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+
+                    sessionStorage.setItem('tmpCellRef', JSON.stringify({
+                        ID: ID,
+                        col: parsedRef.col,
+                        row: parsedRef.row
+                    }));
+                }
+            break
+                default:
                 return;
         }
 
