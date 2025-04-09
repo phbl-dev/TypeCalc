@@ -207,8 +207,3 @@ export class TextValue extends Value {
     }
 }
 
-const t = new TextValue("hej");
-
-if (t.value != null) {
-    console.log("test");
-}
