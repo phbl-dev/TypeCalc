@@ -173,15 +173,12 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 const storedRef2 = sessionStorage.getItem('tmpCellRef');
                 if (storedRef2) {
                     const parsedRef = JSON.parse(storedRef2);
-
+                    const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col,parsedRef.row)!
                     WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
+                    WorkbookManager.getActiveSheet()?.SetCell(tmpCell,parsedRef.col,parsedRef.row)
                     ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
 
-                    sessionStorage.setItem('tmpCellRef', JSON.stringify({
-                        ID: ID,
-                        col: parsedRef.col,
-                        row: parsedRef.row
-                    }));
+
                 }
             break
                 default:
