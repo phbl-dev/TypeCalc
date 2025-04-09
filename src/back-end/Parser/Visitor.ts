@@ -1,7 +1,7 @@
 import type { Workbook } from "../Workbook";
 import { type Cell, Formula, NumberCell, QuoteCell, TextCell } from "../Cells";
-import { CellArea, CellRef, Error, type Expr, FunCall, NumberConst, TextConst } from "../Expressions";
-import { A1RARef, A1RefCellAddress, R1C1RARef, RARefCellAddress, type SuperRARef } from "../CellAddressing";
+import {CellArea, CellRef, Error, type Expr, ExprArray, FunCall, NumberConst, TextConst} from "../Expressions";
+import { A1RARef, R1C1RARef, type SuperRARef } from "../CellAddressing";
 import { ErrorValue } from "../ErrorValue";
 import type { Sheet } from "../Sheet";
 import { SpreadsheetParser } from "./Parser";
@@ -291,6 +291,13 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             e = new TextConst(textValue.substring(1, textValue.length - 1));
         }
 
+
+
+        if (ctx["LParen"]) {
+            e = this.visit(ctx["expression"][0]);
+        }
+
+
         /**
          * Custom case where we want arrays to be inserted.
          */
@@ -303,15 +310,12 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
                     elements.push(element);
                 }
             }
-            //TODO: THIS DOES NOT WORK AS INTENDED, but we can get our references correctly.
-            // Probably a fix on the functions side.
-            e = FunCall.Make("SUM", elements);
-        }
+            e = FunCall.Make("ARRAY",[ExprArray.MakeExprArray(elements)])
 
-        if (ctx["LParen"]) {
-            e = this.visit(ctx["expression"][0]);
+
         }
         return e;
+
     }
 
     protected raref(ctx: any) {
@@ -356,7 +360,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     protected cellContents(ctx: any): Cell {
         const e:any = this.visit(ctx.expression);
 
-        console.log(JSON.stringify(ctx, null, 2));
+        //console.log(JSON.stringify(ctx, null, 2));
 
         if (ctx.QuoteCell) {
             const helperConst = ctx["QuoteCell"][0].image
