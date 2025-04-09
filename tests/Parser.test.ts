@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import {ArrayFormula, Cell, Formula, NumberCell, QuoteCell, TextCell} from "../src/back-end/Cells";
 import { Workbook } from "../src/back-end/Workbook";
 import { Sheet } from "../src/back-end/Sheet";
-import {CellArea, NumberConst, TextConst} from "../src/back-end/Expressions";
+import {CellArea, Expr, FunCall, NumberConst, TextConst} from "../src/back-end/Expressions";
 
 
 
@@ -244,6 +244,28 @@ describe("Parse Strings", () => {
 
         workbook.Recalculate()
         expect(sheet.Get(0,0).Eval(sheet,0,0).ToObject()).toBe(8)
+    })
+
+    test("Check move in backend", () => {
+        const A2 = Cell.Parse("30", workbook,0,0)
+        const A3 = Cell.Parse("100", workbook,0,0)
+        sheet.SetCell(A2,0,1)
+
+        sheet.SetCell(A3,0,2)
+        A2.MarkDirty()
+        A3.MarkDirty()
+
+        workbook.Recalculate()
+
+        const A1 = Cell.Parse("=SUM(A2:A3)", workbook,0,0)
+        sheet.SetCell(A1,0,0)
+        A1.MarkDirty()
+
+        workbook.Recalculate()
+
+        A1.MoveContents(1,1)
+
+
     })
 
     test("Check for relative references", () => {

@@ -1,12 +1,12 @@
 import  { Sheet } from "./Sheet";
 import  { Value } from "./Value";
-import { Adjusted, FullCellAddress, Interval, type RARefCellAddress, SuperCellAddress, SuperRARef } from "./CellAddressing";
-import {Cell, NumberCell} from "./Cells";
-import { type Formats, type IEquatable, ImpossibleException, Applier } from "./Types";
+import { Adjusted, FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "./CellAddressing";
+import {Cell} from "./Cells";
+import { type Formats, type IEquatable, ImpossibleException } from "./Types";
 import { NumberValue } from "./NumberValue";
 import { TextValue } from "./TextValue";
 import { ErrorValue } from "./ErrorValue";
-import {ArrayExplicit, ArrayValue, ArrayView} from "./ArrayValue";
+import {ArrayExplicit, ArrayView} from "./ArrayValue";
 import * as formulajs from '@formulajs/formulajs' // Importing formulajs
 
 
@@ -224,6 +224,7 @@ export class ExprArray extends Expr {
     }
 
     Eval(sheet: Sheet, col: number, row: number): Value {
+        console.log("this is where things go wrong")
         throw new Error("Not implemented"); // this is most likely a problem
     }
 
@@ -332,6 +333,8 @@ export class FunCall extends Expr {
 
     public static Make(name: string, es: Expr[]): Expr {
 
+        let y
+
         if (name === "NEG") {return this.NEG(es)}
         if (name === "EQUALS") {return this.EQUALS(es);}
         if (name === "DIVIDE") {return this.DIVIDE(es);}
@@ -346,10 +349,9 @@ export class FunCall extends Expr {
         if (name === "LEQ") {return this.LEQ(es)}
         if (name === "CONCATENATE") {return this.CONCATENATE(es)}
 
-
-
-
-
+        if (name === "ARRAY") {
+            return ExprArray.MakeExprArray(es);
+        }
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
