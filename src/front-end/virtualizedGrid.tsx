@@ -1,6 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
+import {
+    GetRawCellContent,
+    GetSupportsInWindow,
+    ParseToActiveCell,
+    ShowWindowInGUI,
+    WorkbookManager,
+    XMLReader
+} from "../WorkbookIO";
 import {ArrayFormula, CachedArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
@@ -102,6 +109,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     let isActive = ID == WorkbookManager.getActiveCell();
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
+    let mySupports:string[];
 
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
     const handleHover = () => {
@@ -163,6 +171,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         if (!cellToBeAdded) {return}
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
+
+
+
+        //Handle Array Results for different cells.
         WorkbookManager.getWorkbook().Recalculate();
 
         //Handle Array Results for different cells.
@@ -178,13 +190,14 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 new SuperCellAddress(columnIndex, rowIndex),
                 new SuperCellAddress(columnIndex, rowIndex + result!.values[0].length - 1)
             )
+
         }
     }
 
     const updateFormulaBox = (cellID:string, content:string|null):void => {
         const formulaBox = document.getElementById("formulaBox");
         if (!formulaBox) {
-            console.log("[virtualizedGrid.tsx Cell] FormulaBox not found");
+            console.debug("[virtualizedGrid.tsx Cell] FormulaBox not found");
             return;
         }
         (formulaBox as HTMLInputElement).value = content as string;
@@ -215,7 +228,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  let rawCellContent:string | null = GetRawCellContent(ID);
                  WorkbookManager.setActiveCell(ID);
                  if (!rawCellContent) {
-                     console.log("[virtualizedGrid.tsx Cell] Cell Content not updated");
+                     console.debug("[virtualizedGrid.tsx Cell] Cell Content not updated");
                      updateFormulaBox(ID, rawCellContent);
                      return;
                  }
@@ -226,6 +239,16 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  //Also write the content in the formula box at the top
                  updateFormulaBox(ID, rawCellContent);
 
+                 mySupports = GetSupportsInWindow(columnIndex-20, columnIndex+20,rowIndex-20,rowIndex+20,columnIndex+1,rowIndex+1);
+                 if (!mySupports) {
+                     return;
+                 }
+                 for (let i = 0; i < mySupports.length; i++){
+                     let supportingCell = document.getElementById(mySupports[i]);
+                     if (supportingCell) {
+                         supportingCell.classList.add("support-cell");
+                     }
+                 }
              }}
              onMouseMove={handleHover} // Gets the cellID when moving the mouse
              onKeyDown={(e) => {
@@ -233,17 +256,25 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onBlur={(e) => {
 
-                 console.log("Value not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
+                 console.debug("Value not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
                  //Only update cell if the contents have changed!
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
                      ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3, false);
-                     console.log("Cell Updated");
+                     console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
-
+                 if (mySupports) {
+                     for (let i = 0; i < mySupports.length; i++){
+                         let supportingCell = document.getElementById(mySupports[i]);
+                         if (supportingCell) {
+                             supportingCell.classList.remove("support-cell");
+                         }
+                     }
+                 }
                  ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20, false);
+                 //console.log(GetSupportsInWindow(columnIndex-20, columnIndex+20,rowIndex-20,rowIndex+20,columnIndex+1,rowIndex+1));
              }}
 
 
@@ -340,7 +371,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     try {
                         await xmlReader.readFile(content); // Assumes it modifies the current workbook
 
-                        console.log("[React Drop Handler] File loaded. Updating UI...");
+                        console.debug("[React Drop Handler] File loaded. Updating UI...");
                         sheetNames = WorkbookManager.getSheetNames();
                         setSheetNames(sheetNames);
                         setActiveSheet(sheetNames[0]);
