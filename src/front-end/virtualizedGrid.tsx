@@ -13,6 +13,7 @@ import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
 
+
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
     columnCount: number;
@@ -118,6 +119,11 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+    const handleDrag = () => {
+        // Should drag the cell
+        // Should call sheet.MoveCell()
+    }
+
     // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
@@ -139,6 +145,11 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             case "Enter":
                 nextRow = rowIndex + 1;
                 break;
+            case "F1":
+                WorkbookManager.getActiveSheet()?.MoveCell(columnIndex,rowIndex,columnIndex+1,rowIndex);
+                document.getElementById(ID)!.innerText = ""
+                ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20, false);
+                break
             default:
                 return;
         }
@@ -159,40 +170,27 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         if (!cellToBeAdded) {return}
-        let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
+
 
 
         //Handle Array Results for different cells.
         WorkbookManager.getWorkbook().Recalculate();
 
+        //Handle Array Results for different cells.
         const cell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
-        if (!cell) {
-            return;
-        }
+        if (!cell) return; // Check that cell is not null
         const result = cell.Eval(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
-        // Handle array formula results
-        if (cell instanceof Formula && result instanceof ArrayExplicit) {
-            // We need to instantiate a CAF to later instantiating our ArrayFormulas
-            if (result.values[0] && result.values[0].length > 1) {
-                const cachedArrayFormula = new CachedArrayFormula(
-                    cell as Formula,
-                    WorkbookManager.getActiveSheet()!,
-                    columnIndex , rowIndex ,
-                    new SuperCellAddress(columnIndex , rowIndex ),
-                    new SuperCellAddress(columnIndex , rowIndex  + result.values[0].length - 1)
-                );
 
-                // Only set ArrayFormula cells if they don't already exist
-                for (let i = 0; i < result.values[0].length; i++) {
-                    const nextCell = WorkbookManager.getActiveSheet()!.Get(columnIndex, rowIndex + i);
-                    if (!(nextCell instanceof ArrayFormula)) {
-                        const arrayFormula = new ArrayFormula(cachedArrayFormula, 0, i);
-                        WorkbookManager.getActiveSheet()!.SetCell(arrayFormula, columnIndex, rowIndex + i);
-                        console.debug("arrayFormula", arrayFormula);
-                    }
-                }
-            }
+        if (cell instanceof Formula && result instanceof ArrayExplicit) {
+            WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
+                cell, // cell
+                columnIndex,
+                rowIndex,
+                new SuperCellAddress(columnIndex, rowIndex),
+                new SuperCellAddress(columnIndex, rowIndex + result!.values[0].length - 1)
+            )
+
         }
     }
 
@@ -210,6 +208,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              style={{
                  ...style, // Inherit style from style.css
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
+             }}
+             onDrag={(e) =>{
+                 handleDrag();
              }}
              onFocus={(e) => {
                  //All of this is to add and remove styling from the active cell
