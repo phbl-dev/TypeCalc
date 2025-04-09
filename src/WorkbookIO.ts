@@ -256,73 +256,31 @@ export function ShowWindowInGUI(activeSheet: string, leftCornerCol: number, righ
         console.log("[ShowWindowInGUI] No workbook found!");
         return;
     }
+    wb.Recalculate();
 
-    const sheet: Sheet = wb.get(activeSheet) as Sheet;
-    if (!sheet) return;
-
-    wb.Recalculate(); // Recalculate once before rendering
-
-    // Process cells in the viewport
-    for (let col = leftCornerCol; col <= rightCornerCol; col++) {
-        for (let row = topCornerRow; row <= bottomCornerRow; row++) {
-            const colChar = numberToLetters(col);
-            const cellHTML = document.getElementById(colChar + row);
-            if (!cellHTML) continue;
-
-            try {
-                // Get the cell at this position
-                const cell = sheet.Get(col - 1, row - 1);
-
-                // If the cell has no content we set it to be an empty string
-                if (!cell) {
-                    if (sheetSwap) {
+    const startCol:number = leftCornerCol;
+    const endCol:number = rightCornerCol;
+    const startRow:number = topCornerRow;
+    const endRow:number = bottomCornerRow;
+    const sheet:Sheet = wb.get(activeSheet) as Sheet; //This needs to be updated
+    if (sheet) {
+        for (let col: number = startCol; col <= endCol; col++) {
+            for (let row: number = startRow; row <= endRow; row++) {
+                const colChar: string = numberToLetters(col);
+                const cellHTML = document.getElementById(colChar + row);
+                if (cellHTML != null) {
+                    let cellEval = sheet.Get(col - 1, row - 1)?.Eval(sheet, 0, 0)?.ToObject();
+                    if (cellEval != undefined) {
+                        cellHTML.innerText = cellEval as string;
+                    } else if (sheetSwap) {
                         cellHTML.innerText = "";
                     }
-                    continue;
                 }
-
-                // Evaluate the cell
-                const result = cell.Eval(sheet, col - 1, row - 1);
-
-                // Handle array formula results
-                if (cell instanceof Formula && result instanceof ArrayExplicit) {
-
-                    // We need to instantiate a CAF to later instantiating our ArrayFormulas
-                    if (result.values[0] && result.values[0].length > 1) {
-                        const cachedArrayFormula = new CachedArrayFormula(
-                            cell as Formula,
-                            sheet,
-                            col - 1, row - 1,
-                            new SuperCellAddress(col - 1, row - 1),
-                            new SuperCellAddress(col - 1, row - 1 + result.values[0].length - 1)
-                        );
-
-                        // Only set ArrayFormula cells if they don't already exist
-                        for (let i = 0; i < result.values[0].length; i++) {
-                            const nextCell = sheet.Get(col - 1, row - 1 + i);
-                            if (!(nextCell instanceof ArrayFormula)) {
-                                const arrayFormula = new ArrayFormula(cachedArrayFormula, 0, i);
-                                sheet.SetCell(arrayFormula, col - 1, row - 1 + i);
-                            }
-                        }
-                    }
-                }
-                // Display regular cell values
-                else if (result) {
-                    const value = result.ToObject();
-                    if (value != undefined) {
-                        cellHTML.innerText = value.toString();
-                    }
-                }
-                else if (sheetSwap) {
-                    cellHTML.innerText = "";
-                }
-            } catch (error) {
-                console.error(`Error processing cell ${colChar}${row}:`, error);
             }
         }
     }
 }
+
 //Interfaces for different datatypes used in the implementation.
 interface CellData {
     "#text": string | number;

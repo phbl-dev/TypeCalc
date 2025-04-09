@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
-import {Cell as BackendCell, Formula} from "../back-end/Cells";
+import {ArrayFormula, CachedArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
+import {ArrayExplicit} from "../back-end/ArrayValue.ts";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -149,13 +150,41 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
-
-
-
-
         if (!cellToBeAdded) {return}
         let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
+
+        //Handle Array Results for different cells.
+        WorkbookManager.getWorkbook().Recalculate();
+
+        const cell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
+        if (!cell) {
+            return;
+        }
+        const result = cell.Eval(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
+        // Handle array formula results
+        if (cell instanceof Formula && result instanceof ArrayExplicit) {
+            // We need to instantiate a CAF to later instantiating our ArrayFormulas
+            if (result.values[0] && result.values[0].length > 1) {
+                const cachedArrayFormula = new CachedArrayFormula(
+                    cell as Formula,
+                    WorkbookManager.getActiveSheet()!,
+                    columnIndex , rowIndex ,
+                    new SuperCellAddress(columnIndex , rowIndex ),
+                    new SuperCellAddress(columnIndex , rowIndex  + result.values[0].length - 1)
+                );
+
+                // Only set ArrayFormula cells if they don't already exist
+                for (let i = 0; i < result.values[0].length; i++) {
+                    const nextCell = WorkbookManager.getActiveSheet()!.Get(columnIndex, rowIndex + i);
+                    if (!(nextCell instanceof ArrayFormula)) {
+                        const arrayFormula = new ArrayFormula(cachedArrayFormula, 0, i);
+                        WorkbookManager.getActiveSheet()!.SetCell(arrayFormula, columnIndex, rowIndex + i);
+                        console.log("arrayFormula", arrayFormula);
+                    }
+                }
+            }
+        }
     }
 
     const updateFormulaBox = (cellID:string, content:string|null):void => {
@@ -212,7 +241,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
-                     ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+1,rowIndex+1,rowIndex+1, false);
+                     ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3, false);
                      console.log("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
