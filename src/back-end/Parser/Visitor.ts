@@ -37,12 +37,14 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @param row
      * @constructor
      */
-    public ParseCell(parseString: string, workbook: Workbook, col: number, row: number): Cell | null {
+    public ParseCell(parseString: string, workbook: Workbook, col: number, row: number): Cell | null | undefined {
         this.workbook = workbook;
         this.col = col;
         this.row = row;
 
         this.Parse(parseString);
+
+        console.log(this.cell)
 
         return this.cell;
     }
