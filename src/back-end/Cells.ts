@@ -150,10 +150,13 @@ export abstract class Cell {
         if (text) {
             const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
             let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
-            if (cellToBeAdded == null) {return null}
+            if (cellToBeAdded == undefined) {
+                const err = new TextCell(ErrorValue.Make("#SYNTAX").message)
+                err.ogText = text
+                return err
+            }
+
             cellToBeAdded.ogText = text;
-            console.log("this is what is being returned from Cell: ");
-            console.log(cellToBeAdded);
             return cellToBeAdded; // We call the parseCell() method to return a readable Cell.
         } else return null;
     }
