@@ -140,6 +140,14 @@ header h4 {
     outline-offset: -2px;
     z-index: 2;
 }
+
+.support-cell {
+    /*background-color: #32de84 !important;*/
+    outline: 3px groove #03C03C !important;
+    outline-offset: -2px;
+    z-index: 2;
+}
+
 .hide-caret {
     caret-color: transparent;
 }
