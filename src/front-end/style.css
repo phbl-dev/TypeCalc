@@ -186,7 +186,7 @@ header h4 {
 }
 
 .active-cell {
-    background-color: #7CB9E8 !important;
+    background-color: rgba(124, 185, 232, 0.44) !important;
     outline: 2px solid #007bff !important;
     outline-offset: -2px;
     z-index: 2;
