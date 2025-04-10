@@ -133,7 +133,7 @@ export class XMLReader {
 export class WorkbookManager {
     private static instance: Workbook | null = null;
     private static activeSheet:string = "Sheet1";
-    /*private static activeCell:string = "A1";*/
+    private static activeCell:string = "";
 
     static getWorkbook(): Workbook {
         if (!this.instance) {
