@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 
 
@@ -165,3 +167,59 @@ test("FREQUENCY", async ({ page }) => {
 
 
 })
+test("DnD", async ({ page }) => {
+  await page.goto('http://localhost:5173/');
+
+  // Simplified XML content
+  const xmlContent = fs.readFileSync('./extra_files/e2e_1.xml', 'utf8');  // Create file and trigger drop in one step
+  await page.evaluate((xml) => {
+    // Create the file
+    const file = new File([xml], 'test.xml', { type: 'text/xml' });
+    const dt = new DataTransfer();
+    dt.items.add(file);
+
+    // Create and dispatch the drop event directly
+    const dropEvent = new DragEvent('drop', {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer: dt
+    });
+
+    // Dispatch on the document since your app likely has a global handler
+    document.dispatchEvent(dropEvent);
+  }, xmlContent);
+
+
+  const A1 = page.locator("div#A1.Cell")
+  await A1.click()
+  await page.keyboard.press("F1")
+
+  const B1 = page.locator("div#B1.Cell")
+  await B1.click()
+  await page.keyboard.press("F2")
+  await expect(B1).toContainText('10');
+
+  const A2 = page.locator("div#A2.Cell")
+  await A2.click()
+  await page.keyboard.press("F1")
+
+  const C2 = page.locator("div#C2.Cell")
+  await C2.click()
+
+  await page.keyboard.press("F3")
+
+  await expect(A2).toContainText('20');
+  await expect(C2).toContainText('20');
+
+  const A3 = page.locator("div#A3.Cell")
+
+  await A3.click()
+  await page.hover("div#C3.Cell")
+  await page.keyboard.press("F4")
+
+  await page.keyboard.press("F5")
+
+
+
+
+});
