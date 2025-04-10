@@ -34,18 +34,19 @@ header {
 header button {
     height: 30px;
     width: 80px;
+    padding-top: 2px;
+    font-size: 16px;
 }
 
 input.menuTextField {
     margin-left: -35px;
     height: 25px;
-    width: 100px;
+    width: 80px;
     border-radius: 5px;
     text-align: center;
 }
 
 input.formulaBox {
-    margin-left: -15px;
     height: 25px;
     width: 500px;
     border-radius: 5px;
@@ -74,14 +75,36 @@ header h4 {
 }
 #underline {
     text-decoration: underline;
+    margin-right: 15px;
 }
 
-#textColor {
-    margin-right: -15px;
+#cellColor, #textColor {
+    height: 30px;
+    padding-left: 5px;
+    padding-right: 3px;
+    padding-top: 1px;
+    background: #4a7e76;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    row-gap: 0;
+    margin-left: -15px;
+    border-radius: 6px;
+}
+.color {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 1;
+    height: 30px;
 }
 
-#cellColor {
-    text-decoration: underline;
+.color::-webkit-color-swatch {
+    border-radius: 4px;
+}
+.color::-moz-color-swatch {
+    border-radius: 4px;
 }
 
 #drop_zone {

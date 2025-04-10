@@ -64,6 +64,32 @@ export function makeUnderlined() {
     }
 }
 
+export function setCellColor() {
+    let cellID = WorkbookManager.getActiveCell();
+    if (!cellID) { return null; }
+
+    let cell = document.getElementById(cellID);
+    const colorPicker = document.getElementById("cellColorPicker") as HTMLInputElement;
+    if (!cell || !colorPicker) { return null; }
+
+    if(colorPicker.value) {
+        cell.style.backgroundColor = colorPicker.value;
+    }
+}
+
+export function setTextColor() {
+    let cellID = WorkbookManager.getActiveCell();
+    if (!cellID) { return null; }
+
+    let cell = document.getElementById(cellID);
+    const colorPicker = document.getElementById("textColorPicker") as HTMLInputElement;
+    if (!cell || !colorPicker) { return null; }
+
+    if(colorPicker.value) {
+        cell.style.color = colorPicker.value;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     createGrid();
 })

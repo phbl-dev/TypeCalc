@@ -5,7 +5,7 @@ import {ArrayFormula, CachedArrayFormula, Cell as BackendCell, Formula} from "..
 import {Sheet} from "../back-end/Sheet.ts";
 import {SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
-import {makeBold, makeItalic, makeUnderlined} from "./createGrid.tsx";
+import {makeBold, makeItalic, makeUnderlined, setCellColor, setTextColor} from "./createGrid.tsx";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -331,6 +331,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         const boldButton = document.getElementById("bold") as HTMLButtonElement;
         const italicButton = document.getElementById("italic") as HTMLButtonElement;
         const underlineButton = document.getElementById("underline") as HTMLButtonElement;
+        const cellColor = document.getElementById("cellColorPicker") as HTMLInputElement;
+        const textColor = document.getElementById("textColorPicker") as HTMLInputElement;
         if (!jumpButton || !input) return; // In case either element doesn't exist/is null
 
         // Handle file drop events entirely in React
@@ -411,6 +413,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         boldButton.addEventListener("click", makeBold)
         italicButton.addEventListener("click", makeItalic)
         underlineButton.addEventListener("click", makeUnderlined)
+
+        cellColor.addEventListener("input", setCellColor);
+        textColor.addEventListener("input", setTextColor);
+
 
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop
