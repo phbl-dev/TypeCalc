@@ -4,11 +4,12 @@
 import { XMLParser } from "fast-xml-parser";
 import {Workbook} from "./back-end/Workbook";
 import {Sheet} from "./back-end/Sheet";
-import {ArrayFormula, CachedArrayFormula, Cell, Formula, NumberCell, QuoteCell} from "./back-end/Cells";
+import {ArrayFormula, CachedArrayFormula, Cell, ConstCell, Formula, NumberCell, QuoteCell} from "./back-end/Cells";
 import {numberToLetters} from "./front-end/virtualizedGrid.tsx";
 import {A1RefCellAddress, SuperCellAddress, SupportCell, SupportRange} from "./back-end/CellAddressing.ts";
 import {ArrayExplicit} from "./back-end/ArrayValue.ts";
 import {NumberValue} from "./back-end/NumberValue.ts";
+import {NumberConst} from "./back-end/Expressions.ts";
 
 //The XMLReader is used to read an XML file via the method readFile(xml_filename)
 /*More in-depth explanation is as follows:
@@ -232,6 +233,23 @@ export function GetRawCellContent(cellID:string):string|null {
         console.debug("[GetRawCellContent] No activeSheet found!");
         return null;
     }
+
+    const cell = activeSheet.getCells().Get(cellCol, cellRow);
+
+
+    // TODO: Recently added, I think this can be done smarter!
+    // The idea here is that we want to add a "=" to const cells, since they don't work in the sheet otherwise.
+    if(cell instanceof ConstCell) {
+        const formulaText = cell.GetText()
+
+        if(formulaText!.startsWith("=")){
+            return formulaText;
+        } else {
+            // This retains the formulas for values. Even if they don't use =.
+            return "=" + formulaText;
+        }
+    }
+
     const cellContent:string | null | undefined = activeSheet.getCells().Get(cellCol,cellRow)?.GetText();
     if (!cellContent && cellContent != "0") {
         console.debug("[GetRawCellContent] No cell found!");

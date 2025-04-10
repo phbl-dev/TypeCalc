@@ -267,14 +267,19 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             }
         }
 
-        if (ctx["Minus"]) {
+        if (ctx["NEGATIVE"] ) {
 
-            const innerExpr = this.visit(ctx["factor"]);
+            const innerExpr = this.visit(ctx["NEGATIVE"]);
 
-            if (innerExpr instanceof NumberConst) {
-                e = new NumberConst(-innerExpr.value.value);
+            console.log("This is the value of innerExpr", innerExpr);
+            console.log(typeof  innerExpr);
+            if (typeof innerExpr === "number" ) {
+                e = new NumberConst(-innerExpr);
+                console.log(e)
             } else {
-                e = FunCall.Make("NEG", [e]);
+                console.log("This is loop i entered")
+                e = FunCall.Make("NEG", [innerExpr]);
+                console.log(e)
             }
 
 
@@ -282,7 +287,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         if (ctx["number"]) {
 
-            d = Number.parseInt(ctx["number"][0].children["Number"][0].image);
+            d = Number.parseFloat(ctx["number"][0].children["Number"][0].image);
 
             e = new NumberConst(d);
         }
@@ -363,8 +368,10 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         const e:any = this.visit(ctx.expression);
 
         //console.log(JSON.stringify(ctx, null, 2));
-
-        if (ctx.QuoteCell) {
+        if (ctx.Equals) {
+            this.cell = Formula.Make(this.workbook, e)!;
+        }
+        else if (ctx.QuoteCell) {
             const helperConst = ctx["QuoteCell"][0].image
             this.cell = new QuoteCell(ctx["QuoteCell"][0].image.substring(1, helperConst.length - 1));
         } else if (ctx.StringLiteral) {
@@ -373,9 +380,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             this.cell = new TextCell(ctx["StringLiteral"][0].image.substring(1, helperConst.length - 1 ));
         } else if (ctx.number) {
             console.log(ctx["number"][0].children["Number"][0].image)
-            this.cell = new NumberCell(Number.parseInt(ctx["number"][0].children["Number"][0].image));
-        } else if (ctx.Equals) {
-            this.cell = Formula.Make(this.workbook, e)!;
+            this.cell = new NumberCell(Number.parseFloat(ctx["number"][0].children["Number"][0].image));
         } else if (ctx.Datetime) {
             const time:number = NumberValue.DoubleFromDateTimeTicks(ctx["Datetime"][0].image)
             this.cell = new NumberCell(time);
