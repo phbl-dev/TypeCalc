@@ -343,9 +343,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  ...style, // Inherit style from style.css
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
-             onDrag={(e) =>{
-                 handleDrag();
-             }}
+
 
              onClick={(e) => {
                  clearHighlight()
@@ -429,10 +427,11 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     );
 };
 
+// @ts-ignore
 const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
     return (
         <footer style={{ display: 'flex', gap: '1px'}}>
-            {sheetNames.map((name) => (
+            {sheetNames.map((name:any) => (
                 <button
                     key={name}
                     onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); ShowWindowInGUI(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30, true)}}

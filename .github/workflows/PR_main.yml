@@ -4,42 +4,40 @@ on:
     branches: [ main ]
 
 jobs:
-  Testing:
+  Unit-Tests:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [18]
-
     steps:
-      - name: Look at repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
-        with: 
+        with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - name: Downloading and installing dependencies 
+      - name: Install dependencies
         run: npm install
-      
-      - name: Run tests
+      - name: Run unit tests
         run: npm run test
 
+  E2E-Tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - name: Install dependencies
+        run: npm install
       - name: Setup Playwright
         run: npx playwright install --with-deps
-
-      - name: Run E2E
+      - name: Run E2E tests
         run: npm run test:e2e
-
-#  BiomeLinter:
- #   runs-on: ubuntu-latest
-  #  steps:
-   #   - name: Look at repository
-    #    uses: actions/checkout@v4
-     # - name: Set up Biome
-      #  uses: biomejs/setup-biome@v2
-       # with:
-        #  version: latest
-      #- name: Run Biome
-       # run: biome lint . '**/*.{ts,js,tsx}'
