@@ -8,6 +8,5 @@ import type { Workbook } from "../../Workbook";
 
 export abstract class IOFormat {
     public abstract Read(filename: string): Workbook;
-    private fileExtension: string;
-    private description: string;
+
 }

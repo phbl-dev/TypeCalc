@@ -1,11 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {GetRawCellContent, ParseToActiveCell, ShowWindowInGUI, WorkbookManager, XMLReader} from "../WorkbookIO";
-import {ArrayFormula, CachedArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
+import {
+    GetRawCellContent,
+    GetSupportsInWindow,
+    ParseToActiveCell,
+    ShowWindowInGUI,
+    WorkbookManager,
+    XMLReader
+} from "../WorkbookIO";
+import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
-import {SuperCellAddress} from "../back-end/CellAddressing.ts";
+import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
 import {makeBold, makeItalic, makeUnderlined, setCellColor, setTextColor} from "./createGrid.tsx";
+
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -32,6 +40,29 @@ export function numberToLetters(n: number) {
         n = Math.floor(n / 26);
     }
     return letter;
+}
+
+/**
+ * Takes in a formula string, (10, 20,-20, A1, A$2, $A$2), and processes it.
+ * It only processes the changes needed
+ * @param formula
+ * @param rowDiff
+ * @param colDiff
+ */
+export function adjustFormula(formula: string, rowDiff: number, colDiff: number): string {
+
+    return formula.replace(/(\$?)([A-Z]+)(\$?)(\d+)/g, (match, colAbs, column, rowAbs, row) => {
+        const newRow = rowAbs ? row : parseInt(row, 10) + rowDiff;
+
+        let newColumn = column;
+        if (!(colAbs || rowAbs) && (colDiff | rowDiff)  !== 0) {
+            const colNum = lettersToNumber(column);
+            const newColNum = colNum + colDiff;
+            newColumn = numberToLetters(newColNum);
+        }
+
+        return colAbs + newColumn + rowAbs + newRow;
+    });
 }
 
 /** Converts letters to a number, following the same formula as above.
@@ -102,6 +133,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     let isActive = ID == WorkbookManager.getActiveCell();
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
+    let mySupports:string[];
 
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
     const handleHover = () => {
@@ -111,10 +143,21 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+
+    const clearHighlight = () => {
+        const previousSelection = document.querySelectorAll('.selected-cell');
+        previousSelection.forEach(cell => {
+            cell.classList.remove('selected-cell');
+        });
+        sessionStorage.removeItem('selectionRange');
+
+    }
+
     // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
+
 
         switch (event.key) {
             case "ArrowUp":
@@ -132,7 +175,117 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             case "Enter":
                 nextRow = rowIndex + 1;
                 break;
-            default:
+            case "F1":
+                const tmpRef = new A1RefCellAddress(ID)
+                sessionStorage.setItem('tmpCellRef', JSON.stringify({
+                    ID: ID,
+                    col: tmpRef.col,
+                    row: tmpRef.row
+                }));
+
+                break
+
+            case "F2":
+
+                const storedRef = sessionStorage.getItem('tmpCellRef');
+                if (storedRef) {
+                    const parsedRef = JSON.parse(storedRef);
+
+                    WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
+
+                    document.getElementById(parsedRef.ID)!.innerText = ""
+                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                }
+                break
+
+            case "F3":
+                const storedRef2 = sessionStorage.getItem('tmpCellRef');
+                if (storedRef2) {
+                    const parsedRef = JSON.parse(storedRef2);
+                    const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col,parsedRef.row)!
+                    WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
+                    WorkbookManager.getActiveSheet()?.SetCell(tmpCell,parsedRef.col,parsedRef.row)
+                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+
+
+                }
+            break
+
+            case "F4":
+                // Check what cell we are in.
+                const StartCell = document.getElementById("headerCorner");
+                if (StartCell) {
+                    const StartCellRef = new A1RefCellAddress(StartCell.textContent!);
+
+                    const sourceID = ID
+                    const sourceIDContent = GetRawCellContent(sourceID)
+                    // Define the area, we will be using.
+                    // Maybe this could be a method?
+                    const startCol = Math.min(columnIndex, StartCellRef.col);
+                    const endCol = Math.max(columnIndex, StartCellRef.col);
+                    const startRow = Math.min(rowIndex, StartCellRef.row);
+                    const endRow = Math.max(rowIndex, StartCellRef.row);
+
+                    // Clear any existing highlight, if there were any.
+                    clearHighlight()
+
+                    for (let r = startRow; r <= endRow; r++) {
+                        for (let c = startCol; c <= endCol; c++) {
+                            const cellID = numberToLetters(c + 1) + (r + 1); // +1 because we are 1-indexed in the UI.
+                            const cell = document.getElementById(cellID);
+                            if (cell) {
+                                cell.classList.add('selected-cell');
+                            }
+                        }
+                    }
+                    // Save the values in session storage, so it can be accessed between calls.
+                    sessionStorage.setItem('selectionRange', JSON.stringify({
+                        sourceIDContent,
+                        startCol,
+                        startRow,
+                        endCol,
+                        endRow
+                    }));
+
+
+                }
+                break;
+
+            case "F5":
+                    const selectionRange = sessionStorage.getItem('selectionRange');
+                    if (selectionRange) {
+                        const range = JSON.parse(selectionRange);
+                        const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
+
+
+
+
+                            for (let r = startRow; r <= endRow; r++) {
+                                for (let c = startCol; c <= endCol; c++) {
+
+                                    if (r === startRow && c === startCol) continue;
+
+                                    const newForm = adjustFormula(sourceIDContent!.toString(),r - startRow, c - startCol)
+
+                                    handleInput(r,c,newForm) //TODO: Maybe a bit excessive to use handleInput?
+                                    const targetCellID = numberToLetters(c + 1) + (r + 1);
+                                    const cellElement:HTMLElement = document.getElementById(targetCellID)!;
+                                    cellElement.innerText = newForm;
+
+
+                                }
+
+
+                            ShowWindowInGUI(WorkbookManager.getActiveSheetName(), startCol - 5, endCol + 5, startRow - 5, endRow + 5, false);
+                        }
+                        WorkbookManager.getWorkbook().Recalculate();
+
+                    }
+                    // Clear session after use, otherwise some weird issues can happen.
+                sessionStorage.clear()
+
+                break;
+                default:
                 return;
         }
 
@@ -152,46 +305,34 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         if (!cellToBeAdded) {return}
-        let newCellAddress = new SuperCellAddress(columnIndex, rowIndex);
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
+
+
 
         //Handle Array Results for different cells.
         WorkbookManager.getWorkbook().Recalculate();
 
+        //Handle Array Results for different cells.
         const cell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
-        if (!cell) {
-            return;
-        }
+        if (!cell) return; // Check that cell is not null
         const result = cell.Eval(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
-        // Handle array formula results
-        if (cell instanceof Formula && result instanceof ArrayExplicit) {
-            // We need to instantiate a CAF to later instantiating our ArrayFormulas
-            if (result.values[0] && result.values[0].length > 1) {
-                const cachedArrayFormula = new CachedArrayFormula(
-                    cell as Formula,
-                    WorkbookManager.getActiveSheet()!,
-                    columnIndex , rowIndex ,
-                    new SuperCellAddress(columnIndex , rowIndex ),
-                    new SuperCellAddress(columnIndex , rowIndex  + result.values[0].length - 1)
-                );
 
-                // Only set ArrayFormula cells if they don't already exist
-                for (let i = 0; i < result.values[0].length; i++) {
-                    const nextCell = WorkbookManager.getActiveSheet()!.Get(columnIndex, rowIndex + i);
-                    if (!(nextCell instanceof ArrayFormula)) {
-                        const arrayFormula = new ArrayFormula(cachedArrayFormula, 0, i);
-                        WorkbookManager.getActiveSheet()!.SetCell(arrayFormula, columnIndex, rowIndex + i);
-                        console.log("arrayFormula", arrayFormula);
-                    }
-                }
-            }
+        if (cell instanceof Formula && result instanceof ArrayExplicit) {
+            WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
+                cell, // cell
+                columnIndex,
+                rowIndex,
+                new SuperCellAddress(columnIndex, rowIndex),
+                new SuperCellAddress(columnIndex, rowIndex + result!.values[0].length - 1)
+            )
+
         }
     }
 
     const updateFormulaBox = (cellID:string, content:string|null):void => {
         const formulaBox = document.getElementById("formulaBox");
         if (!formulaBox) {
-            console.log("[virtualizedGrid.tsx Cell] FormulaBox not found");
+            console.debug("[virtualizedGrid.tsx Cell] FormulaBox not found");
             return;
         }
         (formulaBox as HTMLInputElement).value = content as string;
@@ -202,6 +343,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              style={{
                  ...style, // Inherit style from style.css
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
+             }}
+
+
+             onClick={(e) => {
+                 clearHighlight()
+
+
              }}
              onFocus={(e) => {
                  //All of this is to add and remove styling from the active cell
@@ -219,7 +367,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  let rawCellContent:string | null = GetRawCellContent(ID);
                  WorkbookManager.setActiveCell(ID);
                  if (!rawCellContent) {
-                     console.log("[virtualizedGrid.tsx Cell] Cell Content not updated");
+                     console.debug("[virtualizedGrid.tsx Cell] Cell Content not updated");
                      updateFormulaBox(ID, rawCellContent);
                      return;
                  }
@@ -230,6 +378,16 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  //Also write the content in the formula box at the top
                  updateFormulaBox(ID, rawCellContent);
 
+                 mySupports = GetSupportsInWindow(columnIndex-20, columnIndex+20,rowIndex-20,rowIndex+20,columnIndex+1,rowIndex+1);
+                 if (!mySupports) {
+                     return;
+                 }
+                 for (let i = 0; i < mySupports.length; i++){
+                     let supportingCell = document.getElementById(mySupports[i]);
+                     if (supportingCell) {
+                         supportingCell.classList.add("support-cell");
+                     }
+                 }
              }}
              onMouseMove={handleHover} // Gets the cellID when moving the mouse
              onKeyDown={(e) => {
@@ -237,17 +395,25 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onBlur={(e) => {
 
-                 console.log("Value not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
+                 console.debug("Value not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
                  //Only update cell if the contents have changed!
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
                      ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3, false);
-                     console.log("Cell Updated");
+                     console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
-
+                 if (mySupports) {
+                     for (let i = 0; i < mySupports.length; i++){
+                         let supportingCell = document.getElementById(mySupports[i]);
+                         if (supportingCell) {
+                             supportingCell.classList.remove("support-cell");
+                         }
+                     }
+                 }
                  ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20, false);
+                 //console.log(GetSupportsInWindow(columnIndex-20, columnIndex+20,rowIndex-20,rowIndex+20,columnIndex+1,rowIndex+1));
              }}
 
 
@@ -262,10 +428,11 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     );
 };
 
+// @ts-ignore
 const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
     return (
         <footer style={{ display: 'flex', gap: '1px'}}>
-            {sheetNames.map((name) => (
+            {sheetNames.map((name:any) => (
                 <button
                     key={name}
                     onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); ShowWindowInGUI(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30, true)}}
@@ -349,7 +516,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                     try {
                         await xmlReader.readFile(content); // Assumes it modifies the current workbook
 
-                        console.log("[React Drop Handler] File loaded. Updating UI...");
+                        console.debug("[React Drop Handler] File loaded. Updating UI...");
                         sheetNames = WorkbookManager.getSheetNames();
                         setSheetNames(sheetNames);
                         setActiveSheet(sheetNames[0]);

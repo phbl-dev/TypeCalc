@@ -125,7 +125,7 @@ export class SpreadsheetParser extends CstParser {
                 {
                     ALT: () => {
                         $.CONSUME(SpreadsheetLexer.Minus);
-                        $.SUBRULE($.factor, { LABEL: "NEGATIVE" });
+                        $.SUBRULE2($.number, {LABEL: "NEGATIVE"});
                     },
                 },
                 {

@@ -191,6 +191,19 @@ header h4 {
     outline-offset: -2px;
     z-index: 2;
 }
+
+.support-cell {
+    /*background-color: #32de84 !important;*/
+    outline: 3px groove #03C03C !important;
+    outline-offset: -2px;
+    z-index: 2;
+}
+
+.selected-cell {
+    background-color: rgba(173, 216, 230, 0.5) !important;
+    border: 1px solid rgb(70, 130, 180) !important;
+}
+
 .hide-caret {
     caret-color: transparent;
 }

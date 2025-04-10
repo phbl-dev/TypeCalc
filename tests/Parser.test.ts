@@ -101,6 +101,17 @@ describe("Parse Numbers", () => {
         expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(-10)
     })
 
+    test("Parse Numbers: 10 - 10 - 10 ", () => {
+        const cell: Cell = Cell.Parse(`= -10`, workbook, 0, 0)!
+        cell.MarkDirty()
+
+        cell.EnqueueForEvaluation(sheet, 0, 0)
+
+        cell.Eval(sheet, 0, 0)
+
+        expect(cell.Eval(sheet, 0, 0)!.ToObject()).toBe(-10)
+    })
+
     test("Parse Numbers: 10 * 10 - 10 * 5", () => {
         const cell: Cell = Cell.Parse("=10 * 10 - 10 * 5", workbook, 0, 0)!
         cell.MarkDirty()

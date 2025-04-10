@@ -4,11 +4,12 @@
 import { XMLParser } from "fast-xml-parser";
 import {Workbook} from "./back-end/Workbook";
 import {Sheet} from "./back-end/Sheet";
-import {ArrayFormula, CachedArrayFormula, Cell, Formula, NumberCell, QuoteCell} from "./back-end/Cells";
+import {ArrayFormula, CachedArrayFormula, Cell, ConstCell, Formula, NumberCell, QuoteCell} from "./back-end/Cells";
 import {numberToLetters} from "./front-end/virtualizedGrid.tsx";
-import {A1RefCellAddress, SuperCellAddress} from "./back-end/CellAddressing.ts";
+import {A1RefCellAddress, SuperCellAddress, SupportCell, SupportRange} from "./back-end/CellAddressing.ts";
 import {ArrayExplicit} from "./back-end/ArrayValue.ts";
 import {NumberValue} from "./back-end/NumberValue.ts";
+import {NumberConst} from "./back-end/Expressions.ts";
 
 //The XMLReader is used to read an XML file via the method readFile(xml_filename)
 /*More in-depth explanation is as follows:
@@ -187,7 +188,7 @@ export class WorkbookManager {
     }
 
     static setWorkbook(wb: Workbook): void {
-        console.log("[WorkbookManager] setWorkbook ->", wb);
+        console.debug("[WorkbookManager] setWorkbook ->", wb);
         this.instance = wb;
     }
 
@@ -199,12 +200,12 @@ export class WorkbookManager {
 export function ParseToActiveCell(content:string):void {
     const a1Address:string | null = WorkbookManager.getActiveCell();
     if (!a1Address) {
-        console.log("[WorkbookIO] ParseToActiveCell cant find active cell");
+        console.debug("[WorkbookIO] ParseToActiveCell cant find active cell");
         return;
     }
     const activeSheet:Sheet|null= WorkbookManager.getActiveSheet();
     if (!activeSheet) {
-        console.log("[WorkbookIO] ParseToActiveCell No activeSheet found!");
+        console.debug("[WorkbookIO] ParseToActiveCell No activeSheet found!");
         return;
     }
     const ca:A1RefCellAddress = new A1RefCellAddress(a1Address);
@@ -212,7 +213,7 @@ export function ParseToActiveCell(content:string):void {
     const cellRow:number = ca.row;
     const cellToBeAdded:Cell | null = Cell.Parse(content, WorkbookManager.getWorkbook(), cellCol, cellRow);
     if (!cellToBeAdded) {
-        console.log("[WorkbookIO] ParseToActiveCell cellToBeAdded not found!");
+        console.debug("[WorkbookIO] ParseToActiveCell cellToBeAdded not found!");
         return;
     }
     WorkbookManager.getWorkbook().get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, cellCol, cellRow);
@@ -224,23 +225,40 @@ export function GetRawCellContent(cellID:string):string|null {
     const cellRow:number = ca.row;
     const wb:Workbook = WorkbookManager.getWorkbook();
     if (!wb) {
-        console.log("[GetRawCellContent] No workbook found!");
+        console.debug("[GetRawCellContent] No workbook found!");
         return null;
     }
     const activeSheet:Sheet|null= WorkbookManager.getActiveSheet();
     if (!activeSheet) {
-        console.log("[GetRawCellContent] No activeSheet found!");
+        console.debug("[GetRawCellContent] No activeSheet found!");
         return null;
     }
+
+    const cell = activeSheet.getCells().Get(cellCol, cellRow);
+
+
+    // TODO: Recently added, I think this can be done smarter!
+    // The idea here is that we want to add a "=" to const cells, since they don't work in the sheet otherwise.
+    if(cell instanceof ConstCell) {
+        const formulaText = cell.GetText()
+
+        if(formulaText!.startsWith("=")){
+            return formulaText;
+        } else {
+            // This retains the formulas for values. Even if they don't use =.
+            return "=" + formulaText;
+        }
+    }
+
     const cellContent:string | null | undefined = activeSheet.getCells().Get(cellCol,cellRow)?.GetText();
     if (!cellContent && cellContent != "0") {
-        console.log("[GetRawCellContent] No cell found!");
+        console.debug("[GetRawCellContent] No cell found!");
         return null;
     }
     const colChar:string = numberToLetters(cellCol);
     const cellHTML = document.getElementById(colChar + cellRow);
     if (!cellHTML) {
-        console.log("[GetRawCellContent] No cell found in frontend!");
+        console.debug("[GetRawCellContent] No cell found in frontend!");
         return null;
     }
     //cellHTML.innerText = cellContent;
@@ -253,7 +271,7 @@ export function GetRawCellContent(cellID:string):string|null {
 export function ShowWindowInGUI(activeSheet: string, leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number, sheetSwap: boolean): void {
     const wb = WorkbookManager.getWorkbook();
     if (!wb) {
-        console.log("[ShowWindowInGUI] No workbook found!");
+        console.debug("[ShowWindowInGUI] No workbook found!");
         return;
     }
     wb.Recalculate();
@@ -279,6 +297,39 @@ export function ShowWindowInGUI(activeSheet: string, leftCornerCol: number, righ
             }
         }
     }
+}
+
+export function GetSupportsInWindow(leftCornerCol:number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number, colIndex:number, rowIndex:number):string[] {
+    let supports:string[] = []
+    // const wb = WorkbookManager.getWorkbook();
+    // if (!wb) {
+    //     console.log("[ShowWindowInGUI] No workbook found!");
+    //     return [];
+    // }
+    const startCol:number = leftCornerCol;
+    const endCol:number = rightCornerCol;
+    const startRow:number = topCornerRow;
+    const endRow:number = bottomCornerRow;
+    const sheet:Sheet = WorkbookManager.getActiveSheet() as Sheet; //This needs to be updated
+    if (sheet) {
+        for (let col: number = startCol; col <= endCol; col++) {
+            for (let row: number = startRow; row <= endRow; row++) {
+                let supportSet = sheet.getCells().Get(col, row)?.GetSupportSet()?.ranges;
+                if (!supportSet) {
+                    continue;
+                }
+                supportSet.forEach( function (value) {
+                    if (value instanceof SupportCell){
+                        if (value.contains(sheet,colIndex-1,rowIndex-1)){
+                            const refLetter:string = numberToLetters(col + 1);
+                            supports.push(refLetter + (row + 1) as string);
+                        }
+                    }
+                })
+            }
+        }
+    }
+    return supports;
 }
 
 //Interfaces for different datatypes used in the implementation.

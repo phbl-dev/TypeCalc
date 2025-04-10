@@ -161,11 +161,15 @@ export class Sheet {
      * @param lrCa
      * @constructor
      */
+    //TODO: Use this in virtualizedGrid.handleInput()
     public SetArrayFormula(cell: Cell, col: number, row: number, ulCa: SuperCellAddress, lrCa: SuperCellAddress): void {
+        console.log("reached here 1")
+
         const formula: Formula = cell as unknown as Formula;
         if (cell == null) {
             throw new Error("Invalid array formula");
         } else {
+            console.log("reached here 2")
             const caf: CachedArrayFormula = new CachedArrayFormula(formula, this, col, row, ulCa, lrCa);
             formula.AddToSupportSets(this, col, row, 1, 1);
             const displayCols = new Interval(ulCa.col, lrCa.col);
@@ -218,7 +222,12 @@ export class Sheet {
             // Added by us. Assume that a sheet is not empty.
             const cell: Cell = this.cells.Get(fromCol, fromRow)!; // This is not allowed to be empty || undefined.
             this.Set(col as number, cell.MoveContents(col - fromCol, row - fromRow), row);
+            this.RemoveCell(fromCol, fromRow);
         }
+    }
+
+    public RemoveCell(col: number, row: number): void {
+        this.cells.Set(col,row,null)
     }
 
     /**
@@ -510,21 +519,21 @@ export class SheetRep {
     MH = this.H - 1;
     SIZEH = 1 << (4 * this.LOGH);
 
-    private readonly tile0: Cell[][][][] = new Array(this.W * this.H).fill(null).map(() => []);
+    private readonly tile0: Cell[][][][] | null[][][][] = new Array(this.W * this.H).fill(null).map(() => []);
 
     public Get(c: number, r: number): Cell | null {
         if (c < 0 || this.SIZEW <= c || r < 0 || this.SIZEH <= r) {
             return null;
         }
-        const tile1: Cell[][][] = this.tile0[(((c >> (3 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (3 * this.LOGH)) & this.MH)];
+        const tile1: Cell[][][] | null[][][] = this.tile0[(((c >> (3 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (3 * this.LOGH)) & this.MH)];
         if (tile1 == null) {
             return null;
         }
-        const tile2: Cell[][] = tile1[(((c >> (2 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (2 * this.LOGH)) & this.MH)];
+        const tile2: Cell[][] | null[][] = tile1[(((c >> (2 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (2 * this.LOGH)) & this.MH)];
         if (tile2 == null) {
             return null;
         }
-        const tile3: Cell[] = tile2[(((c >> this.LOGW) & this.MW) << this.LOGH) | ((r >> this.LOGH) & this.MH)];
+        const tile3: Cell[] | null[] = tile2[(((c >> this.LOGW) & this.MW) << this.LOGH) | ((r >> this.LOGH) & this.MH)];
         if (tile3 == null) {
             return null;
         }
@@ -536,19 +545,21 @@ export class SheetRep {
 
         const index0 = (((c >> (3 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (3 * this.LOGH)) & this.MH);
         this.tile0[index0] ??= new Array(this.W * this.H);
-        const tile1:Cell[][][] = this.tile0[index0];
+        const tile1: Cell[][][] | null[][][] = this.tile0[index0];
 
         const index1 = (((c >> (2 * this.LOGW)) & this.MW) << this.LOGH) | ((r >> (2 * this.LOGH)) & this.MH);
         tile1[index1] ??= new Array(this.W * this.H);
-        const tile2: Cell[][] = tile1[index1];
+        const tile2: Cell[][] | null[][] = tile1[index1];
 
         const index2 = (((c >> this.LOGW) & this.MW) << this.LOGH) | ((r >> this.LOGH) & this.MH);
         tile2[index2] ??= new Array(this.W * this.H);
-        const tile3: Cell[] = tile2[index2];
+        const tile3: Cell[] | null[] = tile2[index2];
 
         const index3 = ((c & this.MW) << this.LOGH) | (r & this.MH);
         if (value instanceof Cell) {
             tile3[index3] = value;
+        } else {
+            tile3[index3] = null;
         }
     }
 
@@ -574,22 +585,22 @@ export class SheetRep {
 
     public Forall(act: (arg1: number, arg2: number, arg3: Cell) => void): void {
         let i0 = 0;
-        this.tile0.forEach((tile1: Cell[][][]) => {
+        this.tile0.forEach((tile1: Cell[][][] | null[][][]) => {
             let i1 = 0;
             const c0 = (i0 >> this.LOGH) << (3 * this.LOGW);
             const r0 = (i0 & this.MH) << (3 * this.LOGH);
             if (tile1 != null) {
-                tile1.forEach((tile2: Cell[][]) => {
+                tile1.forEach((tile2: Cell[][] | null[][]) => {
                     let i2 = 0;
                     const c1 = (i1 >> this.LOGH) << (2 * this.LOGW);
                     const r1 = (i1 & this.MH) << (2 * this.LOGH);
                     if (tile2 != null) {
-                        tile2.forEach((tile3: Cell[]) => {
+                        tile2.forEach((tile3: Cell[] | null[]) => {
                             let i3 = 0;
                             const c2 = (i2 >> this.LOGH) << this.LOGW;
                             const r2 = (i2 & this.MH) << this.LOGH;
                             if (tile3 != null) {
-                                tile3.forEach((cell: Cell) => {
+                                tile3.forEach((cell: Cell | null) => {
                                     if (cell != null) {
                                         act(c0 | c1 | c2 | (i3 >> this.LOGH), r0 | r1 | r2 | (i3 & this.MH), cell);
                                     }

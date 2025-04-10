@@ -12,7 +12,7 @@ export class SpreadsheetLexer {
     static WhiteSpace:TokenType = createToken({ name: "WhiteSpace", pattern: /\s+/, group: Lexer.SKIPPED });
     static Datetime:TokenType = createToken({ name: "Datetime", pattern: /\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?:\.\d+)?)?/ });
 
-    static NUMBER: TokenType = createToken({ name: "Number", pattern: /-?\d+(\.\d+)?([eE][-+]?\d+)?/ });
+    static NUMBER: TokenType = createToken({ name: "Number", pattern: /\d+(\.\d+)?([eE][-+]?\d+)?/ });
     static Colon: TokenType = createToken({ name: "Colon", pattern: /:/ });
     static Identifier: TokenType = createToken({ name: "Identifier", pattern: /[A-Za-z][A-Za-z0-9_]*/ }); // aka name in ATG file.
     static StringLiteral: TokenType = createToken({ name: "StringLiteral", pattern: /"([^"\\]|\\.)*"/ });
