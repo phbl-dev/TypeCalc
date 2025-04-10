@@ -8,9 +8,9 @@ import {
     WorkbookManager,
     XMLReader
 } from "../WorkbookIO";
-import {ArrayFormula, CachedArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
+import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
-import {A1RARef, A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
+import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
 
 
@@ -39,6 +39,29 @@ export function numberToLetters(n: number) {
         n = Math.floor(n / 26);
     }
     return letter;
+}
+
+/**
+ * Takes in a formula string, (10, 20,-20, A1, A$2, $A$2), and processes it.
+ * It only processes the changes needed
+ * @param formula
+ * @param rowDiff
+ * @param colDiff
+ */
+export function adjustFormula(formula: string, rowDiff: number, colDiff: number): string {
+
+    return formula.replace(/(\$?)([A-Z]+)(\$?)(\d+)/g, (match, colAbs, column, rowAbs, row) => {
+        const newRow = rowAbs ? row : parseInt(row, 10) + rowDiff;
+
+        let newColumn = column;
+        if (!(colAbs || rowAbs) && (colDiff | rowDiff)  !== 0) {
+            const colNum = lettersToNumber(column);
+            const newColNum = colNum + colDiff;
+            newColumn = numberToLetters(newColNum);
+        }
+
+        return colAbs + newColumn + rowAbs + newRow;
+    });
 }
 
 /** Converts letters to a number, following the same formula as above.
@@ -119,9 +142,14 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-    const handleDrag = () => {
-        // Should drag the cell
-        // Should call sheet.MoveCell()
+
+    const clearHighlight = () => {
+        const previousSelection = document.querySelectorAll('.selected-cell');
+        previousSelection.forEach(cell => {
+            cell.classList.remove('selected-cell');
+        });
+        sessionStorage.removeItem('selectionRange');
+
     }
 
     // Allows us to navigate the cells using the arrow and Enter keys
@@ -181,6 +209,81 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                 }
             break
+
+            case "F4":
+                // Check what cell we are in.
+                const StartCell = document.getElementById("headerCorner");
+                if (StartCell) {
+                    const StartCellRef = new A1RefCellAddress(StartCell.textContent!);
+
+                    const sourceID = ID
+                    const sourceIDContent = GetRawCellContent(sourceID)
+                    // Define the area, we will be using.
+                    // Maybe this could be a method?
+                    const startCol = Math.min(columnIndex, StartCellRef.col);
+                    const endCol = Math.max(columnIndex, StartCellRef.col);
+                    const startRow = Math.min(rowIndex, StartCellRef.row);
+                    const endRow = Math.max(rowIndex, StartCellRef.row);
+
+                    // Clear any existing highlight, if there were any.
+                    clearHighlight()
+
+                    for (let r = startRow; r <= endRow; r++) {
+                        for (let c = startCol; c <= endCol; c++) {
+                            const cellID = numberToLetters(c + 1) + (r + 1); // +1 because we are 1-indexed in the UI.
+                            const cell = document.getElementById(cellID);
+                            if (cell) {
+                                cell.classList.add('selected-cell');
+                            }
+                        }
+                    }
+                    // Save the values in session storage, so it can be accessed between calls.
+                    sessionStorage.setItem('selectionRange', JSON.stringify({
+                        sourceIDContent,
+                        startCol,
+                        startRow,
+                        endCol,
+                        endRow
+                    }));
+
+
+                }
+                break;
+
+            case "F5":
+                    const selectionRange = sessionStorage.getItem('selectionRange');
+                    if (selectionRange) {
+                        const range = JSON.parse(selectionRange);
+                        const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
+
+
+
+
+                            for (let r = startRow; r <= endRow; r++) {
+                                for (let c = startCol; c <= endCol; c++) {
+
+                                    if (r === startRow && c === startCol) continue;
+
+                                    const newForm = adjustFormula(sourceIDContent!.toString(),r - startRow, c - startCol)
+
+                                    handleInput(r,c,newForm) //TODO: Maybe a bit excessive to use handleInput?
+                                    const targetCellID = numberToLetters(c + 1) + (r + 1);
+                                    const cellElement:HTMLElement = document.getElementById(targetCellID)!;
+                                    cellElement.innerText = newForm;
+
+
+                                }
+
+
+                            ShowWindowInGUI(WorkbookManager.getActiveSheetName(), startCol - 5, endCol + 5, startRow - 5, endRow + 5, false);
+                        }
+                        WorkbookManager.getWorkbook().Recalculate();
+
+                    }
+                    // Clear session after use, otherwise some weird issues can happen.
+                sessionStorage.clear()
+
+                break;
                 default:
                 return;
         }
@@ -242,6 +345,12 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onDrag={(e) =>{
                  handleDrag();
+             }}
+
+             onClick={(e) => {
+                 clearHighlight()
+
+
              }}
              onFocus={(e) => {
                  //All of this is to add and remove styling from the active cell

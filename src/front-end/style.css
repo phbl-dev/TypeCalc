@@ -148,6 +148,11 @@ header h4 {
     z-index: 2;
 }
 
+.selected-cell {
+    background-color: rgba(173, 216, 230, 0.5) !important;
+    border: 1px solid rgb(70, 130, 180) !important;
+}
+
 .hide-caret {
     caret-color: transparent;
 }
