@@ -14,9 +14,13 @@
       <button class="menuButton" type = "reset" id = "reset" onclick = "localStorage.clear(); location.reload()">Clear</button> <!-- Clear's the local storage and reloads the page -->
       <button class="menuButton" type = "button" id = "jumpToCell">Go to</button>
       <label for="jumpToInput"></label><input class="menuTextField" type = "text" id = "jumpToInput">
-      <button class="menuButton" type = "button" id = "bold">B</button>
-      <button class="menuButton" type = "button" id = "italic">I</button>
-      <button class="menuButton" type = "button" id = "underline">U</button>
+      <button class="styleButton" type = "button" id = "bold">B</button>
+      <button class="styleButton" type = "button" id = "italic">I</button>
+      <button class="styleButton" type = "button" id = "underline">U</button>
+      <button class="styleButton" type = "button" id = "textColor">C</button>
+      <button class="styleButton" type = "button" id = "cellColor">
+        A
+      </button>
       <label for="formulaBox"></label><input class="formulaBox" type = "text" id = "formulaBox">
       <h4 contenteditable="true" id="documentTitle">Spreadsheet name</h4>
     </header>
