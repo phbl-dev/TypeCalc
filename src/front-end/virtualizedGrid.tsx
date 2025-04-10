@@ -12,6 +12,7 @@ import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
+import {makeBold, makeItalic, makeUnderlined, setCellColor, setTextColor} from "./createGrid.tsx";
 
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -494,6 +495,11 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     useEffect(() => {
         const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
         const input = document.getElementById("jumpToInput") as HTMLInputElement;
+        const boldButton = document.getElementById("bold") as HTMLButtonElement;
+        const italicButton = document.getElementById("italic") as HTMLButtonElement;
+        const underlineButton = document.getElementById("underline") as HTMLButtonElement;
+        const cellColor = document.getElementById("cellColorPicker") as HTMLInputElement;
+        const textColor = document.getElementById("textColorPicker") as HTMLInputElement;
         if (!jumpButton || !input) return; // In case either element doesn't exist/is null
 
         // Handle file drop events entirely in React
@@ -563,6 +569,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             }
         }
 
+
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
         jumpButton.addEventListener("click", handleJump); // Jump to cell
@@ -570,10 +577,21 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             if (e.key === "Enter") handleJump();
         })
 
+        boldButton.addEventListener("click", makeBold)
+        italicButton.addEventListener("click", makeItalic)
+        underlineButton.addEventListener("click", makeUnderlined)
+
+        cellColor.addEventListener("input", setCellColor);
+        textColor.addEventListener("input", setTextColor);
+
+
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop
             window.removeEventListener("dragover", handleDragOver); // Drag and drop
             jumpButton.removeEventListener("click", handleJump); // Jump to cell
+            boldButton.removeEventListener("click", makeBold)
+            italicButton.removeEventListener("click", makeItalic)
+            underlineButton.removeEventListener("click", makeUnderlined)
         };
     }, [scrollOffset]);
 
