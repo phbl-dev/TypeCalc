@@ -154,71 +154,76 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
     // Allows us to navigate the cells using the arrow and Enter keys
-    const keyNav = (event:any): void => {
+    const keyNav = (event:any): string => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
 
-
-        switch (event.key) {
-            case "ArrowUp":
+        // toLowerCase() because event.key is case-sensitive
+        switch (event.key.toLowerCase()) {
+            case "arrowup":
                 nextRow = Math.max(0, rowIndex - 1); //Needed to not go too far up
                 break;
-            case "ArrowDown":
+            case "arrowdown":
                 nextRow = rowIndex + 1;
                 break;
-            case "ArrowLeft":
+            case "arrowleft":
                 nextCol = Math.max(0, columnIndex - 1); //Needed to not go too far left
                 break;
-            case "ArrowRight":
+            case "arrowright":
                 nextCol = columnIndex + 1;
                 break;
-            case "Enter":
+            case "enter":
                 nextRow = rowIndex + 1;
                 break;
-            case "F1":
-                const tmpRef = new A1RefCellAddress(ID)
-                sessionStorage.setItem('tmpCellRef', JSON.stringify({
-                    ID: ID,
-                    col: tmpRef.col,
-                    row: tmpRef.row
-                }));
+            case "c":
+                if(event.ctrlKey){
+                    const tmpRef = new A1RefCellAddress(ID)
+                    sessionStorage.setItem('tmpCellRef', JSON.stringify({
+                        ID: ID,
+                        col: tmpRef.col,
+                        row: tmpRef.row
+                    }));
+                }
+                else
+                    return "c";
+                break
+            case "x":
+                if(event.ctrlKey){
+                    const storedRef = sessionStorage.getItem('tmpCellRef');
+                    if (storedRef) {
+                        const parsedRef = JSON.parse(storedRef);
 
+                        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
+
+                        document.getElementById(parsedRef.ID)!.innerText = ""
+                        ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    }
+                }
+                else
+                    return "x";
                 break
 
-            case "F2":
-
-                const storedRef = sessionStorage.getItem('tmpCellRef');
-                if (storedRef) {
-                    const parsedRef = JSON.parse(storedRef);
-
-                    WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
-
-                    document.getElementById(parsedRef.ID)!.innerText = ""
-                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+            case "v":
+                if(event.ctrlKey) {
+                    const storedRef2 = sessionStorage.getItem('tmpCellRef');
+                    if (storedRef2) {
+                        const parsedRef = JSON.parse(storedRef2);
+                        const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
+                        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+                        WorkbookManager.getActiveSheet()?.SetCell(tmpCell, parsedRef.col, parsedRef.row)
+                        ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    }
                 }
+                else
+                    return "v";
                 break
-
-            case "F3":
-                const storedRef2 = sessionStorage.getItem('tmpCellRef');
-                if (storedRef2) {
-                    const parsedRef = JSON.parse(storedRef2);
-                    const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col,parsedRef.row)!
-                    WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
-                    WorkbookManager.getActiveSheet()?.SetCell(tmpCell,parsedRef.col,parsedRef.row)
-                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
-
-
-                }
-            break
-
-            case "F4":
+            case "f4":
                 // Check what cell we are in.
                 const StartCell = document.getElementById("headerCorner");
                 if (StartCell) {
                     const StartCellRef = new A1RefCellAddress(StartCell.textContent!);
 
-                    const sourceID = ID
-                    const sourceIDContent = GetRawCellContent(sourceID)
+                    const sourceIDContent = GetRawCellContent(ID)
                     // Define the area, we will be using.
                     // Maybe this could be a method?
                     const startCol = Math.min(columnIndex, StartCellRef.col);
@@ -246,19 +251,14 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         endCol,
                         endRow
                     }));
-
-
                 }
                 break;
 
-            case "F5":
+            case "f5":
                     const selectionRange = sessionStorage.getItem('selectionRange');
                     if (selectionRange) {
                         const range = JSON.parse(selectionRange);
                         const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
-
-
-
 
                             for (let r = startRow; r <= endRow; r++) {
                                 for (let c = startCol; c <= endCol; c++) {
@@ -271,11 +271,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                                     const targetCellID = numberToLetters(c + 1) + (r + 1);
                                     const cellElement:HTMLElement = document.getElementById(targetCellID)!;
                                     cellElement.innerText = newForm;
-
-
                                 }
-
-
                             ShowWindowInGUI(WorkbookManager.getActiveSheetName(), startCol - 5, endCol + 5, startRow - 5, endRow + 5, false);
                         }
                         WorkbookManager.getWorkbook().Recalculate();
@@ -286,7 +282,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                 break;
                 default:
-                return;
+                return "";
         }
 
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID

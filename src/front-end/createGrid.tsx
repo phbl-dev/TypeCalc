@@ -10,6 +10,8 @@ export const createGrid = () => {
     }
 }
 
+// The following 5 functions are for styling the cell and its contents.
+// They are connected to the appropriate buttons in the header.
 export function makeBold() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -27,7 +29,6 @@ export function makeBold() {
         button.style.border = "2px solid white";
     }
 }
-
 export function makeItalic() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -45,7 +46,6 @@ export function makeItalic() {
         button.style.border = "2px solid white";
     }
 }
-
 export function makeUnderlined() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -63,7 +63,6 @@ export function makeUnderlined() {
         button.style.border = "2px solid white";
     }
 }
-
 export function setCellColor() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -76,7 +75,6 @@ export function setCellColor() {
         cell.style.backgroundColor = colorPicker.value;
     }
 }
-
 export function setTextColor() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
