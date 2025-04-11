@@ -194,23 +194,27 @@ test("DnD", async ({ page }) => {
   await A1.click()
   await page.keyboard.down("Control")
   await page.keyboard.press("C")
+  await page.keyboard.up("Control")
 
   const B1 = page.locator("div#B1.Cell")
   await B1.click()
   await page.keyboard.down("Control")
   await page.keyboard.press("X")
+  await page.keyboard.up("Control")
   await expect(B1).toContainText('10');
 
   const A2 = page.locator("div#A2.Cell")
   await A2.click()
   await page.keyboard.down("Control")
   await page.keyboard.press("C")
+  await page.keyboard.up("Control")
 
   const C2 = page.locator("div#C2.Cell")
   await C2.click()
 
   await page.keyboard.down("Control")
   await page.keyboard.press("V")
+  await page.keyboard.up("Control")
 
   await expect(A2).toContainText('20');
   await expect(C2).toContainText('20');
