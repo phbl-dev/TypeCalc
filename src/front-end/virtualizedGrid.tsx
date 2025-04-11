@@ -178,8 +178,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         startRow = Math.min(rowIndex, StartCellRef.row);
         endRow = Math.max(rowIndex, StartCellRef.row);
 
+        // Undo functionality:
         if (event.key === "z" && event.metaKey) {
-            // Undo functionality:
             event.preventDefault()
 
             WorkbookManager.getActiveSheet()?.undo()
@@ -195,8 +195,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             );
         }
 
+        // Redo functionality:
         if (event.key === "y" && event.metaKey) {
-            // Redo functionality:
+            event.preventDefault()
 
             WorkbookManager.getActiveSheet()?.redo()
 

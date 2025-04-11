@@ -49,7 +49,7 @@ export class Sheet {
         this.cells = new SheetRep();
         this.history = [];                 // Added for undo/redo functionality
         this.history.push(new SheetRep()); // Initially, there should be an empty sheet in the history at index 0.
-        this.historyPointer = 1;           // Initially, points at the current "non-existing" sheet rep with the blank empty sheet rep behind it.
+        this.historyPointer = 0;           // Initially, points at "blank" empty sheet rep.
         this.undoCount = 0;                // Initially 0 because nothing have been undone
         this.redoCount = 0;                // Initially 0 because nothing have been redone
     }
@@ -100,22 +100,11 @@ export class Sheet {
      * Added for undo/redo functionality
      */
     public undo(): void {
-        //console.log("this.history")
-        //console.log(this.history[this.history.length - 1].Get(0,0))
-
-        if (this.historyPointer >= 1 && this.undoCount <= this.history.length) {
+        if (this.historyPointer > 0 && this.undoCount <= this.history.length) {
             this.historyPointer--;
             this.undoCount++;
-            console.log("cells before undoing")
-            console.log(this.cells);
-            console.log("A1:");
-            console.log(this.cells.Get(0,0))
+            this.redoCount > 0 ? this.redoCount-- : 0;
             this.cells = this.history[this.historyPointer];
-            console.log("cells after undoing")
-            console.log(this.cells);
-            console.log("A1:");
-            console.log(this.cells.Get(0,0))
-
         }
     }
 
@@ -123,8 +112,9 @@ export class Sheet {
      * Added for undo/redo functionality
      */
     public redo(): void {
-        if (this.redoCount < this.historyPointer) {
+        if (this.undoCount > 0 && this.historyPointer < this.history.length) {
             this.historyPointer++;
+            this.undoCount--;
             this.redoCount++;
             this.cells = this.history[this.historyPointer];
         }
@@ -443,7 +433,9 @@ export class Sheet {
             }
         });
         this.history.push(historyCopy)
-        this.historyPointer++;
+            if (this.redoCount === 0) {
+               this.historyPointer++;
+            }
     }
 
     /**
