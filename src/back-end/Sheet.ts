@@ -14,7 +14,9 @@ export class Sheet {
     public readonly workbook: Workbook;
     private cells: SheetRep;              // Nb.: Removed readonly
     private readonly history: SheetRep[]; // Added for undo/redo functionality
+    private historyPointer: number;       // Added for undo/redo functionality
     private undoCount: number;            // Added for undo/redo functionality
+    private redoCount: number;            // Added for undo/redo functionality
     private functionSheet: boolean;
 
     constructor(workbook: Workbook, name: string, functionSheet: boolean);
@@ -45,8 +47,11 @@ export class Sheet {
             this.workbook.AddSheet(this);
         }
         this.cells = new SheetRep();
-        this.history = [];  // Added for undo/redo functionality
-        this.undoCount = 0; // Added for undo/redo functionality
+        this.history = [];                 // Added for undo/redo functionality
+        this.history.push(new SheetRep()); // Initially, there should be an empty sheet in the history at index 0.
+        this.historyPointer = 1;           // Initially, points at the current "non-existing" sheet rep with the blank empty sheet rep behind it.
+        this.undoCount = 0;                // Initially 0 because nothing have been undone
+        this.redoCount = 0;                // Initially 0 because nothing have been redone
     }
 
     /**
@@ -95,11 +100,22 @@ export class Sheet {
      * Added for undo/redo functionality
      */
     public undo(): void {
-        console.log("this.history")
-        console.log(this.history)
-        if (this.history.length > 0) {
-            this.cells = this.history[this.history.length - 1];
+        //console.log("this.history")
+        //console.log(this.history[this.history.length - 1].Get(0,0))
+
+        if (this.historyPointer >= 1 && this.undoCount <= this.history.length) {
+            this.historyPointer--;
             this.undoCount++;
+            console.log("cells before undoing")
+            console.log(this.cells);
+            console.log("A1:");
+            console.log(this.cells.Get(0,0))
+            this.cells = this.history[this.historyPointer];
+            console.log("cells after undoing")
+            console.log(this.cells);
+            console.log("A1:");
+            console.log(this.cells.Get(0,0))
+
         }
     }
 
@@ -107,9 +123,10 @@ export class Sheet {
      * Added for undo/redo functionality
      */
     public redo(): void {
-        if (this.undoCount > 0) {
-            this.cells = this.history[this.history.length + 1];
-            this.undoCount--;
+        if (this.redoCount < this.historyPointer) {
+            this.historyPointer++;
+            this.redoCount++;
+            this.cells = this.history[this.historyPointer];
         }
     }
 
@@ -188,13 +205,11 @@ export class Sheet {
      * @constructor
      */
     public SetArrayFormula(cell: Cell, col: number, row: number, ulCa: SuperCellAddress, lrCa: SuperCellAddress): void {
-        console.log("reached here 1")
 
         const formula: Formula = cell as unknown as Formula;
         if (cell == null) {
             throw new Error("Invalid array formula");
         } else {
-            console.log("reached here 2")
             const caf: CachedArrayFormula = new CachedArrayFormula(formula, this, col, row, ulCa, lrCa);
             formula.AddToSupportSets(this, col, row, 1, 1);
             const displayCols = new Interval(ulCa.col, lrCa.col);
@@ -418,7 +433,17 @@ export class Sheet {
             console.log("col:", col.col, "row:", col.row);
             this.Set(col.col, newCell, col.row);
         }
-        this.history.push(this.cells) // Added for undo/redo functionality
+
+        // In order to save the current state to our history we have to make a copy of it.
+        // Otherwise, we would keep referenceing to the same SheetRep object.
+        const historyCopy = new SheetRep();
+        this.cells.Forall((col, row, cell) => {
+            if (cell) {
+                historyCopy.Set(col, row, cell.CloneCell(col, row));
+            }
+        });
+        this.history.push(historyCopy)
+        this.historyPointer++;
     }
 
     /**

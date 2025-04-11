@@ -13,6 +13,7 @@ import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
 import {makeBold, makeItalic, makeUnderlined, setCellColor, setTextColor} from "./createGrid.tsx";
+import {CellRef} from "../back-end/Expressions.ts";
 
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -157,27 +158,57 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
-        let selectionRange;
-        let range;
+        const StartCell = document.getElementById("headerCorner"); // Check what cell we are in.
+        let startCol: number;
+        let endCol: number;
+        let startRow: number;
+        let endRow: number;
+        let StartCellRef: A1RefCellAddress;
+
+        if (StartCell) {
+            StartCellRef = new A1RefCellAddress(StartCell.textContent!);
+        } else {
+            StartCellRef = new A1RefCellAddress("A1");
+        }
+
+        // Define the area, we will be using.
+        // Maybe this could be a method?
+        startCol = Math.min(columnIndex, StartCellRef.col);
+        endCol = Math.max(columnIndex, StartCellRef.col);
+        startRow = Math.min(rowIndex, StartCellRef.row);
+        endRow = Math.max(rowIndex, StartCellRef.row);
 
         if (event.key === "z" && event.metaKey) {
             // Undo functionality:
             event.preventDefault()
-            console.log("cmd+z invoked!")
-            selectionRange = sessionStorage.getItem('selectionRange');
-            console.log("here1")
-            console.log(selectionRange);
 
-            if (selectionRange) {
-                console.log("here2")
+            WorkbookManager.getActiveSheet()?.undo()
 
-                range = JSON.parse(selectionRange);
-                const {startCol, startRow, endCol, endRow} = range;
+            // Refresh UI with wider range to ensure all affected cells are updated
+            ShowWindowInGUI(
+                WorkbookManager.getActiveSheetName(),
+                Math.max(0, startCol - 10),
+                endCol + 10,
+                Math.max(0, startRow - 10),
+                endRow + 10,
+                false
+            );
+        }
 
-                WorkbookManager.getActiveSheet()?.undo()
-                WorkbookManager.getWorkbook().Recalculate();
-                ShowWindowInGUI(WorkbookManager.getActiveSheetName(), startCol, endCol, startRow, endRow, false);
-            }
+        if (event.key === "y" && event.metaKey) {
+            // Redo functionality:
+
+            WorkbookManager.getActiveSheet()?.redo()
+
+            // Refresh UI with wider range to ensure all affected cells are updated
+            ShowWindowInGUI(
+                WorkbookManager.getActiveSheetName(),
+                Math.max(0, startCol - 10),
+                endCol + 10,
+                Math.max(0, startRow - 10),
+                endRow + 10,
+                false
+            );
         }
 
 
@@ -233,49 +264,37 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             break
 
             case "F4":
-                // Check what cell we are in.
-                const StartCell = document.getElementById("headerCorner");
-                if (StartCell) {
-                    const StartCellRef = new A1RefCellAddress(StartCell.textContent!);
+                const sourceIDContent = GetRawCellContent(ID)
 
-                    const sourceID = ID
-                    const sourceIDContent = GetRawCellContent(sourceID)
-                    // Define the area, we will be using.
-                    // Maybe this could be a method?
-                    const startCol = Math.min(columnIndex, StartCellRef.col);
-                    const endCol = Math.max(columnIndex, StartCellRef.col);
-                    const startRow = Math.min(rowIndex, StartCellRef.row);
-                    const endRow = Math.max(rowIndex, StartCellRef.row);
+                // Clear any existing highlight, if there were any.
+                clearHighlight()
 
-                    // Clear any existing highlight, if there were any.
-                    clearHighlight()
-
-                    for (let r = startRow; r <= endRow; r++) {
-                        for (let c = startCol; c <= endCol; c++) {
-                            const cellID = numberToLetters(c + 1) + (r + 1); // +1 because we are 1-indexed in the UI.
-                            const cell = document.getElementById(cellID);
-                            if (cell) {
-                                cell.classList.add('selected-cell');
-                            }
+                for (let r = startRow; r <= endRow; r++) {
+                    for (let c = startCol; c <= endCol; c++) {
+                        const cellID = numberToLetters(c + 1) + (r + 1); // +1 because we are 1-indexed in the UI.
+                        const cell = document.getElementById(cellID);
+                        if (cell) {
+                            cell.classList.add('selected-cell');
                         }
                     }
-                    // Save the values in session storage, so it can be accessed between calls.
-                    sessionStorage.setItem('selectionRange', JSON.stringify({
-                        sourceIDContent,
-                        startCol,
-                        startRow,
-                        endCol,
-                        endRow
-                    }));
-
-
                 }
+                // Save the values in session storage, so it can be accessed between calls.
+                sessionStorage.setItem('selectionRange', JSON.stringify({
+                    sourceIDContent,
+                    startCol,
+                    startRow,
+                    endCol,
+                    endRow
+                }));
+
+
+
                 break;
 
             case "F5":
-                selectionRange = sessionStorage.getItem('selectionRange');
+                const selectionRange = sessionStorage.getItem('selectionRange');
                     if (selectionRange) {
-                        range = JSON.parse(selectionRange);
+                        const range = JSON.parse(selectionRange);
                         const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
 
 
@@ -305,23 +324,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     // Clear session after use, otherwise some weird issues can happen.
                 sessionStorage.clear()
 
-                break;
-
-
-
-
-            // Redo functionality:
-            case "metaKey+y":
-                event.preventDefault()
-                selectionRange = sessionStorage.getItem('selectionRange');
-                if (selectionRange) {
-                    range = JSON.parse(selectionRange);
-                    const {startCol, startRow, endCol, endRow} = range;
-
-                    WorkbookManager.getActiveSheet()?.redo()
-                    WorkbookManager.getWorkbook().Recalculate();
-                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), startCol, endCol, startRow, endRow, false);
-                }
                 break;
 
             default:

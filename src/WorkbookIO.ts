@@ -280,17 +280,24 @@ export function ShowWindowInGUI(activeSheet: string, leftCornerCol: number, righ
     const endCol:number = rightCornerCol;
     const startRow:number = topCornerRow;
     const endRow:number = bottomCornerRow;
-    const sheet:Sheet = wb.get(activeSheet) as Sheet; //This needs to be updated
+    const sheet:Sheet = wb.get(activeSheet) as Sheet;
+
     if (sheet) {
         for (let col: number = startCol; col <= endCol; col++) {
             for (let row: number = startRow; row <= endRow; row++) {
                 const colChar: string = numberToLetters(col);
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
-                    let cellEval = sheet.Get(col - 1, row - 1)?.Eval(sheet, 0, 0)?.ToObject();
-                    if (cellEval != undefined) {
-                        cellHTML.innerText = cellEval as string;
-                    } else if (sheetSwap) {
+                    const cell = sheet.Get(col - 1, row - 1);
+                    if (cell != null) {
+                        let cellEval = cell.Eval(sheet, 0, 0)?.ToObject();
+                        if (cellEval != undefined) {
+                            cellHTML.innerText = cellEval as string;
+                        } else {
+                            cellHTML.innerText = "";
+                        }
+                    } else {
+                        // Important: Clear the cell content when the cell is null
                         cellHTML.innerText = "";
                     }
                 }
