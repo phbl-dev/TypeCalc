@@ -99,7 +99,7 @@ header h4 {
     z-index: 1;
     height: 30px;
 }
-
+/* Needed to round corners of color pickers */
 .color::-webkit-color-swatch {
     border-radius: 4px;
 }
