@@ -157,6 +157,28 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
+        let selectionRange;
+        let range;
+
+        if (event.key === "z" && event.metaKey) {
+            // Undo functionality:
+            event.preventDefault()
+            console.log("cmd+z invoked!")
+            selectionRange = sessionStorage.getItem('selectionRange');
+            console.log("here1")
+            console.log(selectionRange);
+
+            if (selectionRange) {
+                console.log("here2")
+
+                range = JSON.parse(selectionRange);
+                const {startCol, startRow, endCol, endRow} = range;
+
+                WorkbookManager.getActiveSheet()?.undo()
+                WorkbookManager.getWorkbook().Recalculate();
+                ShowWindowInGUI(WorkbookManager.getActiveSheetName(), startCol, endCol, startRow, endRow, false);
+            }
+        }
 
 
         switch (event.key) {
@@ -182,7 +204,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     col: tmpRef.col,
                     row: tmpRef.row
                 }));
-
                 break
 
             case "F2":
@@ -252,9 +273,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 break;
 
             case "F5":
-                    const selectionRange = sessionStorage.getItem('selectionRange');
+                selectionRange = sessionStorage.getItem('selectionRange');
                     if (selectionRange) {
-                        const range = JSON.parse(selectionRange);
+                        range = JSON.parse(selectionRange);
                         const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
 
 
@@ -285,7 +306,25 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 sessionStorage.clear()
 
                 break;
-                default:
+
+
+
+
+            // Redo functionality:
+            case "metaKey+y":
+                event.preventDefault()
+                selectionRange = sessionStorage.getItem('selectionRange');
+                if (selectionRange) {
+                    range = JSON.parse(selectionRange);
+                    const {startCol, startRow, endCol, endRow} = range;
+
+                    WorkbookManager.getActiveSheet()?.redo()
+                    WorkbookManager.getWorkbook().Recalculate();
+                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), startCol, endCol, startRow, endRow, false);
+                }
+                break;
+
+            default:
                 return;
         }
 

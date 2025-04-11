@@ -12,7 +12,9 @@ export class Sheet {
     public rows = 10000;
     private name: string;
     public readonly workbook: Workbook;
-    private readonly cells: SheetRep;
+    private cells: SheetRep;              // Nb.: Removed readonly
+    private readonly history: SheetRep[]; // Added for undo/redo functionality
+    private undoCount: number;            // Added for undo/redo functionality
     private functionSheet: boolean;
 
     constructor(workbook: Workbook, name: string, functionSheet: boolean);
@@ -43,6 +45,8 @@ export class Sheet {
             this.workbook.AddSheet(this);
         }
         this.cells = new SheetRep();
+        this.history = [];  // Added for undo/redo functionality
+        this.undoCount = 0; // Added for undo/redo functionality
     }
 
     /**
@@ -85,6 +89,28 @@ export class Sheet {
      */
     public getCells(): SheetRep {
         return this.cells;
+    }
+
+    /**
+     * Added for undo/redo functionality
+     */
+    public undo(): void {
+        console.log("this.history")
+        console.log(this.history)
+        if (this.history.length > 0) {
+            this.cells = this.history[this.history.length - 1];
+            this.undoCount++;
+        }
+    }
+
+    /**
+     * Added for undo/redo functionality
+     */
+    public redo(): void {
+        if (this.undoCount > 0) {
+            this.cells = this.history[this.history.length + 1];
+            this.undoCount--;
+        }
     }
 
     /**
@@ -161,7 +187,6 @@ export class Sheet {
      * @param lrCa
      * @constructor
      */
-    //TODO: Use this in virtualizedGrid.handleInput()
     public SetArrayFormula(cell: Cell, col: number, row: number, ulCa: SuperCellAddress, lrCa: SuperCellAddress): void {
         console.log("reached here 1")
 
@@ -393,6 +418,7 @@ export class Sheet {
             console.log("col:", col.col, "row:", col.row);
             this.Set(col.col, newCell, col.row);
         }
+        this.history.push(this.cells) // Added for undo/redo functionality
     }
 
     /**
