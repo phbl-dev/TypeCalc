@@ -12,7 +12,7 @@ import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
-import {makeBold, makeItalic, makeUnderlined, setCellColor, setTextColor} from "./createGrid.tsx";
+import {makeBold, makeItalic, makeUnderlined, setCellColor, setTextColor} from "./headerFunctions.tsx";
 
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -143,14 +143,12 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-
     const clearHighlight = () => {
         const previousSelection = document.querySelectorAll('.selected-cell');
         previousSelection.forEach(cell => {
             cell.classList.remove('selected-cell');
         });
         sessionStorage.removeItem('selectionRange');
-
     }
 
     // Allows us to navigate the cells using the arrow and Enter keys
@@ -158,6 +156,51 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         let nextRow = rowIndex;
         let nextCol = columnIndex;
 
+        if(event.ctrlKey) {
+            switch (event.key) {
+                case "c":
+                    event.preventDefault();
+                    const tmpRef = new A1RefCellAddress(ID)
+                    sessionStorage.setItem('tmpCellRef', JSON.stringify({
+                        ID: ID,
+                        col: tmpRef.col,
+                        row: tmpRef.row
+                    }));
+                    break
+                case "x":
+                    event.preventDefault();
+                    const storedRef = sessionStorage.getItem('tmpCellRef');
+                    if (storedRef) {
+                        const parsedRef = JSON.parse(storedRef);
+
+                        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
+
+                        document.getElementById(parsedRef.ID)!.innerText = ""
+                        ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    }
+                    break
+                case "v":
+                    event.preventDefault();
+                    const storedRef2 = sessionStorage.getItem('tmpCellRef');
+                    if (storedRef2) {
+                        const parsedRef = JSON.parse(storedRef2);
+                        const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
+                        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+                        WorkbookManager.getActiveSheet()?.SetCell(tmpCell, parsedRef.col, parsedRef.row)
+                        ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    }
+                    break
+                case "b":
+                    makeBold();
+                    break
+                case "i":
+                    makeItalic();
+                    break
+                case "u":
+                    makeUnderlined();
+                    break;
+            }
+        }
 
         switch (event.key) {
             case "ArrowUp":
@@ -175,50 +218,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             case "Enter":
                 nextRow = rowIndex + 1;
                 break;
-            case "F1":
-                const tmpRef = new A1RefCellAddress(ID)
-                sessionStorage.setItem('tmpCellRef', JSON.stringify({
-                    ID: ID,
-                    col: tmpRef.col,
-                    row: tmpRef.row
-                }));
-
-                break
-
-            case "F2":
-
-                const storedRef = sessionStorage.getItem('tmpCellRef');
-                if (storedRef) {
-                    const parsedRef = JSON.parse(storedRef);
-
-                    WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
-
-                    document.getElementById(parsedRef.ID)!.innerText = ""
-                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
-                }
-                break
-
-            case "F3":
-                const storedRef2 = sessionStorage.getItem('tmpCellRef');
-                if (storedRef2) {
-                    const parsedRef = JSON.parse(storedRef2);
-                    const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col,parsedRef.row)!
-                    WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
-                    WorkbookManager.getActiveSheet()?.SetCell(tmpCell,parsedRef.col,parsedRef.row)
-                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
-
-
-                }
-            break
-
             case "F4":
                 // Check what cell we are in.
                 const StartCell = document.getElementById("headerCorner");
                 if (StartCell) {
                     const StartCellRef = new A1RefCellAddress(StartCell.textContent!);
 
-                    const sourceID = ID
-                    const sourceIDContent = GetRawCellContent(sourceID)
+                    const sourceIDContent = GetRawCellContent(ID)
                     // Define the area, we will be using.
                     // Maybe this could be a method?
                     const startCol = Math.min(columnIndex, StartCellRef.col);
@@ -246,8 +252,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         endCol,
                         endRow
                     }));
-
-
                 }
                 break;
 
@@ -256,9 +260,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     if (selectionRange) {
                         const range = JSON.parse(selectionRange);
                         const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
-
-
-
 
                             for (let r = startRow; r <= endRow; r++) {
                                 for (let c = startCol; c <= endCol; c++) {
@@ -271,11 +272,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                                     const targetCellID = numberToLetters(c + 1) + (r + 1);
                                     const cellElement:HTMLElement = document.getElementById(targetCellID)!;
                                     cellElement.innerText = newForm;
-
-
                                 }
-
-
                             ShowWindowInGUI(WorkbookManager.getActiveSheetName(), startCol - 5, endCol + 5, startRow - 5, endRow + 5, false);
                         }
                         WorkbookManager.getWorkbook().Recalculate();
@@ -286,7 +283,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                 break;
                 default:
-                return;
+                    return;
         }
 
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID
@@ -325,7 +322,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 new SuperCellAddress(columnIndex, rowIndex),
                 new SuperCellAddress(columnIndex, rowIndex + result!.values[0].length - 1)
             )
-
         }
     }
 
@@ -345,11 +341,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
 
-
              onClick={(e) => {
                  clearHighlight()
-
-
              }}
              onFocus={(e) => {
                  //All of this is to add and remove styling from the active cell
@@ -416,7 +409,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  //console.log(GetSupportsInWindow(columnIndex-20, columnIndex+20,rowIndex-20,rowIndex+20,columnIndex+1,rowIndex+1));
              }}
 
-
              onInput={(e) => {
                  //Update formula box alongside cell input, also show caret (text cursor) once writing starts
                  updateFormulaBox(ID, (e.target as HTMLElement).innerText);
@@ -447,7 +439,6 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
                 >
                     {name}
                 </button>
-
             ))}
             <button id="createSheetButton"
                 onClick={() => {
@@ -457,9 +448,6 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
                         WorkbookManager.getWorkbook().AddSheet(newSheet);
                         setSheetNames([...sheetNames, newSheetName]);
                     }
-                }}
-                style={{
-                    /*backgroundColor: '#28a745',*/
                 }}
             >
                 +
