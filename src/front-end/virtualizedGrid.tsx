@@ -50,12 +50,11 @@ export function numberToLetters(n: number) {
  * @param colDiff
  */
 export function adjustFormula(formula: string, rowDiff: number, colDiff: number): string {
-
     return formula.replace(/(\$?)([A-Z]+)(\$?)(\d+)/g, (match, colAbs, column, rowAbs, row) => {
         const newRow = rowAbs ? row : parseInt(row, 10) + rowDiff;
 
         let newColumn = column;
-        if (!(colAbs || rowAbs) && (colDiff | rowDiff)  !== 0) {
+        if (!colAbs && colDiff !== 0) {
             const colNum = lettersToNumber(column);
             const newColNum = colNum + colDiff;
             newColumn = numberToLetters(newColNum);
@@ -64,7 +63,6 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
         return colAbs + newColumn + rowAbs + newRow;
     });
 }
-
 /** Converts letters to a number, following the same formula as above.
  *
  * @param letters - The letters to convert
@@ -237,6 +235,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                     for (let r = startRow; r <= endRow; r++) {
                         for (let c = startCol; c <= endCol; c++) {
+                            if (r === startRow && c === startCol) continue;
                             const cellID = numberToLetters(c + 1) + (r + 1); // +1 because we are 1-indexed in the UI.
                             const cell = document.getElementById(cellID);
                             if (cell) {
@@ -268,18 +267,19 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                                     const newForm = adjustFormula(sourceIDContent!.toString(),r - startRow, c - startCol)
 
-                                    handleInput(r,c,newForm) //TODO: Maybe a bit excessive to use handleInput?
+                                    handleInput(r,c,newForm)
+
+
                                     const targetCellID = numberToLetters(c + 1) + (r + 1);
                                     const cellElement:HTMLElement = document.getElementById(targetCellID)!;
                                     cellElement.innerText = newForm;
                                 }
-                            ShowWindowInGUI(WorkbookManager.getActiveSheetName(), startCol - 5, endCol + 5, startRow - 5, endRow + 5, false);
                         }
-                        WorkbookManager.getWorkbook().Recalculate();
 
                     }
-                    // Clear session after use, otherwise some weird issues can happen.
-                sessionStorage.clear()
+                    WorkbookManager.getWorkbook().Recalculate();
+                    sessionStorage.removeItem('selectionRange');
+
 
                 break;
                 default:
@@ -299,8 +299,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-    const handleInput = (rowIndex:number, columnIndex:number, content:string|number) => {
-        const cellToBeAdded:BackendCell|null = BackendCell.Parse(content as string,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
+    const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
+        const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
+        console.log(cellToBeAdded);
         if (!cellToBeAdded) {return}
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
 

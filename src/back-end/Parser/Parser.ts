@@ -113,12 +113,9 @@ export class SpreadsheetParser extends CstParser {
         }
 
         function Factor() {
-            //console.log("Visiting Factor");
             return $.OR([
                 {
                     ALT: () => {
-                        //console.log("Looking in application");
-
                         $.SUBRULE($.application);
                     },
                 },
@@ -128,10 +125,14 @@ export class SpreadsheetParser extends CstParser {
                         $.SUBRULE2($.number, {LABEL: "NEGATIVE"});
                     },
                 },
+
                 {
                     ALT: () => {
+                        $.OPTION3(() => {
+                            $.CONSUME(SpreadsheetLexer.SheetRef);
+                        });
                         $.SUBRULE($.raref)
-                        $.OPTION(() => {
+                        $.OPTION4(() => {
                             $.CONSUME(SpreadsheetLexer.Colon);
                             $.SUBRULE2($.raref);
                         });
@@ -154,15 +155,6 @@ export class SpreadsheetParser extends CstParser {
 
                         $.CONSUME(SpreadsheetLexer.RBracket);
                     }
-                },
-
-
-
-
-                {
-                    ALT: () => {
-                        $.CONSUME(SpreadsheetLexer.SheetRef);
-                    },
                 },
                 {
                     ALT: () => {

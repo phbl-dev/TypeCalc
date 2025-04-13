@@ -90,10 +90,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
                     op = "CONCATENATE";
                 }
 
-                // Get the next term
                 const e2 = this.visit(ctx["term"][i + 1]);
 
-                // Create a function call for this operation
                 e = FunCall.Make(op, [e, e2]);
             }
         }
@@ -115,13 +113,11 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         s = ctx["Identifier"][0].image;
 
-        s = s.toUpperCase();
-
         if (ctx["exprs1"]) {
             es = this.visit(ctx["exprs1"]);
-            e = FunCall.Make(s, es);
+            e = FunCall.Make(s.toUpperCase(), es);
         } else {
-            e = FunCall.Make(s, []);
+            e = FunCall.Make(s.toUpperCase(), []);
         }
 
         return e;
@@ -164,22 +160,14 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected logicalOp(ctx: any): string {
-        console.log(ctx)
-        let op = "";
-        if (ctx.Equals) {
-            op = "EQUALS";
-        } else if (ctx.NotEqual) {
-            op = "NOTEQUALS";
-        } else if (ctx.LessThan) {
-            op = "LEQ";
-        } else if (ctx.LessThanOrEqual) {
-            op = "LEQUALS";
-        } else if (ctx.GreaterThan) {
-            op = "GEQ";
-        } else if (ctx.GreaterThanOrEqual) {
-            op = "GEQUALS";
-        }
-        return op;
+        if (ctx.Equals) return "EQUALS";
+        if (ctx.NotEqual) return "NOTEQUALS";
+        if (ctx.LessThan) return "LEQ";
+        if (ctx.LessThanOrEqual) return "LEQUALS";
+        if (ctx.GreaterThan) return "GEQ";
+        if (ctx.GreaterThanOrEqual) return "GEQUALS";
+
+        return ""
     }
 
     protected mulOp(ctx: any): string {
@@ -250,20 +238,12 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             r1 = this.visit(ctx["raref"][0]);
 
 
-            if (sheetError) {
-                e = new Error(ErrorValue.refError);
-            } else {
-                e = new CellRef(s1 as unknown as Sheet, r1);
-            }
+            e = sheetError ? new Error(ErrorValue.refError) :  new CellRef(s1 as unknown as Sheet, r1);
 
             if (ctx["raref"][1]) {
                 r2 = this.visit(ctx["raref"][1]);
 
-                if (sheetError) {
-                    e = new Error(ErrorValue.refError);
-                } else {
-                    e = new CellArea(s1 as unknown as Sheet, r1 as SuperRARef, r2 as SuperRARef);
-                }
+                e = sheetError ? new Error(ErrorValue.refError) : new CellArea(s1 as unknown as Sheet, r1 as SuperRARef, r2 as SuperRARef);
             }
         }
 
@@ -271,16 +251,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
             const innerExpr = this.visit(ctx["NEGATIVE"]);
 
-            console.log("This is the value of innerExpr", innerExpr);
-            console.log(typeof  innerExpr);
-            if (typeof innerExpr === "number" ) {
-                e = new NumberConst(-innerExpr);
-                console.log(e)
-            } else {
-                console.log("This is loop i entered")
-                e = FunCall.Make("NEG", [innerExpr]);
-                console.log(e)
-            }
+            e = typeof innerExpr === "number" ? new NumberConst(-innerExpr) : FunCall.Make("NEG", [innerExpr]);
 
 
         }
@@ -329,6 +300,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         let raref;
 
 
+
+
         if (ctx["A1Ref"]) {
             const token = ctx["A1Ref"][0].image
             raref = new A1RARef(token, this.col,this.row);
@@ -367,7 +340,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     protected cellContents(ctx: any): Cell {
         const e:any = this.visit(ctx.expression);
 
-        //console.log(JSON.stringify(ctx, null, 2));
         if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         }

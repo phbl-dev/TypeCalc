@@ -234,23 +234,25 @@ export function GetRawCellContent(cellID:string):string|null {
         return null;
     }
 
+
     const cell = activeSheet.getCells().Get(cellCol, cellRow);
+    if (!cell) {
+        console.debug("[GetRawCellContent] No cell found!");
+        return null;
+    }
 
-
-    // TODO: Recently added, I think this can be done smarter!
-    // The idea here is that we want to add a "=" to const cells, since they don't work in the sheet otherwise.
-    if(cell instanceof ConstCell) {
-        const formulaText = cell.GetText()
-
-        if(formulaText!.startsWith("=")){
-            return formulaText;
-        } else {
-            // This retains the formulas for values. Even if they don't use =.
-            return "=" + formulaText;
+    // Special handling for Formula cells
+    if (cell instanceof Formula) {
+        let formulaText = cell.GetText()!;
+        // Ensure it starts with equals sign
+        if (!formulaText.startsWith("=")) {
+            formulaText = "=" + formulaText;
         }
+        return formulaText;
     }
 
     const cellContent:string | null | undefined = activeSheet.getCells().Get(cellCol,cellRow)?.GetText();
+    console.log("this is the cellContent", cellContent)
     if (!cellContent && cellContent != "0") {
         console.debug("[GetRawCellContent] No cell found!");
         return null;
