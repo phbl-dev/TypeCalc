@@ -12,7 +12,7 @@ import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
-import {makeBold, makeItalic, makeUnderlined, setCellColor, setTextColor} from "./createGrid.tsx";
+import {makeBold, makeItalic, makeUnderlined, setCellColor, setTextColor} from "./headerFunctions.tsx";
 
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -143,14 +143,12 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-
     const clearHighlight = () => {
         const previousSelection = document.querySelectorAll('.selected-cell');
         previousSelection.forEach(cell => {
             cell.classList.remove('selected-cell');
         });
         sessionStorage.removeItem('selectionRange');
-
     }
 
     // Allows us to navigate the cells using the arrow and Enter keys
@@ -181,7 +179,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
                     }
                     break
-
                 case "v":
                     event.preventDefault();
                     const storedRef2 = sessionStorage.getItem('tmpCellRef');
@@ -193,10 +190,18 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
                     }
                     break
+                case "b":
+                    makeBold();
+                    break
+                case "i":
+                    makeItalic();
+                    break
+                case "u":
+                    makeUnderlined();
+                    break;
             }
         }
 
-        // toLowerCase() because event.key is case-sensitive
         switch (event.key) {
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1); //Needed to not go too far up
@@ -336,7 +341,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
              }}
 
-
              onClick={(e) => {
                  clearHighlight()
              }}
@@ -404,7 +408,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  ShowWindowInGUI(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20, false);
                  //console.log(GetSupportsInWindow(columnIndex-20, columnIndex+20,rowIndex-20,rowIndex+20,columnIndex+1,rowIndex+1));
              }}
-
 
              onInput={(e) => {
                  //Update formula box alongside cell input, also show caret (text cursor) once writing starts
