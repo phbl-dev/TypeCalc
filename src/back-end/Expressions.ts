@@ -272,7 +272,7 @@ export class FunCall extends Expr {
     public readonly function: (...args: unknown[]) => unknown;
     public es: Expr[];           // Non-null, elements non-null
     public nonStrict: boolean;        // We implemented a flag for non-strict functions such that we know if some of their arguments should not be evaluated.
-    public isChoose: boolean
+    public isChoose: boolean          // TODO: Are we still using this field?
 
     private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[]) {
         super();
