@@ -333,8 +333,6 @@ export class FunCall extends Expr {
 
     public static Make(name: string, es: Expr[]): Expr {
 
-        let y
-
         if (name === "NEG") {return this.NEG(es)}
         if (name === "EQUALS") {return this.EQUALS(es);}
         if (name === "DIVIDE") {return this.DIVIDE(es);}
@@ -348,10 +346,7 @@ export class FunCall extends Expr {
         if (name === "LEQUALS") {return this.LEQUALS(es)}
         if (name === "LEQ") {return this.LEQ(es)}
         if (name === "CONCATENATE") {return this.CONCATENATE(es)}
-
-        if (name === "ARRAY") {
-            return ExprArray.MakeExprArray(es);
-        }
+        if (name === "ARRAY") {return ExprArray.MakeExprArray(es);}
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
@@ -363,14 +358,7 @@ export class FunCall extends Expr {
                 es[i] = new Error("#SYNTAX") as unknown as Expr;
             }
         }
-
-        if (name === "SPECIALIZE" && es.length > 1) {
-            return new FunCall("SPECIALIZE", [FunCall.Make("CLOSURE", es)]);
-        } else {
-            return new FunCall(func, es);
-        }
-
-
+        return new FunCall(func, es);
     }
 
     /**
