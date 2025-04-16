@@ -5,7 +5,7 @@ import { XMLParser } from "fast-xml-parser";
 import {Workbook} from "./back-end/Workbook";
 import {Sheet} from "./back-end/Sheet";
 import {ArrayFormula, CachedArrayFormula, Cell, ConstCell, Formula, NumberCell, QuoteCell} from "./back-end/Cells";
-import {numberToLetters} from "./front-end/SpreadsheetGrid.tsx";
+import {numberToLetters} from "./front-end/HelperFunctions.tsx";
 import {A1RefCellAddress, SuperCellAddress, SupportCell, SupportRange} from "./back-end/CellAddressing.ts";
 import {ArrayExplicit} from "./back-end/ArrayValue.ts";
 import {NumberValue} from "./back-end/NumberValue.ts";

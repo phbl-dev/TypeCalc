@@ -9,7 +9,10 @@ import {
     XMLReader
 } from "../WorkbookIO";
 import {
+    getCell,
     adjustFormula,
+    numberToLetters,
+    lettersToNumber,
     makeBold,
     makeItalic,
     makeUnderlined,
@@ -32,37 +35,6 @@ interface GridInterface {
     width?: number;
     height?: number;
     ref?: React.Ref<any>;
-}
-
-/** Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
- *
- * @param n - The number to convert
- */
-export function numberToLetters(n: number) {
-    let letter = "";
-    while (n > 0) {
-        n--; // Required so that 1 = 'A'
-        letter = String.fromCharCode((n % 26) + 65) + letter;
-        n = Math.floor(n / 26);
-    }
-    return letter;
-}
-
-/** Converts letters to a number, following the same formula as above.
- *
- * @param letters - The letters to convert
- */
-export function lettersToNumber(letters:string):number {
-    let output = 0;
-    for (let i = 0; i < letters.length; i++) {
-        const charCode = letters.charCodeAt(i) - 65;
-        output = output * 26 + (charCode + 1);
-    }
-    return output;
-}
-
-export function getCell(cellID:string):HTMLElement|null{
-    return document.getElementById(cellID);
 }
 
 /** Defines the column headers as a div with ID, style, and contents
@@ -97,6 +69,7 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
     </div>
 );
 
+// Creates the formula box field in the header. Used in Cell by updateFormulaBox.
 const formulaBox = ({ cell, style}: {cell:BackendCell, style:any}) => (
     <div id="formulaBox"
          style={{
@@ -202,6 +175,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 nextRow = rowIndex + 1;
                 break;
             case "F4":
+                event.preventDefault();
                 // Check what cell we are in.
                 const StartCell = document.getElementById("headerCorner");
                 if (StartCell) {
@@ -238,37 +212,37 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     }));
                 }
                 break;
-
             case "F5":
-                    const selectionRange = sessionStorage.getItem('selectionRange');
-                    if (selectionRange) {
-                        const range = JSON.parse(selectionRange);
-                        const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
+                event.preventDefault();
+                const selectionRange = sessionStorage.getItem('selectionRange');
+                if (selectionRange) {
+                    const range = JSON.parse(selectionRange);
+                    const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
 
-                            for (let r = startRow; r <= endRow; r++) {
-                                for (let c = startCol; c <= endCol; c++) {
+                        for (let r = startRow; r <= endRow; r++) {
+                            for (let c = startCol; c <= endCol; c++) {
 
-                                    if (r === startRow && c === startCol) continue;
+                                if (r === startRow && c === startCol) continue;
 
-                                    const newForm = adjustFormula(sourceIDContent!.toString(),r - startRow, c - startCol)
+                                const newForm = adjustFormula(sourceIDContent!.toString(),r - startRow, c - startCol)
 
-                                    handleInput(r,c,newForm)
+                                handleInput(r,c,newForm)
 
 
-                                    const targetCellID = numberToLetters(c + 1) + (r + 1);
-                                    const cellElement:HTMLElement = document.getElementById(targetCellID)!;
-                                    cellElement.innerText = newForm;
-                                }
-                        }
-
+                                const targetCellID = numberToLetters(c + 1) + (r + 1);
+                                const cellElement:HTMLElement = document.getElementById(targetCellID)!;
+                                cellElement.innerText = newForm;
+                            }
                     }
-                    WorkbookManager.getWorkbook().Recalculate();
-                    sessionStorage.removeItem('selectionRange');
+
+                }
+                WorkbookManager.getWorkbook().Recalculate();
+                sessionStorage.removeItem('selectionRange');
 
 
                 break;
-                default:
-                    return;
+            default:
+                return;
         }
 
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID

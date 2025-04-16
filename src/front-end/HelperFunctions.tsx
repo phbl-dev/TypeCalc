@@ -1,5 +1,35 @@
-import {lettersToNumber, numberToLetters} from "./SpreadsheetGrid.tsx";
 import {WorkbookManager} from "../WorkbookIO.ts";
+
+export function getCell(cellID:string):HTMLElement|null{
+    return document.getElementById(cellID);
+}
+
+/** Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
+ *
+ * @param n - The number to convert
+ */
+export function numberToLetters(n: number) {
+    let letter = "";
+    while (n > 0) {
+        n--; // Required so that 1 = 'A'
+        letter = String.fromCharCode((n % 26) + 65) + letter;
+        n = Math.floor(n / 26);
+    }
+    return letter;
+}
+
+/** Converts letters to a number, following the same formula as above.
+ *
+ * @param letters - The letters to convert
+ */
+export function lettersToNumber(letters:string):number {
+    let output = 0;
+    for (let i = 0; i < letters.length; i++) {
+        const charCode = letters.charCodeAt(i) - 65;
+        output = output * 26 + (charCode + 1);
+    }
+    return output;
+}
 
 /**
  * Takes in a formula string, (10, 20,-20, A1, A$2, $A$2), and processes it.
