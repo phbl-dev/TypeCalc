@@ -13,7 +13,6 @@ import {
     adjustFormula,
     numberToLetters,
     lettersToNumber,
-    formulaBox,
     makeBold,
     makeItalic,
     makeUnderlined,
