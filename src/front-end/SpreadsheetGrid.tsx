@@ -411,7 +411,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
  * additional grids; one for the row headers and one for the regular cells.
  */
-export const DefineGrid: React.FC<GridInterface> = (({
+export const VirtualizedGrid: React.FC<GridInterface> = (({
      columnCount,
      rowCount,
      columnWidth = 80,
