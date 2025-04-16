@@ -13,6 +13,7 @@ import {
     adjustFormula,
     numberToLetters,
     lettersToNumber,
+    formulaBox,
     makeBold,
     makeItalic,
     makeUnderlined,
@@ -66,15 +67,6 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
          }}
     >
         {rowIndex + 1} {/* +1 since its 0-indexed */}
-    </div>
-);
-
-// Creates the formula box field in the header. Used in Cell by updateFormulaBox.
-const formulaBox = ({ cell, style}: {cell:BackendCell, style:any}) => (
-    <div id="formulaBox"
-         style={{
-             ...style,
-         }}>
     </div>
 );
 
