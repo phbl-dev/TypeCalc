@@ -8,12 +8,21 @@ import {
     WorkbookManager,
     XMLReader
 } from "../WorkbookIO";
+import {
+    getCell,
+    adjustFormula,
+    numberToLetters,
+    lettersToNumber,
+    makeBold,
+    makeItalic,
+    makeUnderlined,
+    setCellColor,
+    setTextColor
+} from "./HelperFunctions.tsx";
 import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
-import {makeBold, makeItalic, makeUnderlined, setCellColor, setTextColor} from "./headerFunctions.tsx";
-
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -26,58 +35,6 @@ interface GridInterface {
     width?: number;
     height?: number;
     ref?: React.Ref<any>;
-}
-
-/** Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
- *
- * @param n - The number to convert
- */
-export function numberToLetters(n: number) {
-    let letter = "";
-    while (n > 0) {
-        n--; // Required so that 1 = 'A'
-        letter = String.fromCharCode((n % 26) + 65) + letter;
-        n = Math.floor(n / 26);
-    }
-    return letter;
-}
-
-/**
- * Takes in a formula string, (10, 20,-20, A1, A$2, $A$2), and processes it.
- * It only processes the changes needed
- * @param formula
- * @param rowDiff
- * @param colDiff
- */
-export function adjustFormula(formula: string, rowDiff: number, colDiff: number): string {
-    return formula.replace(/(\$?)([A-Z]+)(\$?)(\d+)/g, (match, colAbs, column, rowAbs, row) => {
-        const newRow = rowAbs ? row : parseInt(row, 10) + rowDiff;
-
-        let newColumn = column;
-        if (!colAbs && colDiff !== 0) {
-            const colNum = lettersToNumber(column);
-            const newColNum = colNum + colDiff;
-            newColumn = numberToLetters(newColNum);
-        }
-
-        return colAbs + newColumn + rowAbs + newRow;
-    });
-}
-/** Converts letters to a number, following the same formula as above.
- *
- * @param letters - The letters to convert
- */
-function lettersToNumber(letters:string):number {
-    let output = 0;
-    for (let i = 0; i < letters.length; i++) {
-        const charCode = letters.charCodeAt(i) - 65;
-        output = output * 26 + (charCode + 1);
-    }
-    return output;
-}
-
-export function getCell(cellID:string):HTMLElement|null{
-    return document.getElementById(cellID);
 }
 
 /** Defines the column headers as a div with ID, style, and contents
@@ -109,14 +66,6 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
          }}
     >
         {rowIndex + 1} {/* +1 since its 0-indexed */}
-    </div>
-);
-
-const formulaBox = ({ cell, style}: {cell:BackendCell, style:any}) => (
-    <div id="formulaBox"
-         style={{
-             ...style,
-         }}>
     </div>
 );
 
@@ -217,6 +166,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 nextRow = rowIndex + 1;
                 break;
             case "F4":
+                event.preventDefault();
                 // Check what cell we are in.
                 const StartCell = document.getElementById("headerCorner");
                 if (StartCell) {
@@ -253,37 +203,37 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     }));
                 }
                 break;
-
             case "F5":
-                    const selectionRange = sessionStorage.getItem('selectionRange');
-                    if (selectionRange) {
-                        const range = JSON.parse(selectionRange);
-                        const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
+                event.preventDefault();
+                const selectionRange = sessionStorage.getItem('selectionRange');
+                if (selectionRange) {
+                    const range = JSON.parse(selectionRange);
+                    const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
 
-                            for (let r = startRow; r <= endRow; r++) {
-                                for (let c = startCol; c <= endCol; c++) {
+                        for (let r = startRow; r <= endRow; r++) {
+                            for (let c = startCol; c <= endCol; c++) {
 
-                                    if (r === startRow && c === startCol) continue;
+                                if (r === startRow && c === startCol) continue;
 
-                                    const newForm = adjustFormula(sourceIDContent!.toString(),r - startRow, c - startCol)
+                                const newForm = adjustFormula(sourceIDContent!.toString(),r - startRow, c - startCol)
 
-                                    handleInput(r,c,newForm)
+                                handleInput(r,c,newForm)
 
 
-                                    const targetCellID = numberToLetters(c + 1) + (r + 1);
-                                    const cellElement:HTMLElement = document.getElementById(targetCellID)!;
-                                    cellElement.innerText = newForm;
-                                }
-                        }
-
+                                const targetCellID = numberToLetters(c + 1) + (r + 1);
+                                const cellElement:HTMLElement = document.getElementById(targetCellID)!;
+                                cellElement.innerText = newForm;
+                            }
                     }
-                    WorkbookManager.getWorkbook().Recalculate();
-                    sessionStorage.removeItem('selectionRange');
+
+                }
+                WorkbookManager.getWorkbook().Recalculate();
+                sessionStorage.removeItem('selectionRange');
 
 
                 break;
-                default:
-                    return;
+            default:
+                return;
         }
 
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID
@@ -304,8 +254,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         console.log(cellToBeAdded);
         if (!cellToBeAdded) {return}
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
-
-
 
         //Handle Array Results for different cells.
         WorkbookManager.getWorkbook().Recalculate();
@@ -329,7 +277,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     const updateFormulaBox = (cellID:string, content:string|null):void => {
         const formulaBox = document.getElementById("formulaBox");
         if (!formulaBox) {
-            console.debug("[virtualizedGrid.tsx Cell] FormulaBox not found");
+            console.debug("[SpreadsheetGrid.tsx Cell] FormulaBox not found");
             return;
         }
         (formulaBox as HTMLInputElement).value = content as string;
@@ -361,7 +309,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  let rawCellContent:string | null = GetRawCellContent(ID);
                  WorkbookManager.setActiveCell(ID);
                  if (!rawCellContent) {
-                     console.debug("[virtualizedGrid.tsx Cell] Cell Content not updated");
+                     console.debug("[SpreadsheetGrid.tsx Cell] Cell Content not updated");
                      updateFormulaBox(ID, rawCellContent);
                      return;
                  }
@@ -463,7 +411,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
  * additional grids; one for the row headers and one for the regular cells.
  */
-export const VirtualizedGrid: React.FC<GridInterface> = (({
+export const SpreadsheetGrid: React.FC<GridInterface> = (({
      columnCount,
      rowCount,
      columnWidth = 80,
@@ -558,7 +506,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             }
         }
 
-
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
         jumpButton.addEventListener("click", handleJump); // Jump to cell
@@ -583,7 +530,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             underlineButton.removeEventListener("click", makeUnderlined)
         };
     }, [scrollOffset]);
-
 
     //Handling the formulabox input
     useEffect(() => {
@@ -633,7 +579,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             formulaBox.removeEventListener("blur", handleBlur);
         };
     }, []);
-
 
     /** Synchronizes scrolling between the grid body and the headers so that it works
      * like one, big grid. Does not currently synchronize scrolling done on the headers.

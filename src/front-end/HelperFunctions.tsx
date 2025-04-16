@@ -1,7 +1,70 @@
+import {WorkbookManager} from "../WorkbookIO.ts";
+import {Cell as BackendCell} from "../back-end/Cells";
+
+export function getCell(cellID:string):HTMLElement|null{
+    return document.getElementById(cellID);
+}
+
+/** Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
+ *
+ * @param n - The number to convert
+ */
+export function numberToLetters(n: number) {
+    let letter = "";
+    while (n > 0) {
+        n--; // Required so that 1 = 'A'
+        letter = String.fromCharCode((n % 26) + 65) + letter;
+        n = Math.floor(n / 26);
+    }
+    return letter;
+}
+
+/** Converts letters to a number, following the same formula as above.
+ *
+ * @param letters - The letters to convert
+ */
+export function lettersToNumber(letters:string):number {
+    let output = 0;
+    for (let i = 0; i < letters.length; i++) {
+        const charCode = letters.charCodeAt(i) - 65;
+        output = output * 26 + (charCode + 1);
+    }
+    return output;
+}
+
+/**
+ * Takes in a formula string, (10, 20,-20, A1, A$2, $A$2), and processes it.
+ * It only processes the changes needed
+ * @param formula
+ * @param rowDiff
+ * @param colDiff
+ */
+export function adjustFormula(formula: string, rowDiff: number, colDiff: number): string {
+    return formula.replace(/(\$?)([A-Z]+)(\$?)(\d+)/g, (match, colAbs, column, rowAbs, row) => {
+        const newRow = rowAbs ? row : parseInt(row, 10) + rowDiff;
+
+        let newColumn = column;
+        if (!colAbs && colDiff !== 0) {
+            const colNum = lettersToNumber(column);
+            const newColNum = colNum + colDiff;
+            newColumn = numberToLetters(newColNum);
+        }
+
+        return colAbs + newColumn + rowAbs + newRow;
+    });
+}
+
+// Creates the formula box field in the header. Used in Cell by updateFormulaBox.
+export const formulaBox = ({ cell, style}: {cell:BackendCell, style:any}) => (
+    <div id="formulaBox"
+         style={{
+             ...style,
+         }}>
+    </div>
+);
+
 // The following 5 functions are for styling the cell and its contents.
 // They are connected to the appropriate buttons in the header.
-import {WorkbookManager} from "../WorkbookIO.ts";
-
 export function makeBold() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
