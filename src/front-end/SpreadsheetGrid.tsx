@@ -70,8 +70,8 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
 );
 
 let selectionStartCell: string | null = null
-
 let isShiftKeyDown = false
+
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
@@ -181,10 +181,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 nextRow = rowIndex + 1;
                 break;
             case "Shift":
-                // Record the current cell as the start of a potential selection
                 selectionStartCell = WorkbookManager.getActiveCell();
                 isShiftKeyDown = true;
-                console.log("Shift pressed, selection start set to:", selectionStartCell);
                 break;
             case "F5":
                 event.preventDefault();
@@ -268,6 +266,43 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
+    function setHighlight(selectedStartCell:string) {
+        const startCellRef = new A1RefCellAddress(selectedStartCell);
+        const currentCellRef = new A1RefCellAddress(ID);
+
+
+        const sourceIDContent = GetRawCellContent(selectedStartCell!);
+
+        // Define the area we will be using
+        const startCol = Math.min(currentCellRef.col, startCellRef.col);
+        const endCol = Math.max(currentCellRef.col, startCellRef.col);
+        const startRow = Math.min(currentCellRef.row, startCellRef.row);
+        const endRow = Math.max(currentCellRef.row, startCellRef.row);
+
+        // Clear any existing highlight
+        clearHighlight();
+
+        // Highlight all cells in the range
+        for (let r = startRow; r <= endRow; r++) {
+            for (let c = startCol; c <= endCol; c++) {
+                const cellID = numberToLetters(c + 1) + (r + 1);
+                const cell = document.getElementById(cellID);
+                if (cell) {
+                    cell.classList.add('selected-cell');
+                }
+            }
+        }
+
+        // Save the selection range in session storage
+        sessionStorage.setItem('selectionRange', JSON.stringify({
+            sourceIDContent,
+            startCol,
+            startRow,
+            endCol,
+            endRow
+        }));
+    }
+
     return (
         <div className="Cell" contentEditable={true} id={ID}
              style={{
@@ -277,41 +312,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
              onClick={(e) => {
                  if(e.shiftKey && selectionStartCell) {
-
-                     const startCellRef = new A1RefCellAddress(selectionStartCell);
-                     const currentCellRef = new A1RefCellAddress(ID);
-
-                     const sourceIDContent = GetRawCellContent(selectionStartCell);
-
-                     // Define the area we will be using
-                     const startCol = Math.min(currentCellRef.col, startCellRef.col);
-                     const endCol = Math.max(currentCellRef.col, startCellRef.col);
-                     const startRow = Math.min(currentCellRef.row, startCellRef.row);
-                     const endRow = Math.max(currentCellRef.row, startCellRef.row);
-
-                     // Clear any existing highlight
-                     clearHighlight();
-
-                     // Highlight all cells in the range
-                     for (let r = startRow; r <= endRow; r++) {
-                         for (let c = startCol; c <= endCol; c++) {
-                             const cellID = numberToLetters(c + 1) + (r + 1);
-                             const cell = document.getElementById(cellID);
-                             if (cell) {
-                                 cell.classList.add('selected-cell');
-                             }
-                         }
-                     }
-
-                     // Save the selection range in session storage
-                     sessionStorage.setItem('selectionRange', JSON.stringify({
-                         sourceIDContent,
-                         startCol,
-                         startRow,
-                         endCol,
-                         endRow
-                     }));
-
+                     setHighlight(selectionStartCell);
                  } else {
                      clearHighlight();
                  }

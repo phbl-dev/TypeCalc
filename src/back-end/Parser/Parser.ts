@@ -35,7 +35,6 @@ export class SpreadsheetParser extends CstParser {
         $.RULE("exprs1", exprs1);
         $.RULE("cellContents", cellContents);
         $.RULE("number", NUMBER);
-        $.RULE("Name", Name);
 
         function addOp() {
             $.OR([
@@ -57,9 +56,6 @@ export class SpreadsheetParser extends CstParser {
             ]);
         }
 
-        function Name() {
-            $.CONSUME(SpreadsheetLexer.Identifier);
-        }
 
         function logicalOp() {
             $.OR([
