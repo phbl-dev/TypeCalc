@@ -37,6 +37,8 @@ interface GridInterface {
     ref?: React.Ref<any>;
 }
 
+
+
 /** Defines the column headers as a div with ID, style, and contents
  *
  * @param columnIndex - Current column index shown in the header as a corresponding letter, as defined in the numberToLetters function
@@ -71,6 +73,7 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
 
 let selectionStartCell: string | null = null
 let isShiftKeyDown = false
+let sheetChanged = false
 
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
@@ -85,8 +88,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
     let mySupports:string[];
-
-
 
 
     document.addEventListener('keyup', (e) => {
@@ -401,7 +402,8 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
             {sheetNames.map((name:any) => (
                 <button
                     key={name}
-                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); ShowWindowInGUI(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30, true)}}
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); ShowWindowInGUI(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30, true)
+                    document.getElementById("documentTitle")!.innerText = WorkbookManager.getActiveSheetName();}}
                     style={{
                         backgroundColor: activeSheet === name ? 'darkslategrey' : '',
                         color: activeSheet === name ? '' : '',
