@@ -14,6 +14,7 @@ import {NumberValue} from "../NumberValue.ts";
  * @desc <b>Visitor Class </b>.This class relies on the implementation of the SpreadSheetParser class to generate a CST (Concrete Syntax Tree),
  * to which is it traversing the tree, and manipulates the outcome.
  * @example new SpreadsheetVisitor().ParseCell("= 10 + 10)", new Workbook(), 1, 1); // Can be used to parse the input "= 10 + 10".
+ * Please note, that while this will parse and set the cells up for evaluation, this method doesn't evaluate the cells. This process goes on in the Expressions class.
  */
 export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisitorConstructor() {
     private workbook!: Workbook;
@@ -31,6 +32,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     /**
      * ParseCell reads a string and inserts the value onto the col and row that is provided.
      * This method should be the only one that is accessed by outside classes.
+     * This method is in charge of handling values.
      * @param parseString
      * @param workbook
      * @param col
@@ -42,21 +44,23 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         this.col = col;
         this.row = row;
 
-        this.Parse(parseString);
-
-        console.log(this.cell)
+        const parser = new SpreadsheetParser();
+        const _ = new Lexer(SpreadsheetLexer.AllTokens);
+        parser.input =  _.tokenize(parseString).tokens;
+        const cst:CstNode = parser.cellContents();
+        this.visit(cst);
 
         return this.cell;
     }
 
-    protected Parse(input: string): void {
-        const parser = new SpreadsheetParser();
-        const _ = new Lexer(SpreadsheetLexer.AllTokens);
-        parser.input =  _.tokenize(input).tokens;
-        const cst:CstNode = parser.cellContents();
-        this.visit(cst);
-    }
 
+    /**
+     * powFactor (or powerFactor) is the method, that evaluates exponents
+     * , which have been written with "^". It is placed in the lowest section of the CST,
+     * since it needs to be evaluated prior to other arithmetic rules.
+     * @param ctx - the current node in the CST
+     * @protected
+     */
     protected powFactor(ctx: any): Expr {
         let e2: Expr;
 
@@ -69,19 +73,24 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return e;
     }
 
+    /**
+     * logicalTerm is the method, that evaluates the
+     * lowest priority arithmetic rules and string concatenation.
+     * Since there can be multiple instances of logicalTerms and operators,
+     * this method can run multiple times.
+     * This follows the $.MANY keyword used in {@link SpreadsheetParser}'s logicalTerm method
+     * @param ctx - the current node in the CST
+     * @protected
+     */
     protected logicalTerm(ctx: any): Expr {
         let e: Expr;
 
-        // Get the first term
         e = this.visit(ctx["term"][0]);
 
-        // Process all subsequent term-operator pairs
         if (ctx["addOp"] && ctx["addOp"].length > 0) {
             for (let i = 0; i < ctx["addOp"].length; i++) {
-                // Get the operator
                 let op = this.visit(ctx["addOp"][i]);
 
-                // Transform the operator name as needed
                 if (op === "+") {
                     op = "ADD";
                 } else if (op === "-") {
@@ -89,7 +98,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
                 } else if (op === "&") {
                     op = "CONCATENATE";
                 }
-
+                // It will not parse correctly in the parser class, if there is not a term on the right hand side,
+                // Therefore, we never have to account for this in logicalTerm.
                 const e2 = this.visit(ctx["term"][i + 1]);
 
                 e = FunCall.Make(op, [e, e2]);
@@ -99,34 +109,47 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return e;
     }
 
+    /**
+     * Simply, yet extremely important method.
+     * This method returns a number, when matched as a rule in the parser.
+     * It uses float parsing, since it allows both integers and floating points to exist.
+     * @param ctx - the current node in the CST
+     * @protected
+     */
     protected number(ctx: any): number {
 
         return Number.parseFloat(ctx["Number"][0].image);
     }
 
+    /**
+     * this method is used when word-based formulas are to be parsed.
+     * Examples of this include "SUM", "FREQUENCY", "CHOOSE", which are identified as identifiers and combined with exprs1.
+     * @param ctx - the current node in the CST
+     * @protected
+     */
     protected application(ctx: any): Expr {
 
         let s: string;
         let es: Expr[];
         let e: Expr;
 
-
         s = ctx["Identifier"][0].image;
 
         if (ctx["exprs1"]) {
             es = this.visit(ctx["exprs1"]);
-            e = FunCall.Make(s.toUpperCase(), es);
+            e = FunCall.Make(s.toUpperCase(), es); // es is an array of Expr[], which is returned by following exprs1.
         } else {
-            e = FunCall.Make(s.toUpperCase(), []);
+            e = FunCall.Make(s.toUpperCase(), []); // TODO: Understand why this makes sense?
         }
 
         return e;
     }
 
-    Name(ctx: any): string {
-        return this.visit(ctx["name"][0].image);
-    }
-
+    /**
+     * This method collects expressions, which are going to be evaluated by an application formula.
+     * It returns an array of expressions, which are evaluated left to right.
+     * @param ctx
+     */
     exprs1(ctx: any): Expr[] {
 
         const elist: Expr[] = [];
@@ -140,8 +163,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
                 elist.push(e2);
             }
         }
-
-
         return elist;
     }
 
@@ -171,12 +192,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected mulOp(ctx: any): string {
-
-        if (ctx.Multiply) {
-            return "PRODUCT";
-        } else {
-            return "DIVIDE";
-        }
+        return ctx.Multiply ? "PRODUCT" : "DIVIDE"
     }
 
     protected term(ctx: any): Expr {
@@ -297,44 +313,16 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected raref(ctx: any) {
-        let raref;
-
-
-
-
         if (ctx["A1Ref"]) {
-            const token = ctx["A1Ref"][0].image
-            raref = new A1RARef(token, this.col,this.row);
-
-        } else if (ctx["XMLSSRARef11"]) {
-            const token = ctx["XMLSSRARef11"][0];
-            raref = new R1C1RARef(token.image);
-        } else if (ctx["XMLSSRARef12"]) {
-            const token = ctx["XMLSSRARef12"][0];
-            raref = new R1C1RARef(token.image);
-        } else if (ctx["XMLSSRARef13"]) {
-            const token = ctx["XMLSSRARef13"][0];
-            raref = new R1C1RARef(token.image);
-        } else if (ctx["XMLSSRARef21"]) {
-            const token = ctx["XMLSSRARef21"][0];
-            raref = new R1C1RARef(token.image);
-        } else if (ctx["XMLSSRARef22"]) {
-            const token = ctx["XMLSSRARef22"][0];
-            raref = new R1C1RARef(token.image);
-        } else if (ctx["XMLSSRARef23"]) {
-            const token = ctx["XMLSSRARef23"][0];
-            raref = new R1C1RARef(token.image);
-        } else if (ctx["XMLSSRARef31"]) {
-            const token = ctx["XMLSSRARef31"][0];
-            raref = new R1C1RARef(token.image);
-        } else if (ctx["XMLSSRARef32"]) {
-            const token = ctx["XMLSSRARef32"][0];
-            raref = new R1C1RARef(token.image);
-        } else if (ctx["XMLSSRARef33"]) {
-            const token = ctx["XMLSSRARef33"][0];
-            raref = new R1C1RARef(token.image);
+            return new A1RARef(ctx["A1Ref"][0].image, this.col, this.row);
         }
-        return raref;
+
+        const r1c1Key = Object.keys(ctx).find(key => key.startsWith("XMLSSRARef"))!;
+        if (r1c1Key) {
+            return new R1C1RARef(ctx[r1c1Key][0].image);
+        }
+
+
     }
 
     protected cellContents(ctx: any): Cell {
@@ -345,17 +333,14 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         }
         else if (ctx.QuoteCell) {
             const helperConst = ctx["QuoteCell"][0].image
-            this.cell = new QuoteCell(ctx["QuoteCell"][0].image.substring(1, helperConst.length - 1));
+            this.cell = new QuoteCell(helperConst.substring(1, helperConst.length - 1));
         } else if (ctx.StringLiteral) {
             const helperConst = ctx["StringLiteral"][0].image
-
-            this.cell = new TextCell(ctx["StringLiteral"][0].image.substring(1, helperConst.length - 1 ));
+            this.cell = new TextCell(helperConst.substring(1, helperConst.length - 1 ));
         } else if (ctx.number) {
-            console.log(ctx["number"][0].children["Number"][0].image)
             this.cell = new NumberCell(Number.parseFloat(ctx["number"][0].children["Number"][0].image));
         } else if (ctx.Datetime) {
-            const time:number = NumberValue.DoubleFromDateTimeTicks(ctx["Datetime"][0].image)
-            this.cell = new NumberCell(time);
+            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(ctx["Datetime"][0].image));
                 }
 
 
