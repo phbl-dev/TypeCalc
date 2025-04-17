@@ -14,6 +14,7 @@ import {NumberValue} from "../NumberValue.ts";
  * @desc <b>Visitor Class </b>.This class relies on the implementation of the SpreadSheetParser class to generate a CST (Concrete Syntax Tree),
  * to which is it traversing the tree, and manipulates the outcome.
  * @example new SpreadsheetVisitor().ParseCell("= 10 + 10)", new Workbook(), 1, 1); // Can be used to parse the input "= 10 + 10".
+ * Please note, that while this will parse and set the cells up for evaluation, this method doesn't evaluate the cells. This process goes on in the Expressions class.
  */
 export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisitorConstructor() {
     private workbook!: Workbook;
@@ -108,30 +109,47 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return e;
     }
 
+    /**
+     * Simply, yet extremely important method.
+     * This method returns a number, when matched as a rule in the parser.
+     * It uses float parsing, since it allows both integers and floating points to exist.
+     * @param ctx - the current node in the CST
+     * @protected
+     */
     protected number(ctx: any): number {
 
         return Number.parseFloat(ctx["Number"][0].image);
     }
 
+    /**
+     * this method is used when word-based formulas are to be parsed.
+     * Examples of this include "SUM", "FREQUENCY", "CHOOSE", which are identified as identifiers and combined with exprs1.
+     * @param ctx - the current node in the CST
+     * @protected
+     */
     protected application(ctx: any): Expr {
 
         let s: string;
         let es: Expr[];
         let e: Expr;
 
-
         s = ctx["Identifier"][0].image;
 
         if (ctx["exprs1"]) {
             es = this.visit(ctx["exprs1"]);
-            e = FunCall.Make(s.toUpperCase(), es);
+            e = FunCall.Make(s.toUpperCase(), es); // es is an array of Expr[], which is returned by following exprs1.
         } else {
-            e = FunCall.Make(s.toUpperCase(), []);
+            e = FunCall.Make(s.toUpperCase(), []); // TODO: Understand why this makes sense?
         }
 
         return e;
     }
 
+    /**
+     * This method collects expressions, which are going to be evaluated by an application formula.
+     * It returns an array of expressions, which are evaluated left to right.
+     * @param ctx
+     */
     exprs1(ctx: any): Expr[] {
 
         const elist: Expr[] = [];
@@ -145,8 +163,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
                 elist.push(e2);
             }
         }
-
-
         return elist;
     }
 
