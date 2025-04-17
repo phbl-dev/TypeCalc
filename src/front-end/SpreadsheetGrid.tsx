@@ -69,6 +69,10 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
     </div>
 );
 
+let selectionStartCell: string | null = null
+
+let isShiftKeyDown = false
+
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
@@ -81,6 +85,16 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
     let mySupports:string[];
+
+
+
+
+    document.addEventListener('keyup', (e) => {
+        if (e.key === 'Shift') {
+            isShiftKeyDown = false;
+            console.log('Shift released', isShiftKeyDown);
+        }
+    });
 
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
     const handleHover = () => {
@@ -149,6 +163,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             }
         }
 
+
         switch (event.key) {
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1); //Needed to not go too far up
@@ -165,43 +180,11 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             case "Enter":
                 nextRow = rowIndex + 1;
                 break;
-            case "F4":
-                event.preventDefault();
-                // Check what cell we are in.
-                const StartCell = document.getElementById("headerCorner");
-                if (StartCell) {
-                    const StartCellRef = new A1RefCellAddress(StartCell.textContent!);
-
-                    const sourceIDContent = GetRawCellContent(ID)
-                    // Define the area, we will be using.
-                    // Maybe this could be a method?
-                    const startCol = Math.min(columnIndex, StartCellRef.col);
-                    const endCol = Math.max(columnIndex, StartCellRef.col);
-                    const startRow = Math.min(rowIndex, StartCellRef.row);
-                    const endRow = Math.max(rowIndex, StartCellRef.row);
-
-                    // Clear any existing highlight, if there were any.
-                    clearHighlight()
-
-                    for (let r = startRow; r <= endRow; r++) {
-                        for (let c = startCol; c <= endCol; c++) {
-                            if (r === startRow && c === startCol) continue;
-                            const cellID = numberToLetters(c + 1) + (r + 1); // +1 because we are 1-indexed in the UI.
-                            const cell = document.getElementById(cellID);
-                            if (cell) {
-                                cell.classList.add('selected-cell');
-                            }
-                        }
-                    }
-                    // Save the values in session storage, so it can be accessed between calls.
-                    sessionStorage.setItem('selectionRange', JSON.stringify({
-                        sourceIDContent,
-                        startCol,
-                        startRow,
-                        endCol,
-                        endRow
-                    }));
-                }
+            case "Shift":
+                // Record the current cell as the start of a potential selection
+                selectionStartCell = WorkbookManager.getActiveCell();
+                isShiftKeyDown = true;
+                console.log("Shift pressed, selection start set to:", selectionStartCell);
                 break;
             case "F5":
                 event.preventDefault();
@@ -235,6 +218,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             default:
                 return;
         }
+
+
 
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID
         // so we can focus the cell. Also updates top-left corner to show current cell's ID.
@@ -291,8 +276,47 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
 
              onClick={(e) => {
-                 clearHighlight()
+                 if(e.shiftKey && selectionStartCell) {
+
+                     const startCellRef = new A1RefCellAddress(selectionStartCell);
+                     const currentCellRef = new A1RefCellAddress(ID);
+
+                     const sourceIDContent = GetRawCellContent(selectionStartCell);
+
+                     // Define the area we will be using
+                     const startCol = Math.min(currentCellRef.col, startCellRef.col);
+                     const endCol = Math.max(currentCellRef.col, startCellRef.col);
+                     const startRow = Math.min(currentCellRef.row, startCellRef.row);
+                     const endRow = Math.max(currentCellRef.row, startCellRef.row);
+
+                     // Clear any existing highlight
+                     clearHighlight();
+
+                     // Highlight all cells in the range
+                     for (let r = startRow; r <= endRow; r++) {
+                         for (let c = startCol; c <= endCol; c++) {
+                             const cellID = numberToLetters(c + 1) + (r + 1);
+                             const cell = document.getElementById(cellID);
+                             if (cell) {
+                                 cell.classList.add('selected-cell');
+                             }
+                         }
+                     }
+
+                     // Save the selection range in session storage
+                     sessionStorage.setItem('selectionRange', JSON.stringify({
+                         sourceIDContent,
+                         startCol,
+                         startRow,
+                         endCol,
+                         endRow
+                     }));
+
+                 } else {
+                     clearHighlight();
+                 }
              }}
+
              onFocus={(e) => {
                  //All of this is to add and remove styling from the active cell
                  const prev = WorkbookManager.getActiveCell();
