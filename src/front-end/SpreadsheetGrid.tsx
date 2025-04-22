@@ -22,6 +22,7 @@ import {
     ParseToActiveCell,
     WorkbookManager
 } from "../API-Layer.ts";
+import {XMLReader} from "../WorkbookIO.ts";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
