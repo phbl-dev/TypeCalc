@@ -13,10 +13,9 @@ export class Sheet {
     private name: string;
     public readonly workbook: Workbook;
     private cells: SheetRep;              // Nb.: Removed readonly
-    private readonly history: {cell: Cell; row: number; col: number}[]; // Added for undo/redo functionality
-    private historyPointer: number;       // Added for undo/redo functionality
-    private undoCount: number;            // Added for undo/redo functionality
-    private redoCount: number;            // Added for undo/redo functionality
+    private readonly history: {cell: Cell; row: number; col: number}[]; // Added for undo/redo functionality. Array for caching added cells such that we can undo and redo them.
+    private historyPointer: number;       // Added for undo/redo functionality. Points at where we are in the history when undo/redo are in use
+    private undoCount: number;            // Added for undo/redo functionality. Counts how deep we are in undo calls.
     private functionSheet: boolean;
 
     constructor(workbook: Workbook, name: string, functionSheet: boolean);
@@ -47,10 +46,9 @@ export class Sheet {
             this.workbook.AddSheet(this);
         }
         this.cells = new SheetRep();
-        this.history = [];                 // Added for undo/redo functionality
-        this.historyPointer = 0;           // Initially 0
+        this.history = [];                 // Initially empty because no cells have been added yet
+        this.historyPointer = 0;           // Initially 0 because there is nothing else in the history to point at
         this.undoCount = 0;                // Initially 0 because nothing have been undone
-        this.redoCount = 0;                // Initially 0 because nothing have been redone
     }
 
     /**
@@ -99,10 +97,10 @@ export class Sheet {
      * Added for undo/redo functionality
      */
     public undo(): void {
+        // If the undoCount is smaller than the length of the history, then there are cells to undo.
         if (this.undoCount < this.history.length) {
             this.undoCount++;
             this.historyPointer--;
-            this.redoCount > 0 ? this.redoCount-- : 0;
 
             // Loop over the history in reversed order to check for older versions of the cell we are resetting.
             // We subtract the undoCount-1 to avoid matching the same cell and to avoid matching redundant cells
@@ -127,6 +125,7 @@ export class Sheet {
      * Added for undo/redo functionality
      */
     public redo(): void {
+        // If the undoCount is larger than 0 then there are cells to redo
         if (this.undoCount > 0) {
 
             // We get index that undoCount is at in relation to the history length because we
@@ -138,8 +137,6 @@ export class Sheet {
             // fields accordingly:
             this.historyPointer++;
             this.undoCount--;
-            this.redoCount++;
-
         }
     }
 
@@ -475,9 +472,8 @@ export class Sheet {
                 this.history.push({cell: newCell, row: row, col: col}) // Push the cell and its position to the history array
             }
         }
-        //if (this.redoCount === 0) {        // Why do we do this?
-            this.historyPointer++;
-        //}
+        // Increase the historyPointer such that it follows the history array
+        this.historyPointer++;
     }
 
     /**
