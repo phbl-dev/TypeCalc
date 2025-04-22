@@ -33,7 +33,7 @@ header {
 
 header button {
     height: 30px;
-    width: 80px;
+    width: 65px;
     padding-top: 2px;
     font-size: 16px;
 }
@@ -41,7 +41,7 @@ header button {
 input.menuTextField {
     margin-left: -35px;
     height: 25px;
-    width: 80px;
+    width: 100px;
     border-radius: 5px;
     text-align: center;
 }
@@ -123,14 +123,10 @@ header h4 {
 }
 
 #headerCorner {
-    background: black;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
+    background: #3b3b3b;
     border-left: 1px solid grey;
     border-top: 1px solid grey;
+    z-index: 3;
 }
 
 #columnHeaders {

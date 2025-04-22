@@ -100,10 +100,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     });
 
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
-    const handleHover = () => {
-        const headerCorner = document.getElementById("headerCorner");
+    const getCellIdOnClick = () => {
+        const headerCorner = document.getElementById("jumpToInput") as HTMLInputElement;;
         if(headerCorner) { // if-statement handles possibility that headerCorner is null
-            headerCorner.textContent = ID;
+            headerCorner.value = ID;
         }
     }
 
@@ -307,7 +307,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
     return (
-        <div className="Cell" contentEditable={true} id={ID}
+        <div className="Cell" contentEditable={true} id={ID} title={ID}
              style={{
                  ...style, // Inherit style from style.css
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
@@ -359,7 +359,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                      }
                  }
              }}
-             onMouseMove={handleHover} // Gets the cellID when moving the mouse
+             onMouseDown={getCellIdOnClick} // Gets the cellID when moving the mouse
              onKeyDown={(e) => {
                  keyNav(e);
              }}
@@ -648,7 +648,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                          height: colHeaderHeight,
                      }}
                 >
-                    {"#"}
+                    {""}
                 </div>
                 {/* Column headers as a grid */}
                 <Grid
