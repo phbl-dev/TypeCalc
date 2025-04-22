@@ -1,5 +1,5 @@
-import {WorkbookManager} from "../WorkbookIO.ts";
 import {Cell as BackendCell} from "../back-end/Cells";
+import {WorkbookManager} from "../API-Layer.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
