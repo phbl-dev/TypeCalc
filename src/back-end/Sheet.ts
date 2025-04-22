@@ -161,7 +161,6 @@ export class Sheet {
      * @param lrCa
      * @constructor
      */
-    //TODO: Use this in virtualizedGrid.handleInput()
     public SetArrayFormula(cell: Cell, col: number, row: number, ulCa: SuperCellAddress, lrCa: SuperCellAddress): void {
         console.log("reached here 1")
 
