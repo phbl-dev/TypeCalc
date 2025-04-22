@@ -13,7 +13,7 @@ export class Sheet {
     private name: string;
     public readonly workbook: Workbook;
     private cells: SheetRep;              // Nb.: Removed readonly
-    private readonly history: SheetRep[]; // Added for undo/redo functionality
+    private readonly history: {cell: Cell; row: number; col: number}[]; // Added for undo/redo functionality
     private historyPointer: number;       // Added for undo/redo functionality
     private undoCount: number;            // Added for undo/redo functionality
     private redoCount: number;            // Added for undo/redo functionality
@@ -48,8 +48,7 @@ export class Sheet {
         }
         this.cells = new SheetRep();
         this.history = [];                 // Added for undo/redo functionality
-        this.history.push(new SheetRep()); // Initially, there should be an empty sheet in the history at index 0.
-        this.historyPointer = 0;           // Initially, points at "blank" empty sheet rep.
+        this.historyPointer = 0;           // Initially 0
         this.undoCount = 0;                // Initially 0 because nothing have been undone
         this.redoCount = 0;                // Initially 0 because nothing have been redone
     }
@@ -100,11 +99,27 @@ export class Sheet {
      * Added for undo/redo functionality
      */
     public undo(): void {
-        if (this.historyPointer > 0 && this.undoCount <= this.history.length) {
-            this.historyPointer--;
+        if (this.undoCount < this.history.length) {
             this.undoCount++;
+            this.historyPointer--;
             this.redoCount > 0 ? this.redoCount-- : 0;
-            this.cells = this.history[this.historyPointer];
+
+            // Loop over the history in reversed order to check for older versions of the cell we are resetting.
+            // We subtract the undoCount-1 to avoid matching the same cell and to avoid matching redundant cells
+            // in case the user has pressed cmd+z multiple times:
+            for (let i = this.history.length - this.undoCount - 1; i >= 0; i--) {
+
+                // If a previous version of that cell already exists in the history:
+                if (this.history[i].row === this.history[this.history.length - this.undoCount].row &&
+                    this.history[i].col === this.history[this.history.length - this.undoCount].col ) {
+
+                    // Then set the cell to that previous state
+                    this.cells.Set(this.history[i].col, this.history[i].row, this.history[i].cell)
+                    return
+                }
+            }
+            // Else, set the cell to null because then it should just be blank
+            this.cells.Set(this.history[this.historyPointer].col, this.history[this.historyPointer].row, null)
         }
     }
 
@@ -112,11 +127,19 @@ export class Sheet {
      * Added for undo/redo functionality
      */
     public redo(): void {
-        if (this.undoCount > 0 && this.historyPointer < this.history.length) {
+        if (this.undoCount > 0) {
+
+            // We get index that undoCount is at in relation to the history length because we
+            // want to redo and get update the cell in that spot.
+            let i = this.history.length - this.undoCount;
+            this.cells.Set(this.history[i].col, this.history[i].row, this.history[i].cell)
+
+            // We have moved one step forward in the history array so we update the relevant
+            // fields accordingly:
             this.historyPointer++;
             this.undoCount--;
             this.redoCount++;
-            this.cells = this.history[this.historyPointer];
+
         }
     }
 
@@ -426,16 +449,35 @@ export class Sheet {
 
         // In order to save the current state to our history we have to make a copy of it.
         // Otherwise, we would keep referenceing to the same SheetRep object.
-        const historyCopy = new SheetRep();
-        this.cells.Forall((col, row, cell) => {
-            if (cell) {
-                historyCopy.Set(col, row, cell.CloneCell(col, row));
+        // const historyCopy = new SheetRep();
+        // this.cells.Forall((col, row, cell) => {
+        //    if (cell) {
+        //        historyCopy.Set(col, row, cell.CloneCell(col, row));
+        //    }
+        //});
+
+        // Undo/Redo functionality. First we check if the type of row and col is number:
+        if (typeof row === "number" && typeof col === "number") {
+            // If the user sets a new value in the sheet but "undo" has been called a number of times,
+            // then we make sure to shorten the history in accordance with the number of undo calls.
+            // This is important because then we remove the old values from the history that have already
+            // been "undone" by the user, and we therefore don't want to store them any longer because the
+            // user is setting new cells again.
+            if (this.undoCount > 0){
+                for (let i = 0; i < this.undoCount; i++) {
+                    this.history.pop()
+                }
+                this.undoCount = 0; // Reset undoCount because the history has been updated.
+                this.history.push({cell: newCell, row: row, col: col}) // Add the newly created cell to our history
+            } else {
+                // Otherwise, if undo has not been called then we can just add our new cell to the history
+                // because the user have not undone any values that we should remove from the history:
+                this.history.push({cell: newCell, row: row, col: col}) // Push the cell and its position to the history array
             }
-        });
-        this.history.push(historyCopy)
-            if (this.redoCount === 0) {
-               this.historyPointer++;
-            }
+        }
+        //if (this.redoCount === 0) {        // Why do we do this?
+            this.historyPointer++;
+        //}
     }
 
     /**
