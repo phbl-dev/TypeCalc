@@ -84,7 +84,6 @@ let AreaMarked = false
  */
 const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: number, style:any}) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
-    let isActive = ID == WorkbookManager.getActiveCell();
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
     let mySupports:string[];
@@ -301,7 +300,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-    const updateFormulaBox = (cellID:string, content:string|null):void => {
+    const updateFormulaBox = (_cellID:string, content:string|null):void => {
         const formulaBox = document.getElementById("formulaBox");
         if (!formulaBox) {
             console.debug("[SpreadsheetGrid.tsx Cell] FormulaBox not found");
