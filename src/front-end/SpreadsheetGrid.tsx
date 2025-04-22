@@ -73,7 +73,7 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
 
 let selectionStartCell: string | null = null
 let isShiftKeyDown = false
-let sheetChanged = false
+let AreaMarked = false
 
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
@@ -93,7 +93,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     document.addEventListener('keyup', (e) => {
         if (e.key === 'Shift') {
             isShiftKeyDown = false;
-            console.log('Shift released', isShiftKeyDown);
         }
     });
 
@@ -105,45 +104,118 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-    const clearHighlight = () => {
+    const clearVisualHighlight = () => {
         const previousSelection = document.querySelectorAll('.selected-cell');
         previousSelection.forEach(cell => {
             cell.classList.remove('selected-cell');
         });
+    }
+
+    const clearSelection = () => {
+        clearVisualHighlight();
         sessionStorage.removeItem('selectionRange');
     }
 
-    // Allows us to navigate the cells using the arrow and Enter keys
+    function MultiCellMove(areaRef: string, copy: boolean = false) {
+        const range = JSON.parse(areaRef);
+        const {startCol, startRow, endCol, endRow, sourceIDContent} = range;
+        const targetCellRef = new A1RefCellAddress(ID);
+        for (let i = startRow; i <= endRow; i++) {
+            for (let j = startCol; j <= endCol; j++) {
+                const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
+                const targetRow = targetCellRef.row + (i - startRow);
+                const targetCol = targetCellRef.col + (j - startCol);
+                if (sourceIDContent && sourceIDContent.toString().startsWith('=')) {
+                    if (j === startCol && i === startRow && !copy) continue;
+
+                    const newForm = adjustFormula(
+                        sourceIDContent.toString(),
+                        targetRow - startRow,
+                        targetCol - startCol
+                    );
+                    handleInput(targetRow, targetCol, newForm);
+                    const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
+                    if (targetCellElement) {
+                        targetCellElement.innerText = newForm;
+                    }
+                }
+                else if (cell) {
+                    WorkbookManager.getActiveSheet()?.MoveCell(j, i, targetCol, targetRow);
+                    if (copy) {
+                        WorkbookManager.getActiveSheet()?.SetCell(cell, j, i);
+                    }
+                    else {
+                        const origCellElement = document.getElementById(numberToLetters(j + 1) + (i + 1));
+                        if (origCellElement) {
+                            origCellElement.innerText = "";
+                        }
+                    }
+                    const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
+                    if (targetCellElement) {
+                        const movedCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(targetCol, targetRow);
+                        if (movedCell) {
+                            targetCellElement.innerText = movedCell.GetText()!;
+                        }
+                    }
+                }
+            }
+        }
+        WorkbookManager.getWorkbook().Recalculate();
+        if (!copy) {
+            clearSelection(); // clear the selected area.
+        }
+        AreaMarked = false;
+    }
+
+    function singleCellMove(storedRef: string) {
+        const parsedRef = JSON.parse(storedRef);
+
+        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+
+        document.getElementById(parsedRef.ID)!.innerText = "";
+        sessionStorage.removeItem('tmpCellRef');
+    }
+
+// Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
+
 
         if(event.ctrlKey) {
             switch (event.key) {
                 case "c":
                     event.preventDefault();
-                    const tmpRef = new A1RefCellAddress(ID)
-                    sessionStorage.setItem('tmpCellRef', JSON.stringify({
-                        ID: ID,
-                        col: tmpRef.col,
-                        row: tmpRef.row
-                    }));
+                    if (AreaMarked) {
+                        setHighlight(selectionStartCell!, true);
+                    } else {
+                        // Save single cells
+                        const singleCellRef = new A1RefCellAddress(ID)
+                        sessionStorage.setItem('tmpCellRef', JSON.stringify({
+                            ID: ID,
+                            col: singleCellRef.col,
+                            row: singleCellRef.row
+                        }));
+                    }
                     break
                 case "x":
                     event.preventDefault();
                     const storedRef = sessionStorage.getItem('tmpCellRef');
-                    if (storedRef) {
-                        const parsedRef = JSON.parse(storedRef);
-
-                        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
-
-                        document.getElementById(parsedRef.ID)!.innerText = ""
-                        ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    const areaRef = sessionStorage.getItem('selectionRange');
+                    if (areaRef) {
+                        MultiCellMove(areaRef);
+                    } else if (storedRef) {
+                            singleCellMove(storedRef);
                     }
+                    ShowWindowInGUI(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
                     break
                 case "v":
                     event.preventDefault();
                     const storedRef2 = sessionStorage.getItem('tmpCellRef');
+                    const areaRef2 = sessionStorage.getItem('selectionRange');
+                    if(areaRef2) {
+                        MultiCellMove(areaRef2,true);
+                    }
                     if (storedRef2) {
                         const parsedRef = JSON.parse(storedRef2);
                         const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
@@ -184,35 +256,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             case "Shift":
                 selectionStartCell = WorkbookManager.getActiveCell();
                 isShiftKeyDown = true;
-                break;
-            case "F5":
-                event.preventDefault();
-                const selectionRange = sessionStorage.getItem('selectionRange');
-                if (selectionRange) {
-                    const range = JSON.parse(selectionRange);
-                    const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
-
-                        for (let r = startRow; r <= endRow; r++) {
-                            for (let c = startCol; c <= endCol; c++) {
-
-                                if (r === startRow && c === startCol) continue;
-
-                                const newForm = adjustFormula(sourceIDContent!.toString(),r - startRow, c - startCol)
-
-                                handleInput(r,c,newForm)
-
-
-                                const targetCellID = numberToLetters(c + 1) + (r + 1);
-                                const cellElement:HTMLElement = document.getElementById(targetCellID)!;
-                                cellElement.innerText = newForm;
-                            }
-                    }
-
-                }
-                WorkbookManager.getWorkbook().Recalculate();
-                sessionStorage.removeItem('selectionRange');
-
-
                 break;
             default:
                 return;
@@ -267,21 +310,21 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
-    function setHighlight(selectedStartCell:string) {
-        const startCellRef = new A1RefCellAddress(selectedStartCell);
-        const currentCellRef = new A1RefCellAddress(ID);
+    function setHighlight(endCell:string, saveHighlight:boolean = false) {
+        const endCellRef = new A1RefCellAddress(endCell);
+        const currentActiveCellRef = new A1RefCellAddress(ID);
 
 
-        const sourceIDContent = GetRawCellContent(selectedStartCell!);
+        const sourceIDContent = GetRawCellContent(endCell!);
 
         // Define the area we will be using
-        const startCol = Math.min(currentCellRef.col, startCellRef.col);
-        const endCol = Math.max(currentCellRef.col, startCellRef.col);
-        const startRow = Math.min(currentCellRef.row, startCellRef.row);
-        const endRow = Math.max(currentCellRef.row, startCellRef.row);
+        const startCol = Math.min(currentActiveCellRef.col, endCellRef.col);
+        const endCol = Math.max(currentActiveCellRef.col, endCellRef.col);
+        const startRow = Math.min(currentActiveCellRef.row, endCellRef.row);
+        const endRow = Math.max(currentActiveCellRef.row, endCellRef.row);
 
         // Clear any existing highlight
-        clearHighlight();
+        clearVisualHighlight()
 
         // Highlight all cells in the range
         for (let r = startRow; r <= endRow; r++) {
@@ -294,14 +337,15 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             }
         }
 
-        // Save the selection range in session storage
-        sessionStorage.setItem('selectionRange', JSON.stringify({
-            sourceIDContent,
-            startCol,
-            startRow,
-            endCol,
-            endRow
-        }));
+        if(saveHighlight) {
+            sessionStorage.setItem('selectionRange', JSON.stringify({
+                sourceIDContent,
+                startCol,
+                startRow,
+                endCol,
+                endRow
+            }));
+        }
     }
 
     return (
@@ -314,8 +358,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              onClick={(e) => {
                  if(e.shiftKey && selectionStartCell) {
                      setHighlight(selectionStartCell);
+                     AreaMarked = true
+
                  } else {
-                     clearHighlight();
+                     clearVisualHighlight()
                  }
              }}
 
