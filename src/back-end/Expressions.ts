@@ -540,10 +540,7 @@ export class FunCall extends Expr {
         }
 
         if (Array.isArray(result)) {
-            const values: Value[][] = [];
-
-            // Works for a column-oriented result:
-            values[0] = [];
+            const values: Value[][] = [[]];
 
             // Fill the column with values
             for (let i = 0; i < result.length; i++) {

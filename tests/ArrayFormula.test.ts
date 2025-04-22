@@ -8,14 +8,13 @@ import {SuperCellAddress} from "../src/back-end/CellAddressing";
 describe("ArrayFormula", () => {
     let workbook: Workbook;
     let sheet: Sheet;
-    let cellArea: CellArea;
-    let funCall: Expr;
-    let formula: Formula;
 
     beforeEach(() => {
         workbook = new Workbook();
         sheet = new Sheet(workbook, "testSheet", false)
+    })
 
+    test("constructor and eval", () => {
         // Setting cells A1:C3 to contain the numbers 1-9
         let val = 1;
         for (let i = 0; i < 3; i++) {
@@ -24,19 +23,16 @@ describe("ArrayFormula", () => {
             }
         }
 
-        cellArea = new CellArea(sheet, true, 0, true, 0, true, 2, true, 2); // Creating a cell area from A1:C3 with absolute references.
-        funCall = FunCall.Make("FREQUENCY", [cellArea, ExprArray.MakeExprArray([new NumberConst(2), new NumberConst(4)])])                         // Creating a function call to FREQUENCY
-        formula = Formula.Make(workbook, funCall)                           // Creating a Formula Cell containing the function call
-        sheet.SetCell(formula, 0, 3)                                        // Setting the formula in A4
+        const cellArea: CellArea = new CellArea(sheet, true, 0, true, 0, true, 2, true, 2); // Creating a cell area from A1:C3 with absolute references.
+        const funCall: Expr = FunCall.Make("FREQUENCY", [cellArea, ExprArray.MakeExprArray([new NumberConst(2), new NumberConst(4)])])                         // Creating a function call to FREQUENCY
+        const formula: Formula = Formula.Make(workbook, funCall)                            // Creating a Formula Cell containing the function call
+        sheet.SetCell(formula, 0, 3)                                                        // Setting the formula in A4
 
         workbook.Recalculate()
 
-    })
-
-    test("constructor and eval", () => {
         // Creating a cached array formula stored in A4 and holding a reference to the cell area A1:C3:
         let cachedArrayFormula = new CachedArrayFormula(
-            formula,            // Your FREQUENCY formula
+            formula,            // The FREQUENCY formula
             sheet,              // The sheet
             0, 3,               // Formula position (col=0, row=3) - A4
             new SuperCellAddress(0, 3),  // Output range start (A4)
@@ -44,7 +40,7 @@ describe("ArrayFormula", () => {
         );
 
         // Place ArrayFormula cells in the output range
-        // Create array formulas with the EXACT structure that matches your array
+        // Create array formulas with the EXACT structure that matches the array
         const arrayFormula1 = new ArrayFormula(cachedArrayFormula, 0, 0); // First element
         const arrayFormula2 = new ArrayFormula(cachedArrayFormula, 0, 1); // Second element
         const arrayFormula3 = new ArrayFormula(cachedArrayFormula, 0, 2); // Third element
@@ -59,7 +55,6 @@ describe("ArrayFormula", () => {
         expect(sheet.Get(0, 3).Eval(sheet, 0, 3).ToObject()).toBe(2);
         expect(sheet.Get(0, 4).Eval(sheet, 0, 4).ToObject()).toBe(2);
         expect(sheet.Get(0, 5).Eval(sheet, 0, 5).ToObject()).toBe(5);
-
 
     })
 })
