@@ -5,7 +5,7 @@ import type { Expr } from "./Expressions";
 import { ArrayValue } from "./ArrayValue";
 
 /**
- * Creates a new sheet. Default size is 20 columns and 1000 rows.
+ * Creates a new sheet. Default size is 2000 columns and 10000 rows.
  */
 export class Sheet {
     public cols = 2000;
@@ -24,9 +24,9 @@ export class Sheet {
 
     /**
      * Constructors are defined below. There is supposed to be two constructors,
-     * where the first one uses the default number of columns (20) and rows (1000).
+     * where the first one uses the default number of columns (2000) and rows (10000).
      * The second constructor allows us to give our own value for cols and rows.
-     * @defaultValue: columns = 20, rows = 1000
+     * @defaultValue: columns = 2000, rows = 10000
      * @example
      * // returns a sheet with 10 columns and 10 rows.
      *  const sheet:Sheet = new Sheet(workbook, "sheet1", 100, 100, false);

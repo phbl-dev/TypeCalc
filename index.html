@@ -5,14 +5,14 @@
     <link rel="icon" type="image/png" href="../Spreadsheet/src/assets/spreadsheet.png" />    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="src/front-end/style.css" />
     <title>Spreadsheet test</title>
-    <script type="module" src = "src/front-end/createGrid.tsx"></script>
+    <script type="module" src = "src/front-end/CreateGrid.tsx"></script>
   </head>
 
   <body>
     <header>
       <button class="menuButton" type = "reset" id = "reset" onclick = "localStorage.clear(); location.reload()">Clear</button> <!-- Clear's the local storage and reloads the page -->
       <button class="menuButton" type = "button" id = "jumpToCell">Go to</button>
-      <label for="jumpToInput"></label><input class="menuTextField" type = "text" id = "jumpToInput">
+      <label for="cellIdInput"></label><input class="menuTextField" type = "text" id = "cellIdInput">
       <button class="styleButton" type = "button" id = "bold">B</button>
       <button class="styleButton" type = "button" id = "italic">I</button>
       <button class="styleButton" type = "button" id = "underline">U</button>
@@ -25,7 +25,7 @@
         <input class="color" type="color" id = "textColorPicker" value="#000000">
       </div>
       <label for="formulaBox"></label><input class="formulaBox" type = "text" id = "formulaBox">
-      <h4 contenteditable="true" id="documentTitle">Spreadsheet name</h4>
+      <h4 contenteditable="true" id="documentTitle">Sheet1</h4>
     </header>
     <div id="root"><!--Table goes here--></div>
     <!-- Footer created separately by SheetSelector in virtualizedGrid -->
