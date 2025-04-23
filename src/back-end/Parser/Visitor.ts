@@ -336,7 +336,11 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             this.cell = new QuoteCell(helperConst.substring(1, helperConst.length - 1));
         } else if (ctx.StringLiteral) {
             const helperConst = ctx["StringLiteral"][0].image
-            this.cell = new TextCell(helperConst.substring(1, helperConst.length - 1 ));
+            this.cell = new TextCell(helperConst.substring(1, helperConst.length - 1));
+        }
+            else if (ctx.Minus) {
+            this.cell = new NumberCell(Number.parseFloat("-" + ctx["number"][0].children["Number"][0].image));
+
         } else if (ctx.number) {
             this.cell = new NumberCell(Number.parseFloat(ctx["number"][0].children["Number"][0].image));
         } else if (ctx.Datetime) {
