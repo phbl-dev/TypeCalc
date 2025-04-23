@@ -297,17 +297,52 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
         switch (event.key) {
             case "ArrowUp":
-                nextRow = Math.max(0, rowIndex - 1); //Needed to not go too far up
+                nextRow = Math.max(0, rowIndex - 1);
+                if (isShiftKeyDown) {
+                    setHighlight(selectionStartCell!, false, nextCol, nextRow);
+                    AreaMarked = true;
+                } else {
+                    clearVisualHighlight();
+                    AreaMarked = false
+                }
                 break;
+
             case "ArrowDown":
                 nextRow = rowIndex + 1;
+                if (isShiftKeyDown) {
+                    setHighlight(selectionStartCell!, false, nextCol, nextRow);
+                    AreaMarked = true;
+                } else {
+                    clearVisualHighlight();
+                    AreaMarked = false
+
+                }
                 break;
+
             case "ArrowLeft":
-                nextCol = Math.max(0, columnIndex - 1); //Needed to not go too far left
+                nextCol = Math.max(0, columnIndex - 1);
+                if (isShiftKeyDown) {
+                    setHighlight(selectionStartCell!, false, nextCol, nextRow);
+                    AreaMarked = true;
+                } else {
+                    clearVisualHighlight();
+                    AreaMarked = false
+
+                }
                 break;
+
             case "ArrowRight":
                 nextCol = columnIndex + 1;
+                if (isShiftKeyDown) {
+                    setHighlight(selectionStartCell!, false, nextCol, nextRow);
+                    AreaMarked = true;
+                } else {
+                    clearVisualHighlight();
+                    AreaMarked = false
+
+                }
                 break;
+
             case "Enter":
                 nextRow = rowIndex + 1;
                 break;
@@ -318,6 +353,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             default:
                 return;
         }
+
 
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID
         // so we can focus the cell. Also updates the cell ID displayed to show current cell's ID.
@@ -366,10 +402,14 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
-    function setHighlight(endCell:string, saveHighlight:boolean = false) {
+    function setHighlight(endCell:string, saveHighlight:boolean = false,  arrowOptCol?:number, arrowOptRow?:number) {
         const endCellRef = new A1RefCellAddress(endCell);
-        const currentActiveCellRef = new A1RefCellAddress(ID);
-
+        let currentActiveCellRef;
+        if(arrowOptCol && arrowOptRow) {
+            currentActiveCellRef = new A1RefCellAddress(numberToLetters(arrowOptCol + 1) + (arrowOptRow + 1))
+        } else {
+         currentActiveCellRef = new A1RefCellAddress(ID);
+}
 
         const sourceIDContent = GetRawCellContent(endCell!);
 
@@ -483,7 +523,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                      }
                  }
                  EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20, false);
-                 //console.log(GetSupportsInWindow(columnIndex-20, columnIndex+20,rowIndex-20,rowIndex+20,columnIndex+1,rowIndex+1));
              }}
 
              onInput={(e) => {
