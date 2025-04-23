@@ -87,15 +87,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
     let mySupports:string[];
-
-
-    document.addEventListener('keyup', (e) => {
-        if (e.key === 'Shift') {
-            isShiftKeyDown = false;
-            console.log('Shift released', isShiftKeyDown);
-        }
-    });
-
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
     const handleHover = () => {
         const headerCorner = document.getElementById("headerCorner");
@@ -118,62 +109,99 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
     function MultiCellMove(areaRef: string, copy: boolean = false) {
         const range = JSON.parse(areaRef);
-        const {startCol, startRow, endCol, endRow, sourceIDContent} = range;
+        const {startCol, startRow, endCol, endRow} = range;
         const targetCellRef = new A1RefCellAddress(ID);
+
+        const cellsToCopy = [];
+
         for (let i = startRow; i <= endRow; i++) {
             for (let j = startCol; j <= endCol; j++) {
                 const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
-                const targetRow = targetCellRef.row + (i - startRow);
-                const targetCol = targetCellRef.col + (j - startCol);
-                if (sourceIDContent && sourceIDContent.toString().startsWith('=')) {
-                    if (j === startCol && i === startRow && !copy) continue;
+                if (cell) {
+                    cellsToCopy.push({
+                        row: i,
+                        col: j,
+                        cell: cell,
+                        content: cell.GetText(),
+                        relRow: i - startRow,
+                        relCol: j - startCol
+                    });
+                }
+            }
+        }
 
+        for (const cellInfo of cellsToCopy) {
+            const { row, col, cell, content, relRow, relCol } = cellInfo;
+            const targetRow = targetCellRef.row + relRow;
+            const targetCol = targetCellRef.col + relCol;
+            if (content!.startsWith('=')) {
+                const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
+                if (copy) {
                     const newForm = adjustFormula(
-                        sourceIDContent.toString(),
-                        targetRow - startRow,
-                        targetCol - startCol
+                        content!,
+                        targetRow - row,
+                        targetCol - col
                     );
                     handleInput(targetRow, targetCol, newForm);
-                    const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
                     if (targetCellElement) {
                         targetCellElement.innerText = newForm;
                     }
-                }
-                else if (cell) {
-                    WorkbookManager.getActiveSheet()?.MoveCell(j, i, targetCol, targetRow);
-                    if (copy) {
-                        WorkbookManager.getActiveSheet()?.SetCell(cell, j, i);
-                    }
-                    else {
-                        const origCellElement = document.getElementById(numberToLetters(j + 1) + (i + 1));
-                        if (origCellElement) {
-                            origCellElement.innerText = "";
-                        }
-                    }
-                    const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
+                } else {
+                    WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
+                    handleInput(targetRow, targetCol, content!);
                     if (targetCellElement) {
-                        const movedCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(targetCol, targetRow);
-                        if (movedCell) {
-                            targetCellElement.innerText = movedCell.GetText()!;
-                        }
+                        targetCellElement.innerText = content!;
+                    }
+
+                    const origCellElement = document.getElementById(numberToLetters(col + 1) + (row + 1));
+                    if (origCellElement) {
+                        origCellElement.innerText = "";
+                    }
+
+                }
+            }
+            else {
+                WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
+                if (copy) {
+                    WorkbookManager.getActiveSheet()?.SetCell(cell, col, row);
+                } else {
+                    const origCellElement = document.getElementById(numberToLetters(col + 1) + (row + 1));
+                    if (origCellElement) {
+                        origCellElement.innerText = "";
+                    }
+                }
+                const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
+                if (targetCellElement) {
+                    const movedCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(targetCol, targetRow);
+                    if (movedCell) {
+                        targetCellElement.innerText = movedCell.GetText()!;
                     }
                 }
             }
         }
         WorkbookManager.getWorkbook().Recalculate();
+
         if (!copy) {
-            clearSelection(); // clear the selected area.
+            clearVisualHighlight();
         }
         AreaMarked = false;
     }
 
-    function singleCellMove(storedRef: string) {
+    function singleCellMove(storedRef: string, copy: boolean = false) {
         const parsedRef = JSON.parse(storedRef);
 
-        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+        if(copy) {
+            const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
+            WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+            WorkbookManager.getActiveSheet()?.SetCell(tmpCell, parsedRef.col, parsedRef.row)
+            console.log("The current cell is below")
+            console.log(tmpCell)
+        } else {
+            WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
 
-        document.getElementById(parsedRef.ID)!.innerText = "";
-        sessionStorage.removeItem('tmpCellRef');
+            document.getElementById(parsedRef.ID)!.innerText = "";
+            sessionStorage.removeItem('tmpCellRef');
+        }
     }
 
 // Allows us to navigate the cells using the arrow and Enter keys
@@ -186,15 +214,16 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 case "c":
                     event.preventDefault();
                     if (AreaMarked) {
+                        sessionStorage.removeItem("tmpCellRef");
                         setHighlight(selectionStartCell!, true);
                     } else {
-                        // Save single cells
                         const singleCellRef = new A1RefCellAddress(ID)
                         sessionStorage.setItem('tmpCellRef', JSON.stringify({
                             ID: ID,
                             col: singleCellRef.col,
                             row: singleCellRef.row
                         }));
+                        clearSelection()
                     }
                     break
                 case "x":
@@ -204,7 +233,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     if (areaRef) {
                         MultiCellMove(areaRef);
                     } else if (storedRef) {
-                            singleCellMove(storedRef);
+                        singleCellMove(storedRef);
                     }
                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
                     break
@@ -215,13 +244,11 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     if(areaRef2) {
                         MultiCellMove(areaRef2,true);
                     }
-                    if (storedRef2) {
-                        const parsedRef = JSON.parse(storedRef2);
-                        const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
-                        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-                        WorkbookManager.getActiveSheet()?.SetCell(tmpCell, parsedRef.col, parsedRef.row)
-                        EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    else if (storedRef2) {
+                        singleCellMove(storedRef2,true);
                     }
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+
                     break
                 case "b":
                     makeBold();
@@ -591,6 +618,14 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
         cellColor.addEventListener("input", setCellColor);
         textColor.addEventListener("input", setTextColor);
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Shift') {
+                isShiftKeyDown = false;
+                console.log('Shift released', isShiftKeyDown);
+            }
+        });
+
 
 
         return () => {

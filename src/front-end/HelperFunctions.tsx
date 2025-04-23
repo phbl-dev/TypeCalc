@@ -50,6 +50,8 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
             newColumn = numberToLetters(newColNum);
         }
 
+        console.log("THis is the value of newColumn", newColumn)
+
         return colAbs + newColumn + rowAbs + newRow;
     });
 }
