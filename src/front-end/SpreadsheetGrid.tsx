@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {
+    XMLReader
+} from "../WorkbookIO";
+import {
     getCell,
     adjustFormula,
     numberToLetters,
@@ -22,7 +25,6 @@ import {
     ParseToActiveCell,
     WorkbookManager
 } from "../API-Layer.ts";
-import {XMLReader} from "../WorkbookIO.ts";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -73,6 +75,7 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
 
 let selectionStartCell: string | null = null
 let isShiftKeyDown = false
+let sheetChanged = false
 let AreaMarked = false
 
 
@@ -90,8 +93,15 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
     const handleHover = () => {
         const headerCorner = document.getElementById("headerCorner");
-        if(headerCorner) { // if-statement handles possibility that headerCorner is null
+        if (headerCorner) { // if-statement handles possibility that headerCorner is null
             headerCorner.textContent = ID;
+        }
+    }
+    // Passes the cell ID to the 'Go to cell' input box as its value of the
+    const displayCellId = () => {
+        const cellIdDisplay = document.getElementById("cellIdInput") as HTMLInputElement;;
+        if(cellIdDisplay) {
+            cellIdDisplay.value = ID;
         }
     }
 
@@ -287,17 +297,15 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 return;
         }
 
-
-
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID
-        // so we can focus the cell. Also updates top-left corner to show current cell's ID.
+        // so we can focus the cell. Also updates the cell ID displayed to show current cell's ID.
         const nextCellID = numberToLetters(nextCol + 1) + (nextRow + 1);
         const nextCell = document.getElementById(nextCellID);
-        const headerCorner = document.getElementById("headerCorner");
+        const cellIdInput = document.getElementById("cellIdInput") as HTMLInputElement;
 
-        if (nextCell && headerCorner) {
+        if (nextCell && cellIdInput) {
             nextCell.focus();
-            headerCorner.textContent = nextCellID;
+            cellIdInput.value = nextCellID;
             event.preventDefault(); // Prevents scrolling until edges are reached
         }
     }
@@ -327,7 +335,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-    const updateFormulaBox = (_cellID:string, content:string|null):void => {
+    const updateFormulaBox = (cellID:string, content:string|null):void => {
         const formulaBox = document.getElementById("formulaBox");
         if (!formulaBox) {
             console.debug("[SpreadsheetGrid.tsx Cell] FormulaBox not found");
@@ -375,7 +383,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
     return (
-        <div className="Cell" contentEditable={true} id={ID}
+        <div className="Cell" contentEditable={true} id={ID} title={ID}
              style={{
                  ...style, // Inherit style from style.css
                  background: rowIndex % 2 === 0 ? "lightgrey" : "white", // Gives 'striped' look to grid body
@@ -429,7 +437,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                      }
                  }
              }}
-             onMouseMove={handleHover} // Gets the cellID when moving the mouse
+             onMouseDown={displayCellId} // Gets the cellID when moving the mouse
              onKeyDown={(e) => {
                  keyNav(e);
              }}
@@ -530,7 +538,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
     useEffect(() => {
         const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
-        const input = document.getElementById("jumpToInput") as HTMLInputElement;
+        const input = document.getElementById("cellIdInput") as HTMLInputElement;
         const boldButton = document.getElementById("bold") as HTMLButtonElement;
         const italicButton = document.getElementById("italic") as HTMLButtonElement;
         const underlineButton = document.getElementById("underline") as HTMLButtonElement;
@@ -575,7 +583,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
         const handleJump = () => {
             const cellID = input.value.trim();
-            const headerCorner = document.getElementById("headerCorner");
 
             if (cellID) {
                 const idSplit = cellID.match(/[A-Za-z]+|\d+/g) || [];
@@ -595,9 +602,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                         // Delay in case the item needs to be rendered first
                         setTimeout(() => {
                             const targetCell = getCell(cellID);
-                            if (targetCell && headerCorner) {
+                            if (targetCell) {
                                 targetCell.focus();
-                                headerCorner.textContent = cellID;
                             }
                         }, 50);
                     }
@@ -723,10 +729,10 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 <div id="headerCorner"
                      style={{ // Has to be defined here to use dimensions of the sheet
                          width: rowHeaderWidth-1,
-                         height: colHeaderHeight,
+                         height: colHeaderHeight-1,
                      }}
                 >
-                    {"#"}
+                    {""}
                 </div>
                 {/* Column headers as a grid */}
                 <Grid
