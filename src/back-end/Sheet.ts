@@ -12,9 +12,9 @@ export class Sheet {
     public rows = 10000;
     private name: string;
     public readonly workbook: Workbook;
-    private cells: SheetRep;              // Nb.: Removed readonly
+    private readonly cells: SheetRep;
     private readonly history: {cell: Cell; row: number; col: number}[]; // Added for undo/redo functionality. Array for caching added cells such that we can undo and redo them.
-    private historyPointer: number;       // Added for undo/redo functionality. Points at where we are in the history when undo/redo are in use
+    private historyPointer: number;       // Added for undo/redo functionality. Points at where we are in the history.
     private undoCount: number;            // Added for undo/redo functionality. Counts how deep we are in undo calls.
     private functionSheet: boolean;
 
@@ -94,17 +94,23 @@ export class Sheet {
     }
 
     /**
-     * Added for undo/redo functionality
+     * The undo method is used when a user press "ctrl+z" to draw back an action in the spreadsheet.
+     * The functionality of the method will only be invoked if there are actions to undo, i.e.
+     * the size of the undoCount is smaller than the length of the history array.
      */
     public undo(): void {
         // If the undoCount is smaller than the length of the history, then there are cells to undo.
         if (this.undoCount < this.history.length) {
+
+            // Increase the undoCount to indicate that undo has been called.
             this.undoCount++;
+
+            // Decrease the historyPointer to indicate that we go one step back in the history.
             this.historyPointer--;
 
             // Loop over the history in reversed order to check for older versions of the cell we are resetting.
             // We subtract the undoCount-1 to avoid matching the same cell and to avoid matching redundant cells
-            // in case the user has pressed cmd+z multiple times:
+            // in case the user has called undo multiple times:
             for (let i = this.history.length - this.undoCount - 1; i >= 0; i--) {
 
                 // If a previous version of that cell already exists in the history:
@@ -122,10 +128,12 @@ export class Sheet {
     }
 
     /**
-     * Added for undo/redo functionality
+     * The redo method is used when a user presses "ctrl+y" to restore an action in the spreadsheet.
+     * The functionality of the method will only be invoked if there are actions to redo, i.e.
+     * the size of the undoCount is larger than 0.
      */
     public redo(): void {
-        // If the undoCount is larger than 0 then there are cells to redo
+        // If the undoCount is larger than 0 then there are cells to redo:
         if (this.undoCount > 0) {
 
             // We get index that undoCount is at in relation to the history length because we
@@ -133,9 +141,10 @@ export class Sheet {
             let i = this.history.length - this.undoCount;
             this.cells.Set(this.history[i].col, this.history[i].row, this.history[i].cell)
 
-            // We have moved one step forward in the history array so we update the relevant
-            // fields accordingly:
+            // We have moved one step forward in the history array so we increase the history pointer by 1:
             this.historyPointer++;
+
+            // We decrease the undoCount because we have now recreated an action:
             this.undoCount--;
         }
     }
@@ -444,15 +453,6 @@ export class Sheet {
             this.Set(col.col, newCell, col.row);
         }
 
-        // In order to save the current state to our history we have to make a copy of it.
-        // Otherwise, we would keep referenceing to the same SheetRep object.
-        // const historyCopy = new SheetRep();
-        // this.cells.Forall((col, row, cell) => {
-        //    if (cell) {
-        //        historyCopy.Set(col, row, cell.CloneCell(col, row));
-        //    }
-        //});
-
         // Undo/Redo functionality. First we check if the type of row and col is number:
         if (typeof row === "number" && typeof col === "number") {
             // If the user sets a new value in the sheet but "undo" has been called a number of times,
@@ -464,11 +464,16 @@ export class Sheet {
                 for (let i = 0; i < this.undoCount; i++) {
                     this.history.pop()
                 }
-                this.undoCount = 0; // Reset undoCount because the history has been updated.
-                this.history.push({cell: newCell, row: row, col: col}) // Add the newly created cell to our history
-            } else {
+
+                // Reset undoCount because the history has been updated:
+                this.undoCount = 0;
+
+                // Add the newly created cell to our history:
+                this.history.push({cell: newCell, row: row, col: col})
+
                 // Otherwise, if undo has not been called then we can just add our new cell to the history
                 // because the user have not undone any values that we should remove from the history:
+            } else {
                 this.history.push({cell: newCell, row: row, col: col}) // Push the cell and its position to the history array
             }
         }
