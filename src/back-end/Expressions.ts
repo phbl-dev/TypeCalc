@@ -136,6 +136,14 @@ export class TextConst extends Const {
         this.value = TextValue.MakeInterned(s);
     }
 
+    /**
+     * Returns the value of the TextConst
+     *
+     * @param sheet - the sheet
+     * @param col - Column index
+     * @param row - Row index
+     * @returns Value - The value to be returned
+     */
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         return this.value;
     }

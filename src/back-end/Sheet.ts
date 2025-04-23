@@ -95,8 +95,12 @@ export class Sheet {
 
     /**
      * The undo method is used when a user press "ctrl+z" to draw back an action in the spreadsheet.
+     *
+     * @remarks
      * The functionality of the method will only be invoked if there are actions to undo, i.e.
      * the size of the undoCount is smaller than the length of the history array.
+     *
+     * @returns Nothing
      */
     public undo(): void {
         // If the undoCount is smaller than the length of the history, then there are cells to undo.
