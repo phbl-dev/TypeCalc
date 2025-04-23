@@ -76,6 +76,7 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
 let selectionStartCell: string | null = null
 let isShiftKeyDown = false
 let sheetChanged = false
+let AreaMarked = false
 
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
@@ -86,19 +87,16 @@ let sheetChanged = false
  */
 const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: number, style:any}) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
-    let isActive = ID == WorkbookManager.getActiveCell();
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
     let mySupports:string[];
-
-
-    document.addEventListener('keyup', (e) => {
-        if (e.key === 'Shift') {
-            isShiftKeyDown = false;
-            console.log('Shift released', isShiftKeyDown);
+    // Passes the cell ID to the headerCorner as textContent of the headerCorner
+    const handleHover = () => {
+        const headerCorner = document.getElementById("headerCorner");
+        if (headerCorner) { // if-statement handles possibility that headerCorner is null
+            headerCorner.textContent = ID;
         }
-    });
-
+    }
     // Passes the cell ID to the 'Go to cell' input box as its value of the
     const displayCellId = () => {
         const cellIdDisplay = document.getElementById("cellIdInput") as HTMLInputElement;;
@@ -107,15 +105,116 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-    const clearHighlight = () => {
+    const clearVisualHighlight = () => {
         const previousSelection = document.querySelectorAll('.selected-cell');
         previousSelection.forEach(cell => {
             cell.classList.remove('selected-cell');
         });
+    }
+
+    const clearSelection = () => {
+        clearVisualHighlight();
         sessionStorage.removeItem('selectionRange');
     }
 
-    // Allows us to navigate the cells using the arrow and Enter keys
+    function MultiCellMove(areaRef: string, copy: boolean = false) {
+        const range = JSON.parse(areaRef);
+        const {startCol, startRow, endCol, endRow} = range;
+        const targetCellRef = new A1RefCellAddress(ID);
+
+        const cellsToCopy = [];
+
+        for (let i = startRow; i <= endRow; i++) {
+            for (let j = startCol; j <= endCol; j++) {
+                const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
+                if (cell) {
+                    cellsToCopy.push({
+                        row: i,
+                        col: j,
+                        cell: cell,
+                        content: cell.GetText(),
+                        relRow: i - startRow,
+                        relCol: j - startCol
+                    });
+                }
+            }
+        }
+
+        for (const cellInfo of cellsToCopy) {
+            const { row, col, cell, content, relRow, relCol } = cellInfo;
+            const targetRow = targetCellRef.row + relRow;
+            const targetCol = targetCellRef.col + relCol;
+            if (content!.startsWith('=')) {
+                const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
+                if (copy) {
+                    const newForm = adjustFormula(
+                        content!,
+                        targetRow - row,
+                        targetCol - col
+                    );
+                    handleInput(targetRow, targetCol, newForm);
+                    if (targetCellElement) {
+                        targetCellElement.innerText = newForm;
+                    }
+                } else {
+                    WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
+                    handleInput(targetRow, targetCol, content!);
+                    if (targetCellElement) {
+                        targetCellElement.innerText = content!;
+                    }
+
+                    const origCellElement = document.getElementById(numberToLetters(col + 1) + (row + 1));
+                    if (origCellElement) {
+                        origCellElement.innerText = "";
+                    }
+
+                }
+            }
+            else {
+                WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
+                if (copy) {
+                    WorkbookManager.getActiveSheet()?.SetCell(cell, col, row);
+                } else {
+                    const origCellElement = document.getElementById(numberToLetters(col + 1) + (row + 1));
+                    if (origCellElement) {
+                        origCellElement.innerText = "";
+                    }
+                }
+                const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
+                if (targetCellElement) {
+                    const movedCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(targetCol, targetRow);
+                    if (movedCell) {
+                        targetCellElement.innerText = movedCell.GetText()!;
+                    }
+                }
+            }
+        }
+        WorkbookManager.getWorkbook().Recalculate();
+
+        if (!copy) {
+            clearVisualHighlight();
+        }
+        AreaMarked = false;
+    }
+
+    function singleCellMove(storedRef: string, copy: boolean = false) {
+        const parsedRef = JSON.parse(storedRef);
+
+        if(copy) {
+            const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
+            WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+            WorkbookManager.getActiveSheet()?.SetCell(tmpCell, parsedRef.col, parsedRef.row)
+            console.log("The current cell is below")
+            console.log(tmpCell)
+        } else {
+            WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+
+            document.getElementById(parsedRef.ID)!.innerText = "";
+            sessionStorage.removeItem('tmpCellRef');
+        }
+    }
+
+// Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
@@ -124,35 +223,42 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             switch (event.key) {
                 case "c":
                     event.preventDefault();
-                    const tmpRef = new A1RefCellAddress(ID)
-                    sessionStorage.setItem('tmpCellRef', JSON.stringify({
-                        ID: ID,
-                        col: tmpRef.col,
-                        row: tmpRef.row
-                    }));
+                    if (AreaMarked) {
+                        sessionStorage.removeItem("tmpCellRef");
+                        setHighlight(selectionStartCell!, true);
+                    } else {
+                        const singleCellRef = new A1RefCellAddress(ID)
+                        sessionStorage.setItem('tmpCellRef', JSON.stringify({
+                            ID: ID,
+                            col: singleCellRef.col,
+                            row: singleCellRef.row
+                        }));
+                        clearSelection()
+                    }
                     break
                 case "x":
                     event.preventDefault();
                     const storedRef = sessionStorage.getItem('tmpCellRef');
-                    if (storedRef) {
-                        const parsedRef = JSON.parse(storedRef);
-
-                        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col,parsedRef.row, columnIndex, rowIndex);
-
-                        document.getElementById(parsedRef.ID)!.innerText = ""
-                        EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    const areaRef = sessionStorage.getItem('selectionRange');
+                    if (areaRef) {
+                        MultiCellMove(areaRef);
+                    } else if (storedRef) {
+                        singleCellMove(storedRef);
                     }
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
                     break
                 case "v":
                     event.preventDefault();
                     const storedRef2 = sessionStorage.getItem('tmpCellRef');
-                    if (storedRef2) {
-                        const parsedRef = JSON.parse(storedRef2);
-                        const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
-                        WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-                        WorkbookManager.getActiveSheet()?.SetCell(tmpCell, parsedRef.col, parsedRef.row)
-                        EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    const areaRef2 = sessionStorage.getItem('selectionRange');
+                    if(areaRef2) {
+                        MultiCellMove(areaRef2,true);
                     }
+                    else if (storedRef2) {
+                        singleCellMove(storedRef2,true);
+                    }
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+
                     break
                 case "b":
                     makeBold();
@@ -186,35 +292,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             case "Shift":
                 selectionStartCell = WorkbookManager.getActiveCell();
                 isShiftKeyDown = true;
-                break;
-            case "F5":
-                event.preventDefault();
-                const selectionRange = sessionStorage.getItem('selectionRange');
-                if (selectionRange) {
-                    const range = JSON.parse(selectionRange);
-                    const { startCol, startRow, endCol, endRow, sourceIDContent } = range;
-
-                        for (let r = startRow; r <= endRow; r++) {
-                            for (let c = startCol; c <= endCol; c++) {
-
-                                if (r === startRow && c === startCol) continue;
-
-                                const newForm = adjustFormula(sourceIDContent!.toString(),r - startRow, c - startCol)
-
-                                handleInput(r,c,newForm)
-
-
-                                const targetCellID = numberToLetters(c + 1) + (r + 1);
-                                const cellElement:HTMLElement = document.getElementById(targetCellID)!;
-                                cellElement.innerText = newForm;
-                            }
-                    }
-
-                }
-                WorkbookManager.getWorkbook().Recalculate();
-                sessionStorage.removeItem('selectionRange');
-
-
                 break;
             default:
                 return;
@@ -267,21 +344,21 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
-    function setHighlight(selectedStartCell:string) {
-        const startCellRef = new A1RefCellAddress(selectedStartCell);
-        const currentCellRef = new A1RefCellAddress(ID);
+    function setHighlight(endCell:string, saveHighlight:boolean = false) {
+        const endCellRef = new A1RefCellAddress(endCell);
+        const currentActiveCellRef = new A1RefCellAddress(ID);
 
 
-        const sourceIDContent = GetRawCellContent(selectedStartCell!);
+        const sourceIDContent = GetRawCellContent(endCell!);
 
         // Define the area we will be using
-        const startCol = Math.min(currentCellRef.col, startCellRef.col);
-        const endCol = Math.max(currentCellRef.col, startCellRef.col);
-        const startRow = Math.min(currentCellRef.row, startCellRef.row);
-        const endRow = Math.max(currentCellRef.row, startCellRef.row);
+        const startCol = Math.min(currentActiveCellRef.col, endCellRef.col);
+        const endCol = Math.max(currentActiveCellRef.col, endCellRef.col);
+        const startRow = Math.min(currentActiveCellRef.row, endCellRef.row);
+        const endRow = Math.max(currentActiveCellRef.row, endCellRef.row);
 
         // Clear any existing highlight
-        clearHighlight();
+        clearVisualHighlight()
 
         // Highlight all cells in the range
         for (let r = startRow; r <= endRow; r++) {
@@ -294,14 +371,15 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             }
         }
 
-        // Save the selection range in session storage
-        sessionStorage.setItem('selectionRange', JSON.stringify({
-            sourceIDContent,
-            startCol,
-            startRow,
-            endCol,
-            endRow
-        }));
+        if(saveHighlight) {
+            sessionStorage.setItem('selectionRange', JSON.stringify({
+                sourceIDContent,
+                startCol,
+                startRow,
+                endCol,
+                endRow
+            }));
+        }
     }
 
     return (
@@ -314,8 +392,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              onClick={(e) => {
                  if(e.shiftKey && selectionStartCell) {
                      setHighlight(selectionStartCell);
+                     AreaMarked = true
+
                  } else {
-                     clearHighlight();
+                     clearVisualHighlight()
                  }
              }}
 
@@ -544,6 +624,14 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
         cellColor.addEventListener("input", setCellColor);
         textColor.addEventListener("input", setTextColor);
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Shift') {
+                isShiftKeyDown = false;
+                console.log('Shift released', isShiftKeyDown);
+            }
+        });
+
 
 
         return () => {

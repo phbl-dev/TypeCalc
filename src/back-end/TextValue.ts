@@ -17,8 +17,7 @@ export class TextValue extends Value {
     public static readonly type: typeof TextValue = TextValue;
 
     // Defining the constructor:
-    public constructor(s: string) {
-        //TODO: FIX this problem when commit this as private.
+    private constructor(s: string) {
         super(); // Calling the parent constructor
         this.value = s; // Setting value to be the argument given in s
     }
