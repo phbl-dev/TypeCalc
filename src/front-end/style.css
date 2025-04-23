@@ -124,8 +124,7 @@ header h4 {
 
 #headerCorner {
     background: #3b3b3b;
-    border-left: 1px solid grey;
-    border-top: 1px solid grey;
+    border: 1px solid grey;
     z-index: 3;
 }
 
@@ -137,7 +136,7 @@ header h4 {
     justify-content: center;
     font-weight: bold;
     width: 100%;
-    border: 1px solid grey;
+    outline: 1px solid grey;
     z-index: 2;
     overflow: hidden;
 }
@@ -150,7 +149,7 @@ header h4 {
     justify-content: center;
     font-weight: bold;
     z-index: 2;
-    border: 1px solid grey;
+    outline: 1px solid grey;
     overflow: hidden;
 }
 
