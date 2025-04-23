@@ -155,10 +155,16 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
                 const colChar: string = numberToLetters(col);
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
-                    let cellEval = sheet.Get(col - 1, row - 1)?.Eval(sheet, 0, 0)?.ToObject();
-                    if (cellEval != undefined) {
-                        cellHTML.innerText = cellEval as string;
-                    } else if (sheetSwap) {
+                    const cell = sheet.Get(col - 1, row - 1);
+                    if (cell != null) {
+                        let cellEval = cell.Eval(sheet, 0, 0)?.ToObject();
+                        if (cellEval != undefined) {
+                            cellHTML.innerText = cellEval as string;
+                        } else {
+                            cellHTML.innerText = "";
+                        }
+                    } else {
+                        // Important: Clear the cell content when the cell is null
                         cellHTML.innerText = "";
                     }
                 }

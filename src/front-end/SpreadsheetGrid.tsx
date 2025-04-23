@@ -25,6 +25,8 @@ import {
     ParseToActiveCell,
     WorkbookManager
 } from "../API-Layer.ts";
+import {CellRef} from "../back-end/Expressions.ts";
+
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -218,6 +220,59 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
+        const StartCell = document.getElementById("headerCorner"); // Check what cell we are in.
+        let startCol: number;
+        let endCol: number;
+        let startRow: number;
+        let endRow: number;
+        let StartCellRef: A1RefCellAddress;
+
+        if (StartCell) {
+            StartCellRef = new A1RefCellAddress(StartCell.textContent!);
+        } else {
+            StartCellRef = new A1RefCellAddress("A1");
+        }
+
+        // Define the area, we will be using.
+        // Maybe this could be a method?
+        startCol = Math.min(columnIndex, StartCellRef.col);
+        endCol = Math.max(columnIndex, StartCellRef.col);
+        startRow = Math.min(rowIndex, StartCellRef.row);
+        endRow = Math.max(rowIndex, StartCellRef.row);
+
+        // Undo functionality:
+        if (event.key === "z" && event.metaKey) {
+            event.preventDefault()
+
+            WorkbookManager.getActiveSheet()?.undo()
+
+            // Refresh UI with wider range to ensure all affected cells are updated
+            EvalCellsInViewport(
+                WorkbookManager.getActiveSheetName(),
+                Math.max(0, startCol - 10),
+                endCol + 10,
+                Math.max(0, startRow - 10),
+                endRow + 10,
+                false
+            );
+        }
+
+        // Redo functionality:
+        if (event.key === "y" && event.metaKey) {
+            event.preventDefault()
+
+            WorkbookManager.getActiveSheet()?.redo()
+
+            // Refresh UI with wider range to ensure all affected cells are updated
+            EvalCellsInViewport(
+                WorkbookManager.getActiveSheetName(),
+                Math.max(0, startCol - 10),
+                endCol + 10,
+                Math.max(0, startRow - 10),
+                endRow + 10,
+                false
+            );
+        }
 
         if(event.ctrlKey) {
             switch (event.key) {

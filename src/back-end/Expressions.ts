@@ -136,6 +136,14 @@ export class TextConst extends Const {
         this.value = TextValue.MakeInterned(s);
     }
 
+    /**
+     * Returns the value of the TextConst
+     *
+     * @param sheet - the sheet
+     * @param col - Column index
+     * @param row - Row index
+     * @returns Value - The value to be returned
+     */
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         return this.value;
     }
@@ -272,7 +280,7 @@ export class FunCall extends Expr {
     public readonly function: (...args: unknown[]) => unknown;
     public es: Expr[];           // Non-null, elements non-null
     public nonStrict: boolean;        // We implemented a flag for non-strict functions such that we know if some of their arguments should not be evaluated.
-    public isChoose: boolean
+    public isChoose: boolean          // TODO: Are we still using this field?
 
     private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[]) {
         super();
@@ -333,8 +341,6 @@ export class FunCall extends Expr {
 
     public static Make(name: string, es: Expr[]): Expr {
 
-        let y
-
         if (name === "NEG") {return this.NEG(es)}
         if (name === "EQUALS") {return this.EQUALS(es);}
         if (name === "DIVIDE") {return this.DIVIDE(es);}
@@ -348,10 +354,7 @@ export class FunCall extends Expr {
         if (name === "LEQUALS") {return this.LEQUALS(es)}
         if (name === "LEQ") {return this.LEQ(es)}
         if (name === "CONCATENATE") {return this.CONCATENATE(es)}
-
-        if (name === "ARRAY") {
-            return ExprArray.MakeExprArray(es);
-        }
+        if (name === "ARRAY") {return ExprArray.MakeExprArray(es);}
 
         const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
         if (func === null) {
@@ -363,14 +366,7 @@ export class FunCall extends Expr {
                 es[i] = new Error("#SYNTAX") as unknown as Expr;
             }
         }
-
-        if (name === "SPECIALIZE" && es.length > 1) {
-            return new FunCall("SPECIALIZE", [FunCall.Make("CLOSURE", es)]);
-        } else {
-            return new FunCall(func, es);
-        }
-
-
+        return new FunCall(func, es);
     }
 
     /**

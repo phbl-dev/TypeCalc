@@ -13,6 +13,9 @@ export class Sheet {
     private name: string;
     public readonly workbook: Workbook;
     private readonly cells: SheetRep;
+    private readonly history: {cell: Cell; row: number; col: number}[]; // Added for undo/redo functionality. Array for caching added cells such that we can undo and redo them.
+    private historyPointer: number;       // Added for undo/redo functionality. Points at where we are in the history.
+    private undoCount: number;            // Added for undo/redo functionality. Counts how deep we are in undo calls.
     private functionSheet: boolean;
 
     constructor(workbook: Workbook, name: string, functionSheet: boolean);
@@ -43,6 +46,9 @@ export class Sheet {
             this.workbook.AddSheet(this);
         }
         this.cells = new SheetRep();
+        this.history = [];                 // Initially empty because no cells have been added yet
+        this.historyPointer = 0;           // Initially 0 because there is nothing else in the history to point at
+        this.undoCount = 0;                // Initially 0 because nothing have been undone
     }
 
     /**
@@ -85,6 +91,66 @@ export class Sheet {
      */
     public getCells(): SheetRep {
         return this.cells;
+    }
+
+    /**
+     * The undo method is used when a user press "ctrl+z" to draw back an action in the spreadsheet.
+     *
+     * @remarks
+     * The functionality of the method will only be invoked if there are actions to undo, i.e.
+     * the size of the undoCount is smaller than the length of the history array.
+     *
+     * @returns Nothing
+     */
+    public undo(): void {
+        // If the undoCount is smaller than the length of the history, then there are cells to undo.
+        if (this.undoCount < this.history.length) {
+
+            // Increase the undoCount to indicate that undo has been called.
+            this.undoCount++;
+
+            // Decrease the historyPointer to indicate that we go one step back in the history.
+            this.historyPointer--;
+
+            // Loop over the history in reversed order to check for older versions of the cell we are resetting.
+            // We subtract the undoCount-1 to avoid matching the same cell and to avoid matching redundant cells
+            // in case the user has called undo multiple times:
+            for (let i = this.history.length - this.undoCount - 1; i >= 0; i--) {
+
+                // If a previous version of that cell already exists in the history:
+                if (this.history[i].row === this.history[this.history.length - this.undoCount].row &&
+                    this.history[i].col === this.history[this.history.length - this.undoCount].col ) {
+
+                    // Then set the cell to that previous state
+                    this.cells.Set(this.history[i].col, this.history[i].row, this.history[i].cell)
+                    return
+                }
+            }
+            // Else, set the cell to null because then it should just be blank
+            this.cells.Set(this.history[this.historyPointer].col, this.history[this.historyPointer].row, null)
+        }
+    }
+
+    /**
+     * The redo method is used when a user presses "ctrl+y" to restore an action in the spreadsheet.
+     * The functionality of the method will only be invoked if there are actions to redo, i.e.
+     * the size of the undoCount is larger than 0.
+     */
+    public redo(): void {
+        // If the undoCount is larger than 0 then there are cells to redo:
+        if (this.undoCount > 0) {
+
+            // We get index that undoCount is at in relation to the history length because we
+            // want to redo and get update the cell in that spot.
+            let i = this.history.length - this.undoCount;
+            this.cells.Set(this.history[i].col, this.history[i].row, this.history[i].cell)
+
+            // We have moved one step forward in the history array so we increase the history pointer by 1:
+            this.historyPointer++;
+
+            // We decrease the undoCount because we have now recreated an action:
+            this.undoCount--;
+        }
     }
 
     /**
@@ -162,13 +228,11 @@ export class Sheet {
      * @constructor
      */
     public SetArrayFormula(cell: Cell, col: number, row: number, ulCa: SuperCellAddress, lrCa: SuperCellAddress): void {
-        console.log("reached here 1")
 
         const formula: Formula = cell as unknown as Formula;
         if (cell == null) {
             throw new Error("Invalid array formula");
         } else {
-            console.log("reached here 2")
             const caf: CachedArrayFormula = new CachedArrayFormula(formula, this, col, row, ulCa, lrCa);
             formula.AddToSupportSets(this, col, row, 1, 1);
             const displayCols = new Interval(ulCa.col, lrCa.col);
@@ -392,6 +456,33 @@ export class Sheet {
             console.log("col:", col.col, "row:", col.row);
             this.Set(col.col, newCell, col.row);
         }
+
+        // Undo/Redo functionality. First we check if the type of row and col is number:
+        if (typeof row === "number" && typeof col === "number") {
+            // If the user sets a new value in the sheet but "undo" has been called a number of times,
+            // then we make sure to shorten the history in accordance with the number of undo calls.
+            // This is important because then we remove the old values from the history that have already
+            // been "undone" by the user, and we therefore don't want to store them any longer because the
+            // user is setting new cells again.
+            if (this.undoCount > 0){
+                for (let i = 0; i < this.undoCount; i++) {
+                    this.history.pop()
+                }
+
+                // Reset undoCount because the history has been updated:
+                this.undoCount = 0;
+
+                // Add the newly created cell to our history:
+                this.history.push({cell: newCell, row: row, col: col})
+
+                // Otherwise, if undo has not been called then we can just add our new cell to the history
+                // because the user have not undone any values that we should remove from the history:
+            } else {
+                this.history.push({cell: newCell, row: row, col: col}) // Push the cell and its position to the history array
+            }
+        }
+        // Increase the historyPointer such that it follows the history array
+        this.historyPointer++;
     }
 
     /**
