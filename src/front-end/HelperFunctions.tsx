@@ -1,5 +1,6 @@
 import {Cell as BackendCell} from "../back-end/Cells";
 import {WorkbookManager} from "../API-Layer.ts";
+import {ErrorValue} from "../back-end/ErrorValue.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
@@ -48,9 +49,12 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
             const colNum = lettersToNumber(column);
             const newColNum = colNum + colDiff;
             newColumn = numberToLetters(newColNum);
+
+            console.log("This is the new column:", newColumn)
+
         }
 
-        console.log("THis is the value of newColumn", newColumn)
+
 
         return colAbs + newColumn + rowAbs + newRow;
     });
