@@ -474,10 +474,6 @@ export class Formula extends Cell {
     public override Eval(sheet: Sheet, col: number, row: number): Value {
 
 
-        if (this.v instanceof ErrorValue){
-            this.state = CellState.Dirty;
-            return this.v;
-        }
         switch (this.state) {
             case CellState.Uptodate:
                 break;
