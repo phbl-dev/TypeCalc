@@ -150,6 +150,10 @@ export abstract class Cell {
         if (text) {
             const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
             let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
+            if (!text.trim()) {
+                const blank = new BlankCell();
+                return blank;
+            }
             if (cellToBeAdded == undefined) {
                 const err = new TextCell(ErrorValue.Make("#SYNTAX").message)
                 err.ogText = text
