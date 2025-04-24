@@ -474,6 +474,10 @@ export class Formula extends Cell {
     public override Eval(sheet: Sheet, col: number, row: number): Value {
 
 
+        if (this.v instanceof ErrorValue){
+            this.state = CellState.Dirty;
+            return this.v;
+        }
         switch (this.state) {
             case CellState.Uptodate:
                 break;
@@ -492,14 +496,13 @@ export class Formula extends Cell {
 
             case CellState.Dirty:
             case CellState.Enqueued:
+                console.log(`Evaluating cell at (${col}, ${row})`);
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
-                // console.log("this.v in Formula.Eval():");
-                // console.log(this.v as Value);
+                console.log(`Result of Eval:`, this.v);
                 this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
                     this.ForEachSupported(Formula.EnqueueCellForEvaluation);
-
                 }
                 break;
 

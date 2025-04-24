@@ -509,6 +509,25 @@ export class FunCall extends Expr {
 
         const args = FunCall.getExprValues(sheet, col, row, this.es);
 
+        console.log("Args before error check:", args);
+        // Check for error values
+        function findErrorValue(arg: any): ErrorValue | null {
+            if (arg instanceof ErrorValue) {
+                return arg;
+            } else if (Array.isArray(arg)) {
+                for (const inner of arg) {
+                    const found = findErrorValue(inner);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        const errorArg = findErrorValue(args);
+        if (errorArg) {
+            return errorArg;
+        }
+
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
         const result = this.function(...args);
@@ -613,6 +632,9 @@ export class FunCall extends Expr {
                         const cellValue = value.Get(c, r);
                         if (cellValue instanceof NumberValue) {
                             result.push(NumberValue.ToNumber(cellValue));
+                        }
+                        else if (cellValue instanceof ErrorValue) {
+                            result.push(cellValue);
                         }
                     }
                 }
