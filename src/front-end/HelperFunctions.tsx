@@ -48,9 +48,18 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
             const colNum = lettersToNumber(column);
             const newColNum = colNum + colDiff;
             newColumn = numberToLetters(newColNum);
+
+            if(newColNum <= 0) {
+                return "'[FIX IN adjustFormula]'"
+            }
+
+            console.log(`Values inside adjustFormula: ${colNum}, ${newColNum}, ${newColumn}`)
+
+
+
         }
 
-        console.log("THis is the value of newColumn", newColumn)
+
 
         return colAbs + newColumn + rowAbs + newRow;
     });

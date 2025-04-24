@@ -171,12 +171,6 @@ export class Workbook {
         this.awaitsEvaluation.push(new FullCellAddress(sheet, null, col, row));
     }
 
-    // TODO: RecalculateFull() (NB: We probably don't have to make this since it's FunCalc related)
-
-    // TODO: RecalculateFullAfterSdfCheck() (NB: We probably don't have to make this since it's FunCalc related)
-
-    // TODO: RecalculateFullRebuild() (NB: We probably don't have to make this since it's FunCalc related)
-
     /**
      * Timing, and handling of cyclic dependencies
      * @param act

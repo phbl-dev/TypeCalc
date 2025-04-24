@@ -161,7 +161,7 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
                         if (cellEval != undefined) {
                             cellHTML.innerText = cellEval as string;
                         } else {
-                            cellHTML.innerText = "";
+                            cellHTML.innerText = cell.GetText()!;
                         }
                     } else {
                         // Important: Clear the cell content when the cell is null
