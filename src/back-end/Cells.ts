@@ -484,7 +484,11 @@ export class Formula extends Cell {
 
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
-                throw new CyclicException(msg, culprit); // Culprit should be added to this.
+                const err = ErrorValue.Make("#CYCLE!");
+                this.v = err;
+                console.error(msg);
+                return this.v;
+                //throw new CyclicException(msg, culprit); // Culprit should be added to this.
 
             case CellState.Dirty:
             case CellState.Enqueued:
