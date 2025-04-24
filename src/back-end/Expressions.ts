@@ -616,6 +616,10 @@ export class FunCall extends Expr {
             }
             const value = expr.Eval(sheet, col, row);
 
+            if (value instanceof ErrorValue) {
+                return value;
+            }
+
             if (value instanceof NumberValue) {
                 return NumberValue.ToNumber(value)
             }
