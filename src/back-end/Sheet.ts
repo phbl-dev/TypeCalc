@@ -469,7 +469,8 @@ export class Sheet {
             this.history = this.history.slice(1);
             // Now we can call manageHistory() to add the new cell.
             this.manageHistory(row, col, newCell);
-
+            // Note that we don't increase the history pointer here
+            // because the history stays at the same length of 100.
         }
     }
 
