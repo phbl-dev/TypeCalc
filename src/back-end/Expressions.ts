@@ -667,7 +667,7 @@ export class FunCall extends Expr {
     // Show infixed operators as infix and without excess parentheses
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
         const stringArray: string[] = [];
-        const pre = 0; //TODO: Fix fixity
+        const pre:number = 0; //TODO: Fix fixity
 
         if (pre === 0) { // Not operator
             stringArray.push(this.function.name + "(");
