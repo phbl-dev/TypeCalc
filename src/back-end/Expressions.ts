@@ -157,6 +157,10 @@ export class TextConst extends Const {
     }
 }
 
+/**
+ * A ValueConst is an arbitrary constant valued expression, used only
+ * for partial evaluation; there is no corresponding formula source syntax.
+ */
 class ValueConst extends Const {
     public readonly value: Value;
     constructor(value: Value) {
