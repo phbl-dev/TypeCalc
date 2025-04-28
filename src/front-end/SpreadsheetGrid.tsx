@@ -482,7 +482,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                      updateFormulaBox(ID, rawCellContent);
                      return;
                  }
-                 valueHolder = (e.target as HTMLElement).innerText;
+                 rawCellContent = rawCellContent.trim();
+                 valueHolder = (e.target as HTMLElement).innerText.trim();
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
 
