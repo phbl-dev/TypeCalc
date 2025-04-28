@@ -284,7 +284,15 @@ export class Sheet {
         if (this.cells != null) {
             // Added by us. Assume that a sheet is not empty.
             const cell: Cell = this.cells.Get(fromCol, fromRow)!; // This is not allowed to be empty || undefined.
+            console.log("this is the oldCell")
+            console.log(cell);
             this.Set(col as number, cell.MoveContents(col - fromCol, row - fromRow), row);
+            if(cell.GetSupportSet() != null) {
+                const newCell = this.cells.Get(fromCol,fromRow)
+                console.log("This is the newCell")
+                console.log(newCell)
+                cell.TransferSupportTo(newCell);
+            }
             this.RemoveCell(fromCol, fromRow);
         }
     }

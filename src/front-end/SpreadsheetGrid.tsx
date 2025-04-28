@@ -201,17 +201,18 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
     function singleCellMove(storedRef: string, copy: boolean = false) {
         const parsedRef = JSON.parse(storedRef);
-
+        const wb = WorkbookManager.getActiveSheet()
         if(copy) {
             const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
-            WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-            WorkbookManager.getActiveSheet()?.SetCell(tmpCell, parsedRef.col, parsedRef.row)
-            console.log("The current cell is below")
-            console.log(tmpCell)
-        } else {
-            WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+            wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+            wb!.SetCell(tmpCell, parsedRef.col, parsedRef.row)
 
-            document.getElementById(parsedRef.ID)!.innerText = "";
+        } else {
+
+            wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+
+            //document.getElementById(parsedRef.ID)!.innerText = "";
+            wb!.RemoveCell(parsedRef.col, parsedRef.row)
             sessionStorage.removeItem('tmpCellRef');
         }
     }
