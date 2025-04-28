@@ -200,7 +200,7 @@ header h4 {
 }
 
 .hide-caret {
-    caret-color: transparent;
+    caret-color: transparent !important;
 }
 
 .show-caret {
