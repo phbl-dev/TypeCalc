@@ -564,7 +564,7 @@ describe("Formula.js", () => {
     test("Eval with IF2", () => {
         const trueExpr: Expr = new NumberConst(1); // We don't have a BooleanConst, but we can make boolean NumberConst
         const falseExpr: Expr = new NumberConst(0); // We don't have a BooleanConst, but we can make boolean NumberConst
-        const expr3: Expr = new NumberConst(42);
+        const expr3: Expr = new NumberConst(42); // Some default value
 
         // If we divide 1/0 we get an error value as we should:
         const shouldBreak = FunCall.Make("DIVIDE", [trueExpr, falseExpr])
@@ -600,9 +600,9 @@ describe("Formula.js", () => {
         workbook.Recalculate();
 
 
-        expect(() => {
-            sheet.Get(1, 0).Eval(sheet, 1, 0);
-        }).toThrowError(CyclicException);
+        const finalResult = sheet.Get(1,0).Eval(sheet,1,0);
+        expect(finalResult).toBeInstanceOf(ErrorValue);  // Expect ErrorValue instead of exception
+        expect((finalResult.ToObject() as ErrorValue).message).toBe("#CYCLE!");
 
         //expect(sheet.Get(1,0).Eval(sheet,1,0)).toThrow("CyclicException: ### CYCLE in cell TestSheet!B1 formula =func(1, TestSheet!C1, 42) \n")
         //console.log(sheet.Get(1,0).Eval(sheet,0,0))
@@ -654,8 +654,12 @@ describe("Formula.js", () => {
 
         workbook.Recalculate();
 
+        const result = sheet.Get(0,0).Eval(sheet,0,0);
+
+        expect(result).toBeInstanceOf(ErrorValue);
+        expect((result.ToObject() as ErrorValue).message).toBe("#CYCLE!");
         // Correctly throws cyclic exception because now the Cell Area A1:A10 is chosen, and it has a cycle:
-        expect(() => sheet.Get(0,0).Eval(sheet,0,0)).toThrowError(CyclicException);
+        //expect(() => sheet.Get(0,0).Eval(sheet,0,0)).toThrowError(CyclicException);
     })
 
 });

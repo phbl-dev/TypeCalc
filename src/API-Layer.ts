@@ -3,6 +3,7 @@ import {Sheet} from "./back-end/Sheet.ts";
 import {numberToLetters} from "./front-end/HelperFunctions.tsx";
 import {A1RefCellAddress, SupportCell} from "./back-end/CellAddressing.ts";
 import {Cell, Formula} from "./back-end/Cells.ts";
+import {ErrorValue} from "./back-end/ErrorValue.ts";
 
 //This is an overarching workbook used for all objects in the system.
 //Follows a singleton dogma, since we really never need to have multiple workbooks at the same time.
@@ -118,7 +119,7 @@ export function GetRawCellContent(cellID: string): string | null {
     }
 
     const cellContent: string | null | undefined = activeSheet.getCells().Get(cellCol, cellRow)?.GetText();
-    console.log("this is the cellContent", cellContent)
+    //console.log("this is the cellContent", cellContent)
     if (!cellContent && cellContent != "0") {
         console.debug("[GetRawCellContent] No cell found!");
         return null;
@@ -157,9 +158,12 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
                 if (cellHTML != null) {
                     const cell = sheet.Get(col - 1, row - 1);
                     if (cell != null) {
-                        let cellEval = cell.Eval(sheet, 0, 0)?.ToObject();
-                        if (cellEval != undefined) {
-                            cellHTML.innerText = cellEval as string;
+                        let cellEval = cell.Eval(sheet, 0, 0);
+                        if (cellEval instanceof ErrorValue) {
+                            cellHTML.innerText = cellEval.message;
+                        }
+                        else if (cellEval != undefined) {
+                            cellHTML.innerText = cellEval.ToObject() as string;
                         } else {
                             cellHTML.innerText = cell.GetText()!;
                         }
