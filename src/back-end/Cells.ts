@@ -210,6 +210,8 @@ export abstract class Cell {
             // Otherwise, it returns the left-hand value. Therefore, newCell cannot be null after this operation.
             newCell = newCell ?? new BlankCell();
             newCell!.supportSet = this.supportSet; // We use ! to guarantee TypeScript that newCell is not null.
+            this.supportSet = null;
+
         }
         // We can't just return newCell because Typescript thinks it can still be null. Therefore, we check again that
         // it's not null before returning it. If it's null we return a new BlankCell.

@@ -204,16 +204,16 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         const wb = WorkbookManager.getActiveSheet()
         if(copy) {
             const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
+
             wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-            wb!.SetCell(tmpCell, parsedRef.col, parsedRef.row)
+            wb!.SetCell(tmpCell.CloneCell(parsedRef.col, parsedRef.row), parsedRef.col, parsedRef.row)
 
         } else {
 
             wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-
-            //document.getElementById(parsedRef.ID)!.innerText = "";
-            wb!.RemoveCell(parsedRef.col, parsedRef.row)
             sessionStorage.removeItem('tmpCellRef');
+
+            WorkbookManager.getWorkbook()?.Recalculate();
         }
     }
 
@@ -508,6 +508,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              onBlur={(e) => {
 
                  console.debug("Value not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
+
+                 console.log(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
                  //Only update cell if the contents have changed!
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
