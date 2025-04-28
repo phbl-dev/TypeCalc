@@ -13,7 +13,7 @@ export class Sheet {
     private name: string;
     public readonly workbook: Workbook;
     private readonly cells: SheetRep;
-    private readonly history: {cell: Cell; row: number; col: number}[]; // Added for undo/redo functionality. Array for caching added cells such that we can undo and redo them.
+    private history: {cell: Cell; row: number; col: number}[]; // Added for undo/redo functionality. Array for caching added cells such that we can undo and redo them.
     private historyPointer: number;       // Added for undo/redo functionality. Points at where we are in the history.
     private undoCount: number;            // Added for undo/redo functionality. Counts how deep we are in undo calls.
     private functionSheet: boolean;
@@ -457,14 +457,39 @@ export class Sheet {
             this.Set(col.col, newCell, col.row);
         }
 
-        // Undo/Redo functionality. First we check if the type of row and col is number:
+        // The history array has a cap of max 100:
+        // Adding the cell to our undo/redo history if it has length < 100.
+        if (this.history.length < 100) {
+            this.manageHistory(row, col, newCell);
+            // Increase the historyPointer such that it follows the history array
+            this.historyPointer++;
+        } else {
+            // Otherwise, we use the slice method to exclude the first element
+            // from the history array and give it length 99:
+            this.history = this.history.slice(1);
+            // Now we can call manageHistory() to add the new cell.
+            this.manageHistory(row, col, newCell);
+            // Note that we don't increase the history pointer here
+            // because the history stays at the same length of 100.
+        }
+    }
+
+    /**
+     * Added for handling Undo/Redo functionality.
+     * @param row
+     * @param col
+     * @param newCell
+     * @private
+     */
+    private manageHistory(row: number | undefined, col: number | SuperCellAddress, newCell: Cell) {
+        // First we check if the type of row and col is number:
         if (typeof row === "number" && typeof col === "number") {
             // If the user sets a new value in the sheet but "undo" has been called a number of times,
             // then we make sure to shorten the history in accordance with the number of undo calls.
             // This is important because then we remove the old values from the history that have already
             // been "undone" by the user, and we therefore don't want to store them any longer because the
             // user is setting new cells again.
-            if (this.undoCount > 0){
+            if (this.undoCount > 0) {
                 for (let i = 0; i < this.undoCount; i++) {
                     this.history.pop()
                 }
@@ -481,8 +506,6 @@ export class Sheet {
                 this.history.push({cell: newCell, row: row, col: col}) // Push the cell and its position to the history array
             }
         }
-        // Increase the historyPointer such that it follows the history array
-        this.historyPointer++;
     }
 
     /**
