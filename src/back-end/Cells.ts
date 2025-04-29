@@ -1,15 +1,14 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
-import type {Sheet} from "./Sheet";
-import type {Value} from "./Value";
-import {Adjusted, FullCellAddress, type Interval, SuperCellAddress, SupportSet} from "./CellAddressing";
+import type { Sheet } from "./Sheet";
+import {ArrayValue, ErrorValue, NumberValue, TextValue, Value} from "./Value";
+import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
 import {Error, type Expr} from "./Expressions"; // This should be imported when it's done
-import {Formats} from "./Types";
-import type {Workbook} from "./Workbook"; // This should be imported when it's done
-import {SpreadsheetVisitor} from "./Parser/Visitor";
-import {NumberValue} from "./NumberValue";
-import {TextValue} from "./TextValue";
-import {ArrayValue} from "./ArrayValue";
-import {ErrorValue} from "./ErrorValue";
+import { Formats } from "./Types";
+import type { Workbook } from "./Workbook"; // This should be imported when it's done
+
+import {SpreadsheetVisitor} from "./Parser.ts";
+
+
 
 
 export enum CellState {

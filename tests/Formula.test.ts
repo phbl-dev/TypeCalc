@@ -4,7 +4,8 @@ import { Cell, Formula, NumberCell } from "../src/back-end/Cells";
 import { Workbook } from "../src/back-end/Workbook";
 import { Expr, FunCall, NumberConst } from "../src/back-end/Expressions";
 import { Sheet } from "../src/back-end/Sheet";
-import { NumberValue } from "../src/back-end/NumberValue";
+
+import {NumberValue} from "../src/back-end/Value";
 
 describe("Formula", () => {
     let workbook: Workbook;

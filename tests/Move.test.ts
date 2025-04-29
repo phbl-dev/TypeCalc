@@ -8,9 +8,6 @@ import {BlankCell, Formula, NumberCell} from "../src/back-end/Cells";
 describe("Move", (): void => {
     let workbook: Workbook;
     let sheet: Sheet;
-    let cellArea: CellArea;
-    let funCall: Expr;
-    let formula: Formula;
 
     beforeEach(() => {
         workbook = new Workbook();

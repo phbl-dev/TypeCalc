@@ -3,7 +3,8 @@ import {Sheet} from "./back-end/Sheet.ts";
 import {numberToLetters} from "./front-end/HelperFunctions.tsx";
 import {A1RefCellAddress, SupportCell} from "./back-end/CellAddressing.ts";
 import {Cell, Formula} from "./back-end/Cells.ts";
-import {ErrorValue} from "./back-end/ErrorValue.ts";
+
+import {ErrorValue} from "./back-end/Value.ts";
 
 //This is an overarching workbook used for all objects in the system.
 //Follows a singleton dogma, since we really never need to have multiple workbooks at the same time.

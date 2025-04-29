@@ -1,8 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { NumberValue } from "../src/back-end/NumberValue";
-import { ErrorValue } from "../src/back-end/ErrorValue";
-import { ObjectValue } from "../src/back-end/ObjectValue";
-import { Value } from "../src/back-end/Value";
+import {ErrorValue, NumberValue, Value} from "../src/back-end/Value";
 
 describe("NumberValue can be Instantiated properly", () => {
   test("NumberValue can be instantiated from a number", () => {
@@ -29,12 +26,6 @@ describe("NumberValue can be Instantiated properly", () => {
     expect(nv1.Equals(nv2)).toBeFalsy();
   });
 
-  test("Two instances with not same type", () => {
-    const nv1 = NumberValue.Make(10);
-    const nv2 = ObjectValue.Make(10 as unknown as object);
-
-    expect(nv1.Equals(nv2)).toBeFalsy();
-  });
 
   test("ToObject should return the inner value as Value tupe", () => {
     const nv1 = NumberValue.Make(10);

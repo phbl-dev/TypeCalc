@@ -3,12 +3,11 @@ import * as formulajs from '@formulajs/formulajs'
 import {CellRef, Expr, ExprArray, FunCall, NumberConst, TextConst} from "../src/back-end/Expressions";
 import { Sheet } from "../src/back-end/Sheet";
 import { Workbook } from "../src/back-end/Workbook";
-import { NumberValue } from "../src/back-end/NumberValue";
-import { TextValue } from "../src/back-end/TextValue";
 import {SuperRARef} from "../src/back-end/CellAddressing";
 import { BlankCell, Cell, Formula, NumberCell } from "../src/back-end/Cells";
 import {CyclicException} from "../src/back-end/Types";
-import {ErrorValue} from "../src/back-end/ErrorValue"; // Importing formulajs
+
+import {ErrorValue, NumberValue, TextValue} from "../src/back-end/Value"; // Importing formulajs
 
 
 describe("Formula.js", () => {
