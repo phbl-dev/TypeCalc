@@ -251,24 +251,6 @@ export class Sheet {
         }
     }
 
-    /**
-     * Not entirely sure how this is supposed to work. It appears as if all Cells are being copied within a specified area
-     * @param cell
-     * @param col
-     * @param row
-     * @param cols
-     * @param rows
-     * @constructor
-     */
-
-    public PasteCell(cell: Cell, col: number, row: number, cols: number, rows: number): void {
-        for (let c = 0; c < cols; c++) {
-            for (let r = 0; r < rows; r++) {
-                this.Set(col + c, cell.CloneCell(col, row), row + r);
-            }
-        }
-        cell.AddToSupportSets(this, col, row, cols, rows);
-    }
 
     /**
      * Moves a cell from its current column and row to another
@@ -534,14 +516,6 @@ export class Sheet {
      */
     public getName(): string {
         return this.name;
-    }
-
-    public getFuncSheetBool(): boolean {
-        return this.functionSheet;
-    }
-
-    public setFuncSheet(value: boolean): void {
-        this.functionSheet = value;
     }
 
     public AddToSupportSets(): void {

@@ -1,69 +1,10 @@
-import {Workbook} from "./back-end/Workbook.ts";
-import {Sheet} from "./back-end/Sheet.ts";
-import {numberToLetters} from "./front-end/HelperFunctions.tsx";
-import {A1RefCellAddress, SupportCell} from "./back-end/CellAddressing.ts";
-import {Cell, Formula} from "./back-end/Cells.ts";
-
-import {ErrorValue} from "./back-end/Value.ts";
-
-//This is an overarching workbook used for all objects in the system.
-//Follows a singleton dogma, since we really never need to have multiple workbooks at the same time.
-export class WorkbookManager {
-    private static instance: Workbook | null = null;
-    private static activeSheet: string = "Sheet1";
-    private static activeCell: string = "";
-
-    static getWorkbook(): Workbook {
-        if (!this.instance) {
-            this.instance = new Workbook();
-            const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", 65536, 1048576, true);
-            this.instance.AddSheet(baseSheet);
-        }
-        return this.instance;
-    }
-
-    static getActiveSheet(): Sheet | null {
-        if (!this.instance || !this.activeSheet) {
-            this.instance = new Workbook();
-            console.log("[WorkbookManager] Creating Workbook");
-        }
-        return this.instance.get(this.activeSheet);
-    }
-
-    static getActiveCell(): string | null {
-        return this.activeCell;
-    }
-
-    static setActiveCell(cell: string): void {
-        this.activeCell = cell;
-    }
-
-    //static addSheet(sheetName:string):void {}
-
-    static getActiveSheetName(): string {
-        return this.activeSheet;
-    }
-
-    static setActiveSheet(activeSheetName: string): void {
-        this.activeSheet = activeSheetName;
-    }
-
-    static createNewWorkbook(): void {
-        this.instance = new Workbook();
-    }
-
-    static getSheetNames(): string[] {
-        if (!this.instance) {
-            console.error("[WorkbookManager] getSheets() can't see a workbook.");
-            return [];
-        }
-        let sheetNames: string[] = [];
-        this.instance.GetSheets().forEach((sheet: Sheet) => {
-            sheetNames.push(sheet.getName());
-        })
-        return sheetNames;
-    }
-}
+import {WorkbookManager} from "./WorkbookManager.ts";
+import {Sheet} from "../back-end/Sheet.ts";
+import {numberToLetters} from "../front-end/HelperFunctions.tsx";
+import {ErrorValue} from "../back-end/Value.ts";
+import {A1RefCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
+import {Cell, Formula} from "../back-end/Cells.ts";
+import {Workbook} from "../back-end/Workbook.ts";
 
 export function ParseToActiveCell(content: string): void {
     const a1Address: string | null = WorkbookManager.getActiveCell();
@@ -138,7 +79,7 @@ export function GetRawCellContent(cellID: string): string | null {
 //This is the method for retrieving cell data for the current view-port in the front-end.
 //Updates on every scroll, meaning that the values are stored only in back-end, and then repeatedly fetched
 //Makes sure that we only load data in the viewport, everything else stays in back-end.
-export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number, sheetSwap: boolean): void {
+export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number): void {
     const wb = WorkbookManager.getWorkbook();
     if (!wb) {
         console.debug("[ShowWindowInGUI] No workbook found!");
@@ -162,8 +103,7 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
                         let cellEval = cell.Eval(sheet, 0, 0);
                         if (cellEval instanceof ErrorValue) {
                             cellHTML.innerText = cellEval.message;
-                        }
-                        else if (cellEval != undefined) {
+                        } else if (cellEval != undefined) {
                             cellHTML.innerText = cellEval.ToObject() as string;
                         } else {
                             cellHTML.innerText = cell.GetText()!;

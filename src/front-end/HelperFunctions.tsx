@@ -1,5 +1,5 @@
-import {Cell as BackendCell} from "../back-end/Cells";
-import {WorkbookManager} from "../API-Layer.ts";
+
+import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
@@ -65,14 +65,6 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
     });
 }
 
-// Creates the formula box field in the header. Used in Cell by updateFormulaBox.
-export const formulaBox = ({ cell, style}: {cell:BackendCell, style:any}) => (
-    <div id="formulaBox"
-         style={{
-             ...style,
-         }}>
-    </div>
-);
 
 // The following 5 functions are for styling the cell and its contents.
 // They are connected to the appropriate buttons in the header.
