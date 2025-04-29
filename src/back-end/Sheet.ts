@@ -2,7 +2,9 @@ import type { Workbook } from "./Workbook";
 import { Cell, BlankCell, CachedArrayFormula, Formula, ArrayFormula } from "./Cells";
 import { type Adjusted, Interval, SuperCellAddress } from "./CellAddressing";
 import type { Expr } from "./Expressions";
-import { ArrayValue } from "./ArrayValue";
+
+
+import {ArrayValue} from "./Value.ts";
 
 /**
  * Creates a new sheet. Default size is 65536 columns and 1048576 rows.

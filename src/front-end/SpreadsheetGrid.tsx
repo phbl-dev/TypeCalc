@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {
     XMLReader
-} from "../WorkbookIO";
+} from "../back-end/WorkbookIO.ts";
 import {
     getCell,
     adjustFormula,
@@ -17,7 +17,6 @@ import {
 import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
-import {ArrayExplicit} from "../back-end/ArrayValue.ts";
 import {
     EvalCellsInViewport,
     GetRawCellContent,
@@ -26,6 +25,8 @@ import {
     WorkbookManager
 } from "../API-Layer.ts";
 import {CellRef} from "../back-end/Expressions.ts";
+
+import {ArrayExplicit} from "../back-end/Value.ts";
 
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -368,6 +369,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+    // Should handleInput() be in API-Layer.ts instead?
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         console.log(cellToBeAdded);

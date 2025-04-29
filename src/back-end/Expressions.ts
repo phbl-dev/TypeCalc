@@ -1,13 +1,10 @@
 import  { Sheet } from "./Sheet";
-import  { Value } from "./Value";
+import {ArrayExplicit, ArrayView, ErrorValue, NumberValue, TextValue, Value} from "./Value";
 import { Adjusted, FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "./CellAddressing";
 import {Cell} from "./Cells";
-import { type Formats, type IEquatable, ImpossibleException } from "./Types";
-import { NumberValue } from "./NumberValue";
-import { TextValue } from "./TextValue";
-import { ErrorValue } from "./ErrorValue";
-import {ArrayExplicit, ArrayView} from "./ArrayValue";
-import * as formulajs from '@formulajs/formulajs' // Importing formulajs
+import { type Formats, ImpossibleException } from "./Types";
+import * as formulajs from '@formulajs/formulajs'
+// Importing formulajs
 
 
 // An Expr is an expression that may appear in a Formula cell.
@@ -790,8 +787,7 @@ class RefSet {
     }
 }
 
-// Should it inherit from IEquatable<CellArea>?
-export class CellRef extends Expr implements IEquatable<CellRef> {
+export class CellRef extends Expr {
     public readonly raref: SuperRARef;
     public readonly sheet: Sheet;
 
@@ -924,7 +920,7 @@ export class CellRef extends Expr implements IEquatable<CellRef> {
     }
 }
 
-export class CellArea extends Expr implements IEquatable<CellArea> {
+export class CellArea extends Expr {
     private readonly ul: SuperRARef;
     private readonly lr: SuperRARef;
     public readonly sheet: Sheet;
