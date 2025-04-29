@@ -25,7 +25,6 @@ import {
     ParseToActiveCell,
     WorkbookManager
 } from "../API-Layer.ts";
-import {CellRef} from "../back-end/Expressions.ts";
 
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -191,7 +190,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 }
             }
         }
-        WorkbookManager.getWorkbook().Recalculate();
+        //WorkbookManager.getWorkbook().Recalculate();
 
         if (!copy) {
             clearVisualHighlight();
@@ -201,18 +200,19 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
     function singleCellMove(storedRef: string, copy: boolean = false) {
         const parsedRef = JSON.parse(storedRef);
-
+        const wb = WorkbookManager.getActiveSheet()
         if(copy) {
             const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
-            WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-            WorkbookManager.getActiveSheet()?.SetCell(tmpCell, parsedRef.col, parsedRef.row)
-            console.log("The current cell is below")
-            console.log(tmpCell)
-        } else {
-            WorkbookManager.getActiveSheet()?.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
 
-            document.getElementById(parsedRef.ID)!.innerText = "";
+            wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
+            wb!.SetCell(tmpCell.CloneCell(parsedRef.col, parsedRef.row), parsedRef.col, parsedRef.row)
+
+        } else {
+
+            wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
             sessionStorage.removeItem('tmpCellRef');
+
+            WorkbookManager.getWorkbook()?.Recalculate();
         }
     }
 
@@ -280,7 +280,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         singleCellMove(storedRef2,true);
                     }
                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
-
+                    WorkbookManager.getWorkbook()?.Recalculate()
                     break
                 case "b":
                     makeBold();
@@ -410,21 +410,14 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         } else {
          currentActiveCellRef = new A1RefCellAddress(ID);
 }
-
-        const sourceIDContent = GetRawCellContent(endCell!);
-
-        // Define the area we will be using
-        const startCol = Math.min(currentActiveCellRef.col, endCellRef.col);
-        const endCol = Math.max(currentActiveCellRef.col, endCellRef.col);
-        const startRow = Math.min(currentActiveCellRef.row, endCellRef.row);
-        const endRow = Math.max(currentActiveCellRef.row, endCellRef.row);
+        let {ulCa,lrCa} = A1RefCellAddress.normalizeArea(currentActiveCellRef,endCellRef)
 
         // Clear any existing highlight
         clearVisualHighlight()
 
         // Highlight all cells in the range
-        for (let r = startRow; r <= endRow; r++) {
-            for (let c = startCol; c <= endCol; c++) {
+        for (let r = ulCa.row; r <= lrCa.row; r++) {
+            for (let c = ulCa.col; c <= lrCa.col; c++) {
                 const cellID = numberToLetters(c + 1) + (r + 1);
                 const cell = document.getElementById(cellID);
                 if (cell) {
@@ -435,11 +428,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
         if(saveHighlight) {
             sessionStorage.setItem('selectionRange', JSON.stringify({
-                sourceIDContent,
-                startCol,
-                startRow,
-                endCol,
-                endRow
+                startCol : ulCa.col,
+                startRow : ulCa.row,
+                endCol : lrCa.col,
+                endRow : lrCa.row
             }));
         }
     }
@@ -507,6 +499,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              onBlur={(e) => {
 
                  console.debug("Value not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
+
+                 console.log(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
                  //Only update cell if the contents have changed!
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
