@@ -2,11 +2,11 @@
   Currently, only Excel 2003 XMLSS format is supported.
  */
 import {XMLParser} from "fast-xml-parser";
-import {Workbook} from "./Workbook.ts";
-import {Sheet} from "./Sheet.ts";
-import {Cell} from "./Cells.ts";
-import {numberToLetters} from "../front-end/HelperFunctions.tsx";
-import {WorkbookManager} from "../API-Layer.ts";
+import {Workbook} from "../back-end/Workbook.ts";
+import {Sheet} from "../back-end/Sheet.ts";
+import {Cell} from "../back-end/Cells.ts";
+
+import {WorkbookManager} from "./WorkbookManager.ts";
 
 //The XMLReader is used to read an XML file via the method readFile(xml_filename)
 /*More in-depth explanation is as follows:

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {
     XMLReader
-} from "../back-end/WorkbookIO.ts";
+} from "../API-Layer/WorkbookIO.ts";
 import {
     getCell,
     adjustFormula,
@@ -17,15 +17,15 @@ import {
 import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
+
+import {ArrayExplicit} from "../back-end/Value.ts";
+import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {
     EvalCellsInViewport,
     GetRawCellContent,
     GetSupportsInViewport,
-    ParseToActiveCell,
-    WorkbookManager
-} from "../API-Layer.ts";
-
-import {ArrayExplicit} from "../back-end/Value.ts";
+    ParseToActiveCell
+} from "../API-Layer/Back-endEndpoints.ts";
 
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -77,7 +77,6 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
 
 let selectionStartCell: string | null = null
 let isShiftKeyDown = false
-let sheetChanged = false
 let AreaMarked = false
 
 
@@ -92,13 +91,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     let initialValueRef = useRef<string>("");
     let valueHolder:string = "";
     let mySupports:string[];
-    // Passes the cell ID to the headerCorner as textContent of the headerCorner
-    const handleHover = () => {
-        const headerCorner = document.getElementById("headerCorner");
-        if (headerCorner) { // if-statement handles possibility that headerCorner is null
-            headerCorner.textContent = ID;
-        }
-    }
+
     // Passes the cell ID to the 'Go to cell' input box as its value of the
     const displayCellId = () => {
         const cellIdDisplay = document.getElementById("cellIdInput") as HTMLInputElement;
@@ -369,7 +362,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
-    // Should handleInput() be in API-Layer.ts instead?
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         console.log(cellToBeAdded);

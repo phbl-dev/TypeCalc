@@ -18,9 +18,6 @@ export abstract class Expr {
     // Evaluate expression as if at cell address sheet[col, row]
     public abstract Eval(sheet: Sheet, col: number, row: number): Value;
 
-    // Using "public" instead of "internal"
-    public abstract VisitorCall(visitor: IExpressionVisitor): void;
-
     // Insert N new rowcols before rowcol R>=0, when we're at rowcol r
     public abstract InsertRowCols(modSheet: Sheet, thisSheet: boolean, R: number, N: number, r: number, doRows: boolean): Adjusted<Expr>;
 
@@ -116,10 +113,6 @@ export class NumberConst extends Const {
         return this.value;
     }
 
-    public override VisitorCall(visitor: IExpressionVisitor) {
-        visitor.visitNumberConst(this);
-    }
-
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
         return this.value.ToString();
     }
@@ -145,10 +138,6 @@ export class TextConst extends Const {
         return this.value;
     }
 
-    public override VisitorCall(visitor: IExpressionVisitor) {
-        visitor.visitTextConst(this);
-    }
-
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
         return '"' + this.value + '"';
     }
@@ -167,10 +156,6 @@ class ValueConst extends Const {
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         return this.value;
-    }
-
-    public override VisitorCall(visitor: IExpressionVisitor) {
-        visitor.visitValueConst(this);
     }
 
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
@@ -195,10 +180,6 @@ export class Error extends Const {
 
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         return this.value;
-    }
-
-    public override VisitorCall(visitor: IExpressionVisitor) {
-        visitor.visitError(this);
     }
 
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
@@ -241,9 +222,6 @@ export class ExprArray extends Expr {
         return this.es.toString()
     }
 
-    VisitorCall(visitor: IExpressionVisitor): void {
-        throw new Error("Not implemented");
-    }
 
     CopyTo(col: number, row: number): Expr {
         throw new Error("CopyTo Not implemented");
@@ -752,22 +730,8 @@ export class FunCall extends Expr {
         })
         return false;
     }
-
-    override VisitorCall(visitor: IExpressionVisitor): void {
-        visitor.visitFunCall(this);
-    }
 }
 
-// Should
-interface IExpressionVisitor {
-    visitNumberConst(numbConst: NumberConst): void;
-    visitTextConst(textConst: TextConst): void;
-    visitValueConst(valueConst: ValueConst): void;
-    visitError(expr: Error): void;
-    visitFunCall(funCall: FunCall): void;
-    visitCellRef(cellRef: CellRef): void;
-    visitCellArea(cellArea: CellArea): void;
-}
 
 class RefSet {
     private readonly cellRefsSeen: Set<CellRef> = new Set<CellRef>();
@@ -891,17 +855,9 @@ export class CellRef extends Expr {
         return this.raref.equals(that.raref);
     }
 
-    public GetHashCode() {
-        return this.raref.getHashCode();
-    }
-
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
         const s = this.raref.show(col, row, fo);
         return this.sheet == null ? s : this.sheet.getName() + "!" + s;
-    }
-
-    public override VisitorCall(visitor: IExpressionVisitor) {
-        visitor.visitCellRef(this);
     }
 
     private static RefAndSupp(abs: boolean, ra: number, r1: number, r2: number): [Interval, (arg: number) => Interval] {
@@ -1075,18 +1031,8 @@ export class CellArea extends Expr {
         return that != null && this.ul.equals(that.ul) && this.lr.equals(that.lr);
     }
 
-
-    public GetHashCode():number {
-        return this.lr.getHashCode() * 511 + this.ul.getHashCode()
-    }
-
-
     public override Show(col: number, row: number, ctxpre: number, fo: Formats): string {
         const s = this.ul.show(col, row, fo) + ":" + this.lr.show(col, row, fo);
         return this.sheet == null ? s : this.sheet.getName() + "!" + s;
-    }
-
-    public override VisitorCall(visitor: IExpressionVisitor) {
-        visitor.visitCellArea(this);
     }
 }

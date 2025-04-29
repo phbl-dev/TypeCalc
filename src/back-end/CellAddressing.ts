@@ -391,14 +391,6 @@ export class A1RefCellAddress extends RARefCellAddress {
     }
 }
 
-//This is used with a screen pointer. We have to figure out how this interacts with the rest of code.
-export class PointCellAddress extends SuperCellAddress {
-    constructor(point: { x: number; y: number }) {
-        const caCol: number = point.x;
-        const caRow: number = point.y;
-        super(caCol, caRow);
-    }
-}
 
 export class FullCellAddress {
     readonly sheet: Sheet;
@@ -426,9 +418,6 @@ export class FullCellAddress {
         return false;
     }
 
-    getHashCode(): number {
-        return this.cellAddress.getHashCode() * 29 + this.sheet.getHashCode();
-    }
 
     //lots of operator overloading here that we can't do in TypeScript. To be considered?
 
@@ -584,9 +573,6 @@ export class SupportArea extends SupportRange {
         return false;
     }
 
-    static get idempotentForeachFunction(): boolean {
-        return this.idempotentForeach;
-    }
 
     static set idempotentForeachFunction(value: boolean) {
         this.idempotentForeach = value;

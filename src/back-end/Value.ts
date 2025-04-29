@@ -52,7 +52,7 @@ export class ErrorValue extends Value {
     public static readonly argTypeError: ErrorValue = this.Make("#ERR: ArgType!");
     public static readonly nameError: ErrorValue = this.Make("#NAME?");
     public static readonly refError: ErrorValue = this.Make("#REF!");
-    public static readonly cycleError: ErrorValue = this.Make("#CYCLE!");
+    public static readonly cycleError: ErrorValue = this.Make("#CYCLE!"); //TODO: Why is this unused?
     public static readonly valueError: ErrorValue = this.Make("#VALUE!");
     public static readonly naError: ErrorValue = this.Make("#NA");
     public static readonly tooManyArgsError: ErrorValue = this.Make(
@@ -87,10 +87,6 @@ export class ErrorValue extends Value {
 
     public Equals(v: Value): boolean {
         return (v as ErrorValue) && (v as ErrorValue).index == this.index;
-    }
-
-    public GetHashCode(): number {
-        return this.index;
     }
 
     public ToObject(): unknown {
@@ -584,28 +580,6 @@ export abstract class ArrayValue extends Value {
         return res;
     }
 
-    public static FromDoubleArray1D(o: object): Value {
-        const xs: number[] = o as number[];
-        if (xs != null) {
-            const vs: Value[][] = Array.from({length: xs.length}, () => Array.from({length: 1}));
-            for (let i = 0; i < xs.length; i++) {
-                vs[i][0] = NumberValue.Make(xs[i]);
-            }
-            return new ArrayExplicit(vs) as unknown as Value;
-        } else {
-            return ErrorValue.argTypeError;
-        }
-    }
-
-    public static FromDoubleArray2D(o: object): Value {
-        const xs: number[][] = o as number[][];
-
-        if (xs != null) {
-            return new ArrayDouble(xs) as unknown as Value;
-        } else {
-            return ErrorValue.argTypeError;
-        }
-    }
 
     private ToDoubleOrNaN(value: Value): number {
         return Number(value) || Number.NaN;
@@ -833,82 +807,5 @@ export class ArrayExplicit extends ArrayValue {
 
     View(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
         return new ArrayExplicit(ulCa.offset(this.ulCellAddress), lrCa.offset(this.lrCellAddress), this.values) as unknown as Value;
-    }
-}
-
-class ArrayDouble extends ArrayValue {
-    public readonly matrix!: number[][];
-
-    constructor(cols: number, rows: number);
-    constructor(matrix: number[][]);
-
-    constructor(arg1: number | number[][], arg2?: number) {
-        super();
-        if (Array.isArray(arg1)) {
-            this.matrix = arg1;
-        } else {
-            this.matrix = new Array(arg1).fill(new Array(arg2));
-        }
-    }
-
-    get Cols(): number {
-        return this.matrix[1].length;
-    }
-
-    Equals(v: Value): boolean {
-        return ArrayValue.EqualsElements(this, v as unknown as ArrayValue);
-    }
-
-    Get(col: number, row: number): Value {
-        return NumberValue.Make(this.matrix[col][row]);
-    }
-
-    get Rows(): number {
-        return this.matrix[0].length;
-    }
-
-    Slice(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
-        return this.View(ulCa, lrCa);
-    }
-
-    View(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
-        const cols: number = this.Cols,
-            rows: number = this.Rows,
-            col0: number = ulCa.col,
-            row0: number = ulCa.row,
-            _lrCa = lrCa; // eslint-disable-line @typescript-eslint/no-unused-vars
-
-        const vals: Value[][] = new Array(cols).fill(new Array(rows));
-        for (let i = 0; i < cols; i++) {
-            for (let j = 0; j < rows; j++) {
-                vals[i][j] = NumberValue.Make(this.matrix[row0 + j][col0 + i]);
-            }
-        }
-        return new ArrayExplicit(vals) as unknown as Value;
-    }
-
-    public override ToDoubleArray2DFast(): number[][] {
-        return this.matrix;
-    }
-
-    public static Make(v: Value): Value {
-        if (v instanceof ArrayDouble) {
-            return v as unknown as Value;
-        } else if (v instanceof ArrayValue) {
-            const arr: ArrayValue = v as unknown as ArrayValue;
-            const cols: number = arr.Cols;
-            const rows: number = arr.Rows;
-            const result: ArrayDouble = new ArrayDouble(cols, rows);
-            for (let i = 0; i < rows; i++) {
-                for (let j = 0; j < cols; j++) {
-                    if (result.matrix[i][j]) {
-                        arr.Get(i, j);
-                    }
-                }
-            }
-            return result as Value;
-        } else {
-            return ErrorValue.argTypeError as unknown as Value;
-        }
     }
 }
