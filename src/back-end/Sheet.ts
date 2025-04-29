@@ -1,10 +1,7 @@
 import type { Workbook } from "./Workbook";
 import { Cell, BlankCell, CachedArrayFormula, Formula, ArrayFormula } from "./Cells";
-import { type Adjusted, Interval, SuperCellAddress } from "./CellAddressing";
+import {type Adjusted, Interval, SuperCellAddress} from "./CellAddressing";
 import type { Expr } from "./Expressions";
-
-
-import {ArrayValue} from "./Value.ts";
 
 /**
  * Creates a new sheet. Default size is 65536 columns and 1048576 rows.
@@ -284,15 +281,28 @@ export class Sheet {
      */
     public MoveCell(fromCol: number, fromRow: number, col: number, row: number) {
         if (this.cells != null) {
-            // Added by us. Assume that a sheet is not empty.
-            const cell: Cell = this.cells.Get(fromCol, fromRow)!; // This is not allowed to be empty || undefined.
-            this.Set(col as number, cell.MoveContents(col - fromCol, row - fromRow), row);
+            const originalCell: Cell = this.cells.Get(fromCol, fromRow)!;
+
+            const originalSupportSet = originalCell.GetSupportSet();
+
+            this.Set(col as number, originalCell.MoveContents(col - fromCol, row - fromRow), row);
+
+            const newCell: Cell = this.cells.Get(col, row)!;
+
             this.RemoveCell(fromCol, fromRow);
+
+            if (originalSupportSet != null) {
+                const blankCell = this.cells.Get(fromCol, fromRow)!;
+
+                newCell.TransferSupportTo(blankCell);
+                this.workbook.RecordCellChange(fromCol, fromRow, this);
+                this.workbook.RecordCellChange(col, row, this);
+            }
         }
     }
 
     public RemoveCell(col: number, row: number): void {
-        this.cells.Set(col,row,null)
+        this.cells.Set(col,row,new BlankCell())
     }
 
     /**
