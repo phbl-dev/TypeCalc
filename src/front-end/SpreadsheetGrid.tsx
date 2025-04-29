@@ -25,7 +25,6 @@ import {
     ParseToActiveCell,
     WorkbookManager
 } from "../API-Layer.ts";
-import {CellRef} from "../back-end/Expressions.ts";
 
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
