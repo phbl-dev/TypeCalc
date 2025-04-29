@@ -64,6 +64,10 @@ header h4 {
     width: 40px;
 }
 
+#export {
+    margin-left: -15px;
+}
+
 #bold {
     font-weight: bold;
 }

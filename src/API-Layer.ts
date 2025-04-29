@@ -15,8 +15,7 @@ export class WorkbookManager {
     static getWorkbook(): Workbook {
         if (!this.instance) {
             this.instance = new Workbook();
-            const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", 65536, 1048576, true);
-            this.instance.AddSheet(baseSheet);
+            new Sheet(this.instance, "Sheet1", 65536, 1048576, true); //Creates initial sheet
         }
         return this.instance;
     }
@@ -57,9 +56,13 @@ export class WorkbookManager {
             return [];
         }
         let sheetNames: string[] = [];
+        let count = 1;
         this.instance.GetSheets().forEach((sheet: Sheet) => {
+            console.log(count.toString() + ". Added " + sheet.getName());
             sheetNames.push(sheet.getName());
+            count++;
         })
+        console.log("SheetNames: " + sheetNames); //TODO: Delete this line
         return sheetNames;
     }
 }

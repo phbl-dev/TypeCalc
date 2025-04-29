@@ -1,4 +1,3 @@
-import {Cell as BackendCell} from "../back-end/Cells";
 import {WorkbookManager} from "../API-Layer.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
@@ -30,6 +29,53 @@ export function lettersToNumber(letters:string):number {
         output = output * 26 + (charCode + 1);
     }
     return output;
+}
+
+export function exportAsXML() {
+    const xmlHeader = "<?xml version=\"1.0\"?>\n" +
+        "<?mso-application progid=\"Excel.Sheet\"?>\n" +
+        "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
+        "          xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n" +
+        "          xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n" +
+        "          xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
+        "          xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
+    const xmlFooter = "" +
+        "</Workbook>";
+
+    let xmlOutput = xmlHeader
+    const sheetNames = WorkbookManager.getSheetNames();
+
+    for(const sheet of sheetNames) {
+        const xmlSheetHeader = `
+                 <Worksheet ss:Name="${sheet}">
+                     <Table>`;
+
+        const xmlSheetFooter = "" +
+            "        </Table>\n" +
+            "    </Worksheet>\n";
+
+        xmlOutput += xmlSheetHeader + xmlSheetFooter;
+    }
+    xmlOutput += xmlFooter;
+
+    const blob = new Blob([xmlOutput], {type: "application/xml"});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "workbook.xml";
+    link.click();
+}
+
+function escapeCharsXML(unsafe: string): string {
+    return unsafe.replace(/[<>&'"]/g, function (c) {
+        switch (c) {
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '&': return '&amp;';
+            case '\'': return '&apos;';
+            case '"': return '&quot;';
+            default: return c;
+        }
+    });
 }
 
 /**
@@ -64,15 +110,6 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
         return colAbs + newColumn + rowAbs + newRow;
     });
 }
-
-// Creates the formula box field in the header. Used in Cell by updateFormulaBox.
-export const formulaBox = ({ cell, style}: {cell:BackendCell, style:any}) => (
-    <div id="formulaBox"
-         style={{
-             ...style,
-         }}>
-    </div>
-);
 
 // The following 5 functions are for styling the cell and its contents.
 // They are connected to the appropriate buttons in the header.

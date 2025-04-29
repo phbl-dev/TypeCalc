@@ -8,6 +8,7 @@ import {
     adjustFormula,
     numberToLetters,
     lettersToNumber,
+    exportAsXML,
     makeBold,
     makeItalic,
     makeUnderlined,
@@ -562,8 +563,8 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
                 onClick={() => {
                     const newSheetName = window.prompt("Enter an unused Sheet Name");
                     if (newSheetName && !sheetNames.includes(newSheetName) && newSheetName.trim() !== "") {
-                        let newSheet = new Sheet(WorkbookManager.getWorkbook(), newSheetName, 65536, 1048576, false);
-                        WorkbookManager.getWorkbook().AddSheet(newSheet);
+                        new Sheet(WorkbookManager.getWorkbook(), newSheetName, 65536, 1048576, false);
+                        WorkbookManager.getWorkbook();
                         setSheetNames([...sheetNames, newSheetName]);
                     }
                 }}
@@ -599,6 +600,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
     useEffect(() => {
+        const exportButton = document.getElementById("export") as HTMLButtonElement;
         const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
         const input = document.getElementById("cellIdInput") as HTMLInputElement;
         const boldButton = document.getElementById("bold") as HTMLButtonElement;
@@ -675,6 +677,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
+        exportButton.addEventListener("click", exportAsXML)
         jumpButton.addEventListener("click", handleJump); // Jump to cell
         input.addEventListener("keydown", (e) => { // Jump to cell
             if (e.key === "Enter") handleJump();
@@ -699,6 +702,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop
             window.removeEventListener("dragover", handleDragOver); // Drag and drop
+            exportButton.removeEventListener("click", exportAsXML);
             jumpButton.removeEventListener("click", handleJump); // Jump to cell
             boldButton.removeEventListener("click", makeBold)
             italicButton.removeEventListener("click", makeItalic)
