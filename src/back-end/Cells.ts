@@ -1,16 +1,15 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
-import type { Sheet } from "./Sheet";
-import type { Value } from "./Value";
-import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
-import {Error, type Expr, FunCall, NumberConst} from "./Expressions"; // This should be imported when it's done
-import { CyclicException, Formats } from "./Types";
-import type { Workbook } from "./Workbook"; // This should be imported when it's done
-import { SpreadsheetVisitor} from "./Parser/Visitor";
-import { NumberValue } from "./NumberValue";
-import { TextValue } from "./TextValue";
-import { ArrayValue } from "./ArrayValue";
-import { ErrorValue } from "./ErrorValue";
-
+import type {Sheet} from "./Sheet";
+import type {Value} from "./Value";
+import {Adjusted, FullCellAddress, type Interval, SuperCellAddress, SupportSet} from "./CellAddressing";
+import {Error, type Expr} from "./Expressions"; // This should be imported when it's done
+import {Formats} from "./Types";
+import type {Workbook} from "./Workbook"; // This should be imported when it's done
+import {SpreadsheetVisitor} from "./Parser/Visitor";
+import {NumberValue} from "./NumberValue";
+import {TextValue} from "./TextValue";
+import {ArrayValue} from "./ArrayValue";
+import {ErrorValue} from "./ErrorValue";
 
 
 export enum CellState {
@@ -151,8 +150,7 @@ export abstract class Cell {
             const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
             let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
             if (!text.trim()) {
-                const blank = new BlankCell();
-                return blank;
+                return new BlankCell();
             }
             if (cellToBeAdded == undefined) {
                 const err = new TextCell(ErrorValue.Make("#SYNTAX").message)
@@ -303,16 +301,8 @@ export class BlankCell extends ConstCell {
     }
 
     public override CloneCell(col: number, row: number): Cell {
-        console.log(col, row);
-
         return new BlankCell();
     }
-
-    Reset(): void {
-        console.log("Trying to reset BlankCell")
-        //throw new Error("Method not implemented (BlankCell Reset).");
-    }
-
 
 }
 
@@ -349,12 +339,6 @@ export class NumberCell extends ConstCell {
     public override CloneCell(col: number, row: number): Cell {
         return new NumberCell(this);
     }
-
-    // We have to implement these methods from the ConstCell as well:
-    Reset(): void {
-        console.log("Trying to reset NumberCell")
-    }
-
 }
 
 
@@ -382,11 +366,6 @@ export class QuoteCell extends ConstCell {
 
     public override CloneCell(col: number, row: number): Cell {
         return new QuoteCell(this);
-    }
-
-    // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
-    Reset(): void {
-        throw new Error("Method not implemented. (QuoteCell Reset)");
     }
 
 }
@@ -417,9 +396,6 @@ export class TextCell extends ConstCell {
         return new TextCell(this);
     }
 
-    // Due to the strictness of inheritance in TypeScript we must implement the rest of the abstract methods from Cell that was not overwritten by ConstCell:
-    Reset(): void {
-    }
 
 }
 
@@ -456,7 +432,6 @@ export class Formula extends Cell {
     }
 
     /**
-     * TODO: This is an issue with this current implementation
      * Moves a single cell containing a formula
      * The values that are used in this method is the delta values,
      * as such we need have the offset between the original formula and it new location.
@@ -474,30 +449,23 @@ export class Formula extends Cell {
      * @constructor
      */
     public override Eval(sheet: Sheet, col: number, row: number): Value {
-
-
         switch (this.state) {
             case CellState.Uptodate:
                 break;
-
             case CellState.Computing:
                 console.log("Computing");
-
-
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
                 const err = ErrorValue.Make("#CYCLE!");
                 this.v = err;
                 console.error(msg);
                 return this.v;
-                //throw new CyclicException(msg, culprit); // Culprit should be added to this.
-
             case CellState.Dirty:
             case CellState.Enqueued:
-                console.log(`Evaluating cell at (${col}, ${row})`);
+                console.debug(`Evaluating cell at (${col}, ${row})`);
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
-                console.log(`Result of Eval:`, this.v);
+                console.debug(`Result of Eval:`, this.v);
                 this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
                     this.ForEachSupported(Formula.EnqueueCellForEvaluation);
@@ -691,12 +659,10 @@ export class ArrayFormula extends Cell {
         return this.caf.ulCa.col <= col && col <= this.caf.lrCa.col && this.caf.ulCa.row <= row && row <= this.caf.lrCa.row;
     }
 
-    // TODO: contains an issue that can be looked into!
     public override MoveContents(deltaCol: number, deltaRow: number): Cell {
         return new ArrayFormula(this.caf.MoveContents(deltaCol, deltaRow), this.ca);
     }
 
-    // TODO: This is not implemented at all in the sestoft version!
     public override InsertRowCols(
         adjusted: Map<Expr, Adjusted<Expr>>,
         modSheet: Sheet,
@@ -706,7 +672,7 @@ export class ArrayFormula extends Cell {
         r: number,
         doRows: boolean,
     ): void {
-        throw new Error("Not implemented :)");
+
     }
 
     public override showValue(sheet: Sheet, col: number, row: number): string {
@@ -767,7 +733,6 @@ export class ArrayFormula extends Cell {
     }
 
     /**
-     * TODO: IMPLEMENT THIS
      * @param col
      * @param row
      * @constructor
