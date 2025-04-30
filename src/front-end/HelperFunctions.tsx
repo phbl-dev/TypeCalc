@@ -1,4 +1,5 @@
 import {WorkbookManager} from "../API-Layer.ts";
+import {Sheet, SheetRep} from "../back-end/Sheet.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
@@ -53,6 +54,9 @@ export function exportAsXML() {
         const xmlSheetFooter = "" +
             "        </Table>\n" +
             "    </Worksheet>\n";
+        const sheetContent = new SheetRep();
+
+        const xmlRow =  `<Cell><Data ss:Type="String"></Data></Cell>`
 
         xmlOutput += xmlSheetHeader + xmlSheetFooter;
     }

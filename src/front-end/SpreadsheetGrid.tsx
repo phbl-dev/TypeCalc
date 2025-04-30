@@ -1,33 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {
-    XMLReader
-} from "../WorkbookIO";
-import {
-    getCell,
-    adjustFormula,
-    numberToLetters,
-    lettersToNumber,
-    exportAsXML,
-    makeBold,
-    makeItalic,
-    makeUnderlined,
-    setCellColor,
-    setTextColor
-} from "./HelperFunctions.tsx";
+import {XMLReader} from "../WorkbookIO";
 import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayExplicit} from "../back-end/ArrayValue.ts";
-import {
-    EvalCellsInViewport,
-    GetRawCellContent,
-    GetSupportsInViewport,
-    ParseToActiveCell,
-    WorkbookManager
-} from "../API-Layer.ts";
-import {CellRef} from "../back-end/Expressions.ts";
-
+import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewport,
+        ParseToActiveCell, WorkbookManager} from "../API-Layer.ts";
+import {getCell, adjustFormula, numberToLetters, lettersToNumber,
+        exportAsXML, makeBold, makeItalic, makeUnderlined,
+        setCellColor, setTextColor} from "./HelperFunctions.tsx";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -41,8 +23,6 @@ interface GridInterface {
     height?: number;
     ref?: React.Ref<any>;
 }
-
-
 
 /** Defines the column headers as a div with ID, style, and contents
  *
@@ -81,7 +61,6 @@ let isShiftKeyDown = false
 let sheetChanged = false
 let AreaMarked = false
 
-
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
@@ -96,7 +75,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     // Passes the cell ID to the headerCorner as textContent of the headerCorner
     const handleHover = () => {
         const headerCorner = document.getElementById("headerCorner");
-        if (headerCorner) { // if-statement handles possibility that headerCorner is null
+        if (headerCorner) { // if-statement handles the possibility that headerCorner is null
             headerCorner.textContent = ID;
         }
     }
@@ -295,7 +274,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             }
         }
 
-
         switch (event.key) {
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1);
@@ -354,7 +332,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             default:
                 return;
         }
-
 
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID
         // so we can focus the cell. Also updates the cell ID displayed to show current cell's ID.
