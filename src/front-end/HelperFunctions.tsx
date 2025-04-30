@@ -34,6 +34,20 @@ export function lettersToNumber(letters:string):number {
     return output;
 }
 
+export function exportAsCSV() {
+    const currentSheet = WorkbookManager.getActiveSheet();
+    if (!currentSheet) return;
+
+    for (let r = 0; r < currentSheet.Rows; r++) {
+        for (let c = 0; c < currentSheet.Cols; c++) {
+            const cell: Cell | null = currentSheet.Get(c, r);
+            if (cell != null) {
+
+            }
+        }
+    }
+}
+
 export function exportAsXML() {
     const xmlHeader = "<?xml version=\"1.0\"?>\n" +
         "<?mso-application progid=\"Excel.Sheet\"?>\n" +
