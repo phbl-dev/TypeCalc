@@ -250,8 +250,8 @@ export class ExprArray extends Expr {
 /**
  *
  */
-type functionType = (...args: (string | number | ErrorValue | Date | number[] | null | undefined)[])
-    => string | number | boolean | ErrorValue | Date | number[] | null | undefined;
+type functionType = (...args: (string | number | ErrorValue | Date | number[])[])
+    => string | number | boolean | ErrorValue | Date | number[] | undefined;
 
 /**
  * A FunCall expression is an operator application such as 1+$A$4 or a function
@@ -516,7 +516,7 @@ export class FunCall extends Expr {
 
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
-        const result = this.function(...args as (string | number | ErrorValue | Date | number[] | null | undefined)[]);
+        const result = this.function(...args as (string | number | ErrorValue | Date | number[])[]);
 
         // If the return type is Date:
         if (result instanceof Date) {
@@ -582,8 +582,10 @@ export class FunCall extends Expr {
      * the expressions in the es-array.
      * - If the expr is an instance of ExprArray then we are dealing with a nested array. Therefore,
      * we call getExprValues() recursively on this expr and return the resulting array from this call.
+     * - If the value is an instance of ErrorValue we simply return this ErrorValue.
      * - If the value is an instance of NumberValue we extract the number from them using ToNumber().
      * - If the expr holds a TextValue we extract the string from it using ToString().
+     * - If the value is an instance of ArrayView, we create a result array where all the values of the ArrayView are pushed onto.
      * - Otherwise, we return null.
      *
      * We store the result in an array called args of (string | number | object | null | undefined)[].
@@ -605,7 +607,6 @@ export class FunCall extends Expr {
             if (value instanceof ErrorValue) {
                 return value;
             }
-
             if (value instanceof NumberValue) {
                 return NumberValue.ToNumber(value)
             }
