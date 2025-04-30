@@ -2,7 +2,7 @@ import {createToken, type CstNode, CstParser, Lexer, type ParserMethod, type Tok
 import type {Workbook} from "./Workbook.ts";
 import {Cell, Formula, NumberCell, QuoteCell, TextCell} from "./Cells.ts";
 import {CellArea, CellRef, Error, Expr, ExprArray, FunCall, NumberConst, TextConst} from "./Expressions.ts";
-import {ErrorValue, NumberValue} from "./Value.ts";
+import {ErrorValue, NumberValue} from "./Values.ts";
 import type {Sheet} from "./Sheet.ts";
 import {A1RARef, R1C1RARef, SuperRARef} from "./CellAddressing.ts";
 

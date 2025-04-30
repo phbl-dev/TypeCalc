@@ -2,7 +2,7 @@ import {describe, expect, test } from "vitest";
 import { NumberCell, Cell } from "../src/back-end/Cells";
 import { Sheet } from "../src/back-end/Sheet";
 import { Workbook } from "../src/back-end/Workbook";
-import { Value } from "../src/back-end/Value";
+import { Value } from "../src/back-end/Values";
 import { Formats } from "../src/back-end/Types";
 
 describe ("NumberCell", () => {
@@ -40,7 +40,7 @@ describe ("NumberCell", () => {
     });
 
     /**
-     * Eval returns the field value of type Value.
+     * Eval returns the field value of type Values.
      */
     test ("Eval Test", () => {
         expect(numberCell.Eval(sheet, 0, 0) instanceof Value).toBe(true);

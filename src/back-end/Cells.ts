@@ -1,6 +1,6 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
 import type { Sheet } from "./Sheet";
-import {ArrayValue, ErrorValue, NumberValue, TextValue, Value} from "./Value";
+import {ArrayValue, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
 import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
 import {Error, type Expr} from "./Expressions"; // This should be imported when it's done
 import { Formats } from "./Types";
@@ -321,7 +321,7 @@ export class NumberCell extends ConstCell {
                 // Check if d is "not a number" or is infinite.
                 throw new Error(`${d} is not a valid number`);
             }
-            this.value = NumberValue.Make(d) as NumberValue; // Because NumberValue.Make(d) returns a Value we cast it as a NumberValue.
+            this.value = NumberValue.Make(d) as NumberValue; // Because NumberValue.Make(d) returns a Values we cast it as a NumberValue.
         } else {
             this.value = d.value;
         }
