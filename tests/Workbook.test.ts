@@ -2,10 +2,9 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { Workbook } from "../src/back-end/Workbook";
 import { Sheet, SheetRep } from "../src/back-end/Sheet";
 import {Cell, Formula, NumberCell, TextCell} from "../src/back-end/Cells";
-import { NumberValue } from "../src/back-end/NumberValue";
 import { FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "../src/back-end/CellAddressing";
-import { TextValue } from "../src/back-end/TextValue";
 import {CellRef, Expr, FunCall, NumberConst} from "../src/back-end/Expressions";
+import {NumberValue, TextValue} from "../src/back-end/Value";
 
 
 describe("Workbook", () => {

@@ -1,7 +1,8 @@
-import {WorkbookManager} from "../API-Layer.ts";
 import {Sheet, SheetRep} from "../back-end/Sheet.ts";
 import {Workbook} from "../back-end/Workbook.ts";
 import {Cell} from "../back-end/Cells.ts";
+
+import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
@@ -148,6 +149,7 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
         return colAbs + newColumn + rowAbs + newRow;
     });
 }
+
 
 // The following 5 functions are for styling the cell and its contents.
 // They are connected to the appropriate buttons in the header.

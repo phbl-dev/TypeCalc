@@ -1,15 +1,14 @@
 import type { Workbook } from "./Workbook";
 import { Cell, BlankCell, CachedArrayFormula, Formula, ArrayFormula } from "./Cells";
-import { type Adjusted, Interval, SuperCellAddress } from "./CellAddressing";
+import {type Adjusted, Interval, SuperCellAddress} from "./CellAddressing";
 import type { Expr } from "./Expressions";
-import { ArrayValue } from "./ArrayValue";
 
 /**
- * Creates a new sheet. Default size is 2000 columns and 10000 rows.
+ * Creates a new sheet. Default size is 65536 columns and 1048576 rows.
  */
 export class Sheet {
-    public cols = 2000;
-    public rows = 10000;
+    public cols = 65536;
+    public rows = 1048576;
     private name: string;
     public readonly workbook: Workbook;
     private readonly cells: SheetRep;
@@ -24,9 +23,9 @@ export class Sheet {
 
     /**
      * Constructors are defined below. There is supposed to be two constructors,
-     * where the first one uses the default number of columns (2000) and rows (10000).
+     * where the first one uses the default number of columns (65536) and rows (1048576).
      * The second constructor allows us to give our own value for cols and rows.
-     * @defaultValue: columns = 2000, rows = 10000
+     * @defaultValue: columns = 65536, rows = 1048576
      * @example
      * // returns a sheet with 10 columns and 10 rows.
      *  const sheet:Sheet = new Sheet(workbook, "sheet1", 100, 100, false);
@@ -252,24 +251,6 @@ export class Sheet {
         }
     }
 
-    /**
-     * Not entirely sure how this is supposed to work. It appears as if all Cells are being copied within a specified area
-     * @param cell
-     * @param col
-     * @param row
-     * @param cols
-     * @param rows
-     * @constructor
-     */
-
-    public PasteCell(cell: Cell, col: number, row: number, cols: number, rows: number): void {
-        for (let c = 0; c < cols; c++) {
-            for (let r = 0; r < rows; r++) {
-                this.Set(col + c, cell.CloneCell(col, row), row + r);
-            }
-        }
-        cell.AddToSupportSets(this, col, row, cols, rows);
-    }
 
     /**
      * Moves a cell from its current column and row to another
@@ -282,15 +263,28 @@ export class Sheet {
      */
     public MoveCell(fromCol: number, fromRow: number, col: number, row: number) {
         if (this.cells != null) {
-            // Added by us. Assume that a sheet is not empty.
-            const cell: Cell = this.cells.Get(fromCol, fromRow)!; // This is not allowed to be empty || undefined.
-            this.Set(col as number, cell.MoveContents(col - fromCol, row - fromRow), row);
+            const originalCell: Cell = this.cells.Get(fromCol, fromRow)!;
+
+            const originalSupportSet = originalCell.GetSupportSet();
+
+            this.Set(col as number, originalCell.MoveContents(col - fromCol, row - fromRow), row);
+
+            const newCell: Cell = this.cells.Get(col, row)!;
+
             this.RemoveCell(fromCol, fromRow);
+
+            if (originalSupportSet != null) {
+                const blankCell = this.cells.Get(fromCol, fromRow)!;
+
+                newCell.TransferSupportTo(blankCell);
+                this.workbook.RecordCellChange(fromCol, fromRow, this);
+                this.workbook.RecordCellChange(col, row, this);
+            }
         }
     }
 
     public RemoveCell(col: number, row: number): void {
-        this.cells.Set(col,row,null)
+        this.cells.Set(col,row,new BlankCell())
     }
 
     /**
@@ -522,14 +516,6 @@ export class Sheet {
      */
     public getName(): string {
         return this.name;
-    }
-
-    public getFuncSheetBool(): boolean {
-        return this.functionSheet;
-    }
-
-    public setFuncSheet(value: boolean): void {
-        this.functionSheet = value;
     }
 
     public AddToSupportSets(): void {

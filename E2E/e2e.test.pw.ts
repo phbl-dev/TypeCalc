@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import * as fs from "node:fs";
-import * as path from "node:path";
 
 
 
@@ -223,3 +222,85 @@ test("DnD", async ({ page }) => {
 
 
 });
+
+test("Copy and cut single cell", async ({ page }) => {
+  await page.goto('http://localhost:5173/');
+  const C4 = page.locator('div#C4.Cell')
+  await C4.click()
+  await C4.type("= 10 + 20 * 30")
+  await page.keyboard.press("Enter")
+  await expect(C4).toContainText('610');
+  await C4.click()
+  await page.keyboard.press("Control+c")
+  const E8 = page.locator('div#E8.Cell')
+  await E8.click()
+  await page.keyboard.press("Control+x")
+  await expect(C4).toContainText("")
+  await expect(E8).toContainText('610');
+
+
+})
+
+
+test("Copy and cut multiple cells", async ({ page }) => {
+  await page.goto('http://localhost:5173/');
+
+
+
+  const C4 = page.locator('div#C4.Cell')
+
+  await C4.click()
+
+  await C4.type("= 10 + 20 * 30")
+
+  await page.keyboard.press("Enter")
+
+  await expect(C4).toContainText('610');
+
+
+  const C6 = page.locator('div#C6.Cell')
+  await C6.click()
+  await C6.type("= 10 + 20 + 30")
+
+  await page.keyboard.press("Enter")
+  await expect(C6).toContainText('60');
+
+
+  await C4.click()
+
+  await page.keyboard.down("Shift")
+  await page.keyboard.press("ArrowDown")
+  await page.keyboard.press("ArrowDown")
+  await page.keyboard.press("ArrowDown")
+
+  await page.keyboard.up("Shift")
+
+
+  await page.keyboard.down("Control")
+  await page.keyboard.press("c")
+
+
+  await page.keyboard.up("Control")
+
+
+  const E8 = page.locator('div#E8.Cell')
+  const E10 = page.locator('div#E10.Cell')
+
+
+  await E8.click()
+
+  await page.keyboard.down("Control")
+  await page.keyboard.press("x")
+
+
+  await page.keyboard.up("Control")
+
+
+  await expect(E8).toContainText('610');
+
+  await expect(E10).toContainText('60');
+
+  await expect(C4).toContainText('');
+  await expect(C6).toContainText('');
+
+})
