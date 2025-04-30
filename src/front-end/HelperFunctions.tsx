@@ -1,5 +1,7 @@
 import {WorkbookManager} from "../API-Layer.ts";
 import {Sheet, SheetRep} from "../back-end/Sheet.ts";
+import {Workbook} from "../back-end/Workbook.ts";
+import {Cell} from "../back-end/Cells.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
@@ -50,17 +52,35 @@ export function exportAsXML() {
         const xmlSheetHeader = `
                  <Worksheet ss:Name="${sheet}">
                      <Table>`;
+        xmlOutput += xmlSheetHeader
 
-        const xmlSheetFooter = "" +
-            "        </Table>\n" +
-            "    </Worksheet>\n";
-        const sheetContent = new SheetRep();
-
-        const xmlRow =  `<Cell><Data ss:Type="String"></Data></Cell>`
-
-        xmlOutput += xmlSheetHeader + xmlSheetFooter;
+        const sheetContent = WorkbookManager.getWorkbook().getSheet(sheet)
+        if(!sheetContent) {return}
+        for (let r = 0; r < sheetContent.Rows; r++) {
+            let newRowFlag = false;
+            for (let c = 0; c < sheetContent.Cols; c++) {
+                const cell: Cell | null = sheetContent.Get(c, r);
+                if (cell != null) {
+                    if(!newRowFlag) {
+                        newRowFlag = true;
+                        const xmlRowStart = "" +
+                            `<Row>`
+                        xmlOutput += xmlRowStart
+                    }
+                    const xmlCell =  `    <Cell><Data ss:Type="String">${cell.showValue(sheetContent, c, r)}</Data></Cell>`
+                    xmlOutput += xmlCell
+                }
+            }
+            const xmlRowEnd = "" +
+                "</Row>"
+            xmlOutput += xmlRowEnd;
+        }
     }
-    xmlOutput += xmlFooter;
+
+    const xmlSheetFooter = "" +
+        "        </Table>\n" +
+        "    </Worksheet>\n";
+    xmlOutput += xmlSheetFooter;
 
     const blob = new Blob([xmlOutput], {type: "application/xml"});
     const link = document.createElement("a");

@@ -245,7 +245,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         if (ctx["SheetRef"]) {
             const sheetName = ctx["SheetRef"][0].image;
-            s1 = this.workbook.get(sheetName.substring(0, sheetName.length - 1));
+            s1 = this.workbook.getSheet(sheetName.substring(0, sheetName.length - 1));
             if (s1 === null) {
                 sheetError = true;
             }

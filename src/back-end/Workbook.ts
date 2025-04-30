@@ -103,7 +103,7 @@ export class Workbook {
      * the argument. Else, it returns null if that sheet doesn't exist.
      * @param name
      */
-    public get(name: string | number): Sheet | null {
+    public getSheet(name: string | number): Sheet | null {
         if (typeof name === "string") {
             name = name.toUpperCase();
             for(const sheet of this.sheets) {
