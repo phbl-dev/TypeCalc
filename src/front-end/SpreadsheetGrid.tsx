@@ -1,39 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {XMLReader} from "../WorkbookIO";
-import {
-    XMLReader
-} from "../API-Layer/WorkbookIO.ts";
-import {
-    getCell,
-    adjustFormula,
-    numberToLetters,
-    lettersToNumber,
-    makeBold,
-    makeItalic,
-    makeUnderlined,
-    setCellColor,
-    setTextColor
-} from "./HelperFunctions.tsx";
+import {XMLReader} from "../API-Layer/WorkbookIO.ts";
 import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
-import {ArrayExplicit} from "../back-end/ArrayValue.ts";
-import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewport,
-        ParseToActiveCell, WorkbookManager} from "../API-Layer.ts";
-import {getCell, adjustFormula, numberToLetters, lettersToNumber,
-        exportAsXML, makeBold, makeItalic, makeUnderlined,
-        setCellColor, setTextColor} from "./HelperFunctions.tsx";
-
 import {ArrayExplicit} from "../back-end/Value.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
-import {
-    EvalCellsInViewport,
-    GetRawCellContent,
-    GetSupportsInViewport,
-    ParseToActiveCell
-} from "../API-Layer/Back-endEndpoints.ts";
-
+import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewport,
+    ParseToActiveCell} from "../API-Layer/Back-endEndpoints.ts";
+import {getCell, adjustFormula, numberToLetters, lettersToNumber,
+    exportAsXML, makeBold, makeItalic, makeUnderlined,
+    setCellColor, setTextColor} from "./HelperFunctions.tsx";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -47,8 +24,6 @@ interface GridInterface {
     height?: number;
     ref?: React.Ref<any>;
 }
-
-
 
 /** Defines the column headers as a div with ID, style, and contents
  *
@@ -184,7 +159,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 }
                 const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
                 if (targetCellElement) {
-                    const movedCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(targetCol, targetRow);
+                    const movedCell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(targetCol, targetRow);
                     if (movedCell) {
                         targetCellElement.innerText = movedCell.GetText()!;
                     }
@@ -203,7 +178,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         const parsedRef = JSON.parse(storedRef);
         const wb = WorkbookManager.getActiveSheet()
         if(copy) {
-            const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
+            const tmpCell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
 
             wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
             wb!.SetCell(tmpCell.CloneCell(parsedRef.col, parsedRef.row), parsedRef.col, parsedRef.row)
@@ -231,7 +206,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     WorkbookManager.getActiveSheet()?.undo()
 
                     // Refresh UI with wider range to ensure all affected cells are updated
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
                 // Redo functionality:
@@ -241,7 +216,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     WorkbookManager.getActiveSheet()?.redo()
 
                     // Refresh UI with wider range to ensure all affected cells are updated
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
                 case "c":
@@ -268,7 +243,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     } else if (storedRef) {
                         singleCellMove(storedRef);
                     }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
                 case "v":
                     event.preventDefault();
@@ -280,7 +255,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     else if (storedRef2) {
                         singleCellMove(storedRef2,true);
                     }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     WorkbookManager.getWorkbook()?.Recalculate()
                     break
                 case "b":
@@ -373,18 +348,18 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         console.log(cellToBeAdded);
         if (!cellToBeAdded) {return}
-        WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
+        WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
 
         //Handle Array Results for different cells.
         WorkbookManager.getWorkbook().Recalculate();
 
         //Handle Array Results for different cells.
-        const cell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
+        const cell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
         if (!cell) return; // Check that cell is not null
-        const result = cell.Eval(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
+        const result = cell.Eval(WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
 
         if (cell instanceof Formula && result instanceof ArrayExplicit) {
-            WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
+            WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
                 cell, // cell
                 columnIndex,
                 rowIndex,
@@ -499,14 +474,14 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onBlur={(e) => {
 
-                 console.debug("Value not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
+                 console.debug("Value not found:" ,WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
 
-                 console.log(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
+                 console.log(WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
                  //Only update cell if the contents have changed!
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
-                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3, false);
+                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3);
                      console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
@@ -518,7 +493,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                          }
                      }
                  }
-                 EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20, false);
+                 EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
              }}
 
              onInput={(e) => {
@@ -539,7 +514,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
             {sheetNames.map((name:any) => (
                 <button
                     key={name}
-                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30, true)
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30)
                     document.getElementById("documentTitle")!.innerText = WorkbookManager.getActiveSheetName();}}
                     style={{
                         backgroundColor: activeSheet === name ? 'darkslategrey' : '',
@@ -622,7 +597,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                         setSheetNames(sheetNames);
                         setActiveSheet(sheetNames[0]);
                         WorkbookManager.setActiveSheet(sheetNames[0]);
-                        EvalCellsInViewport(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30, false);
+                        EvalCellsInViewport(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
                     } catch (error) {
                         console.error("Error during load:", error);
                     }
@@ -736,7 +711,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         const updateCellContents = () => {
             valueChanged = false;
             ParseToActiveCell(value);
-            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30, false);
+            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
         }
 
         formulaBox.addEventListener("keydown", handleKeyDown);
@@ -847,7 +822,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                                 visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
                                 visibleRowStartIndex,
                                 visibleRowStopIndex + 1,
-                                false
                             );
                         }}
                     >
