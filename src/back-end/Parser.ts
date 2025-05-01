@@ -1,8 +1,8 @@
-import {createToken, type CstNode, CstParser, Lexer, type ParserMethod, type TokenType} from "chevrotain";
+import {createToken, CstElement, type CstNode, CstParser, Lexer, type ParserMethod, type TokenType} from "chevrotain";
 import type {Workbook} from "./Workbook.ts";
 import {Cell, Formula, NumberCell, QuoteCell, TextCell} from "./Cells.ts";
 import {CellArea, CellRef, Error, Expr, ExprArray, FunCall, NumberConst, TextConst} from "./Expressions.ts";
-import {ErrorValue, NumberValue} from "./Value.ts";
+import {ErrorValue, NumberValue} from "./Values.ts";
 import type {Sheet} from "./Sheet.ts";
 import {A1RARef, R1C1RARef, SuperRARef} from "./CellAddressing.ts";
 
@@ -498,7 +498,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @param ctx - the current node in the CST
      * @protected
      */
-    protected powFactor(ctx: any): Expr {
+    protected powFactor(ctx:any): any {
         let e2: Expr;
 
         let e = this.visit(ctx["factor"][0]);
@@ -519,7 +519,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @param ctx - the current node in the CST
      * @protected
      */
-    protected logicalTerm(ctx: any): Expr {
+    protected logicalTerm(ctx: any): any {
         let e: Expr;
 
         e = this.visit(ctx["term"][0]);

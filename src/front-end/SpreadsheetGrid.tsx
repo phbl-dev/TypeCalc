@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {
     XMLReader
@@ -18,7 +18,7 @@ import {Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 
-import {ArrayExplicit} from "../back-end/Value.ts";
+import {ArrayExplicit} from "../back-end/Values.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {
     EvalCellsInViewport,
@@ -316,9 +316,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
-        console.log("Cell Content:", content)
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
-        console.log("Cell Being Added:")
         console.log(cellToBeAdded);
         if (!cellToBeAdded) {return}
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
@@ -413,7 +411,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                  // Save the initial value on focus and display it
                  let rawCellContent:string | null = GetRawCellContent(ID);
-                 console.log(rawCellContent);
                  WorkbookManager.setActiveCell(ID);
                  if (!rawCellContent) {
                      console.debug("[SpreadsheetGrid.tsx Cell] Cell Content not updated");
@@ -422,7 +419,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  }
                  rawCellContent = rawCellContent.trim();
                  valueHolder = (e.target as HTMLElement).innerText.trim();
-                 console.log("this is the rawCell", rawCellContent);
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
 
@@ -446,7 +442,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onBlur={(e) => {
 
-                 console.debug("Value not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
+                 console.debug("Values not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
 
                  console.log(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
                  //Only update cell if the contents have changed!
@@ -536,7 +532,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
-    const [scrollOffset, setScrollOffset] = useState({left: 0, top: 0});
+    let [scrollOffset] = useState({left: 0, top: 0});
     let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
@@ -714,7 +710,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 rowHeaderRef.current.scrollTo({scrollTop});
             }
         }
-        setScrollOffset ({ left: scrollLeft, top: scrollTop });
+        scrollOffset = { left: scrollLeft, top: scrollTop };
     }
 
     return (
@@ -793,8 +789,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                                 visibleColumnStartIndex,
                                 visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
                                 visibleRowStartIndex,
-                                visibleRowStopIndex + 1,
-
+                                visibleRowStopIndex + 1
                             );
                         }}
                     >

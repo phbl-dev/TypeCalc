@@ -1,7 +1,7 @@
 import {WorkbookManager} from "./WorkbookManager.ts";
 import {Sheet} from "../back-end/Sheet.ts";
 import {numberToLetters} from "../front-end/HelperFunctions.tsx";
-import {ErrorValue} from "../back-end/Value.ts";
+import {ErrorValue} from "../back-end/Values.ts";
 import {A1RefCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
 import {Cell, Formula} from "../back-end/Cells.ts";
 import {Workbook} from "../back-end/Workbook.ts";

@@ -1,6 +1,6 @@
 import type { Formats } from "./Types";
 import type { Sheet } from "./Sheet";
-import type { Value } from "./Value";
+import type { Value } from "./Values.ts";
 import type { Cell } from "./Cells";
 
 //An interval represents a range of numbers from a min to a max, including both
