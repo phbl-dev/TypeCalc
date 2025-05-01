@@ -50,8 +50,10 @@ export function GetRawCellContent(cellID: string): string | null {
         return null;
     }
 
+    console.log("This is the cell", cell.GetText())
     // Special handling for Formula cells
     if (cell instanceof Formula) {
+        console.log("This is a formula cell");
         let formulaText = cell.GetText()!;
         // Ensure it starts with equals sign
         if (!formulaText.startsWith("=")) {

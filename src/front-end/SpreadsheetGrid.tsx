@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {
     XMLReader
@@ -79,6 +79,16 @@ let selectionStartCell: string | null = null
 let isShiftKeyDown = false
 let AreaMarked = false
 
+type CellInfo = {
+    row: number;
+    col: number;
+    cell: BackendCell;
+    content: string;
+    relRow: number;
+    relCol: number;
+};
+
+
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
@@ -107,113 +117,69 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         });
     }
 
-    const clearSelection = () => {
-        clearVisualHighlight();
-        sessionStorage.removeItem('selectionRange');
-    }
 
-    function MultiCellMove(areaRef: string, copy: boolean = false) {
-        const range = JSON.parse(areaRef);
-        const {startCol, startRow, endCol, endRow} = range;
-        const targetCellRef = new A1RefCellAddress(ID);
-
-        const cellsToCopy = [];
+    function ReadArea(startRow: number, endRow: number, startCol: number, endCol: number) {
+        let AreaArray: CellInfo[] = [];
 
         for (let i = startRow; i <= endRow; i++) {
             for (let j = startCol; j <= endCol; j++) {
                 const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
                 if (cell) {
-                    cellsToCopy.push({
+                    AreaArray.push({
                         row: i,
                         col: j,
                         cell: cell,
-                        content: cell.GetText(),
+                        content: cell.GetText()!,
                         relRow: i - startRow,
                         relCol: j - startCol
                     });
                 }
             }
         }
+        return AreaArray;
+    }
 
-        for (const cellInfo of cellsToCopy) {
-            const { row, col, cell, content, relRow, relCol } = cellInfo;
-            const targetRow = targetCellRef.row + relRow;
-            const targetCol = targetCellRef.col + relCol;
-            if (content!.startsWith('=')) {
-                const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
-                if (copy) {
-                    const newForm = adjustFormula(
+    function CellCopyCut(areaRef: string, copy: boolean = false) {
+        const range = JSON.parse(areaRef);
+        const targetCellRef = new A1RefCellAddress(ID);
+
+        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
+                const { row, col, cell, content, relRow, relCol } = cellInfo;
+                const targetRow = targetCellRef.row + relRow;
+                const targetCol = targetCellRef.col + relCol;
+
+                // If cell is a formula
+                if (cellInfo.cell instanceof Formula) {
+                    const nextFormula = adjustFormula(
                         content!,
                         targetRow - row,
                         targetCol - col
                     );
-                    handleInput(targetRow, targetCol, newForm);
-                    if (targetCellElement) {
-                        targetCellElement.innerText = newForm;
+                    console.log(nextFormula);
+                    if (copy) {
+                        handleInput(targetRow, targetCol, nextFormula!);
+                    } else {
+                        handleInput(targetRow, targetCol, nextFormula!);
+                        WorkbookManager.getActiveSheet()?.RemoveCell(col, row);
                     }
-                } else {
+                }
+                else {
                     WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
-                    handleInput(targetRow, targetCol, content!);
-                    if (targetCellElement) {
-                        targetCellElement.innerText = content!;
-                    }
-
-                    const origCellElement = document.getElementById(numberToLetters(col + 1) + (row + 1));
-                    if (origCellElement) {
-                        origCellElement.innerText = "";
-                    }
-
-                }
-            }
-            else {
-                WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
-                if (copy) {
-                    WorkbookManager.getActiveSheet()?.SetCell(cell, col, row);
-                } else {
-                    const origCellElement = document.getElementById(numberToLetters(col + 1) + (row + 1));
-                    if (origCellElement) {
-                        origCellElement.innerText = "";
+                    if (copy) {
+                        WorkbookManager.getActiveSheet()?.SetCell(cell, col, row);
                     }
                 }
-                const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
-                if (targetCellElement) {
-                    const movedCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(targetCol, targetRow);
-                    if (movedCell) {
-                        targetCellElement.innerText = movedCell.GetText()!;
-                    }
-                }
-            }
         }
-        //WorkbookManager.getWorkbook().Recalculate();
-
         if (!copy) {
             clearVisualHighlight();
         }
         AreaMarked = false;
     }
-
-    function singleCellMove(storedRef: string, copy: boolean = false) {
-        const parsedRef = JSON.parse(storedRef);
-        const wb = WorkbookManager.getActiveSheet()
-        if(copy) {
-            const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
-
-            wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-            wb!.SetCell(tmpCell.CloneCell(parsedRef.col, parsedRef.row), parsedRef.col, parsedRef.row)
-
-        } else {
-
-            wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-            sessionStorage.removeItem('tmpCellRef');
-
-            WorkbookManager.getWorkbook()?.Recalculate();
-        }
-    }
-
 // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
+        let areaRef
 
         if(event.ctrlKey) {
             switch (event.key) {
@@ -223,8 +189,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                     WorkbookManager.getActiveSheet()?.undo()
 
-                    // Refresh UI with wider range to ensure all affected cells are updated
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    // Refresh UI with a wider range to ensure all affected cells are updated
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
                 // Redo functionality:
@@ -233,8 +199,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                     WorkbookManager.getActiveSheet()?.redo()
 
-                    // Refresh UI with wider range to ensure all affected cells are updated
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    // Refresh UI with a wider range to ensure all affected cells are updated
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
                 case "c":
@@ -243,38 +209,25 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         sessionStorage.removeItem("tmpCellRef");
                         setHighlight(selectionStartCell!, true);
                     } else {
-                        const singleCellRef = new A1RefCellAddress(ID)
-                        sessionStorage.setItem('tmpCellRef', JSON.stringify({
-                            ID: ID,
-                            col: singleCellRef.col,
-                            row: singleCellRef.row
-                        }));
-                        clearSelection()
+                        setHighlight(ID, true);
                     }
                     break
                 case "x":
                     event.preventDefault();
-                    const storedRef = sessionStorage.getItem('tmpCellRef');
-                    const areaRef = sessionStorage.getItem('selectionRange');
+                    areaRef = sessionStorage.getItem('selectionRange');
                     if (areaRef) {
-                        MultiCellMove(areaRef);
-                    } else if (storedRef) {
-                        singleCellMove(storedRef);
+                        CellCopyCut(areaRef);
                     }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
+                    sessionStorage.removeItem('selectionRange');
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
                 case "v":
                     event.preventDefault();
-                    const storedRef2 = sessionStorage.getItem('tmpCellRef');
-                    const areaRef2 = sessionStorage.getItem('selectionRange');
-                    if(areaRef2) {
-                        MultiCellMove(areaRef2,true);
+                    areaRef = sessionStorage.getItem('selectionRange');
+                    if(areaRef) {
+                        CellCopyCut(areaRef, true);
                     }
-                    else if (storedRef2) {
-                        singleCellMove(storedRef2,true);
-                    }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20, false);
-                    WorkbookManager.getWorkbook()?.Recalculate()
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
                 case "b":
                     makeBold();
@@ -350,7 +303,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
 
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID
-        // so we can focus the cell. Also updates the cell ID displayed to show current cell's ID.
+        // so we can focus the cell. Also updates the cell ID displayed to show the current cell's ID.
         const nextCellID = numberToLetters(nextCol + 1) + (nextRow + 1);
         const nextCell = document.getElementById(nextCellID);
         const cellIdInput = document.getElementById("cellIdInput") as HTMLInputElement;
@@ -363,7 +316,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
+        console.log("Cell Content:", content)
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
+        console.log("Cell Being Added:")
         console.log(cellToBeAdded);
         if (!cellToBeAdded) {return}
         WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
@@ -396,7 +351,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
-    function setHighlight(endCell:string, saveHighlight:boolean = false,  arrowOptCol?:number, arrowOptRow?:number) {
+    function setHighlight(endCell:string, saveHighlight:boolean = false,  arrowOptCol?:number, arrowOptRow?:number): void {
         const endCellRef = new A1RefCellAddress(endCell);
         let currentActiveCellRef;
         if(arrowOptCol && arrowOptRow) {
@@ -406,7 +361,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 }
         let {ulCa,lrCa} = A1RefCellAddress.normalizeArea(currentActiveCellRef,endCellRef)
 
-        // Clear any existing highlight
         clearVisualHighlight()
 
         // Highlight all cells in the range
@@ -419,7 +373,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 }
             }
         }
-
         if(saveHighlight) {
             sessionStorage.setItem('selectionRange', JSON.stringify({
                 startCol : ulCa.col,
@@ -429,7 +382,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             }));
         }
     }
-
     return (
         <div className="Cell" contentEditable={true} id={ID} title={ID}
              style={{
@@ -461,6 +413,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                  // Save the initial value on focus and display it
                  let rawCellContent:string | null = GetRawCellContent(ID);
+                 console.log(rawCellContent);
                  WorkbookManager.setActiveCell(ID);
                  if (!rawCellContent) {
                      console.debug("[SpreadsheetGrid.tsx Cell] Cell Content not updated");
@@ -469,6 +422,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  }
                  rawCellContent = rawCellContent.trim();
                  valueHolder = (e.target as HTMLElement).innerText.trim();
+                 console.log("this is the rawCell", rawCellContent);
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
 
@@ -499,7 +453,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
-                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3, false);
+                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3);
                      console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
@@ -511,7 +465,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                          }
                      }
                  }
-                 EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20, false);
+                 EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
              }}
 
              onInput={(e) => {
@@ -532,7 +486,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
             {sheetNames.map((name:any) => (
                 <button
                     key={name}
-                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30, true)
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30)
                     document.getElementById("documentTitle")!.innerText = WorkbookManager.getActiveSheetName();}}
                     style={{
                         backgroundColor: activeSheet === name ? 'darkslategrey' : '',
@@ -582,7 +536,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
-    let [scrollOffset] = useState({left: 0, top: 0});
+    const [scrollOffset, setScrollOffset] = useState({left: 0, top: 0});
     let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
@@ -615,7 +569,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                         setSheetNames(sheetNames);
                         setActiveSheet(sheetNames[0]);
                         WorkbookManager.setActiveSheet(sheetNames[0]);
-                        EvalCellsInViewport(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30, false);
+                        EvalCellsInViewport(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
                     } catch (error) {
                         console.error("Error during load:", error);
                     }
@@ -729,7 +683,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         const updateCellContents = () => {
             valueChanged = false;
             ParseToActiveCell(value);
-            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30, false);
+            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
         }
 
         formulaBox.addEventListener("keydown", handleKeyDown);
@@ -760,7 +714,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 rowHeaderRef.current.scrollTo({scrollTop});
             }
         }
-        scrollOffset = { left: scrollLeft, top: scrollTop };
+        setScrollOffset ({ left: scrollLeft, top: scrollTop });
     }
 
     return (
@@ -840,7 +794,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                                 visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
                                 visibleRowStartIndex,
                                 visibleRowStopIndex + 1,
-                                false
+
                             );
                         }}
                     >
