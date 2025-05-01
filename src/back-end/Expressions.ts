@@ -250,7 +250,7 @@ export class ExprArray extends Expr {
 /**
  *
  */
-type functionType = (...args: (string | number | ErrorValue | Date | number[])[])
+type functionType = (...args: (string | number | ErrorValue | number[] | string[])[])
     => string | number | boolean | ErrorValue | Date | number[] | undefined;
 
 /**
@@ -294,9 +294,9 @@ export class FunCall extends Expr {
     private static IF(es: Expr[]) {
         const func: functionType = (...args)=> {
             if (args[0]) {
-                return args[1];
+                return args[1] as string | number | boolean | ErrorValue | Date | number[] | undefined;
             } else {
-                return args[2];
+                return args[2] as string | number | boolean | ErrorValue | Date | number[] | undefined;
             }
         }
 
@@ -312,7 +312,7 @@ export class FunCall extends Expr {
     private static CHOOSE(es: Expr[]) {
         const func: functionType = (...args)=> {
             if((args[0] as Value).ToObject() as number >= 1 && (args[0] as Value).ToObject() as number <= args.length) {
-                return args[0];
+                return args[0] as string | number | boolean | ErrorValue | Date | number[] | undefined;
             }
         }
 
@@ -514,9 +514,22 @@ export class FunCall extends Expr {
             return errorArg;
         }
 
+
+        // Flatten nested arrays consistently before passing to function.
+        // We need to do this because the recursive call in getExprValues()
+        // creates nested array arguments which cannot be handled by some
+        // Formula.js functions such as WORKDAY which takes string array
+        // arguments.
+        const flattenedArgs = args.map(arg => {
+            if (Array.isArray(arg) && arg.length === 1 && Array.isArray(arg[0])) {
+                return arg[0]; // Flatten exactly one level if needed
+            }
+            return arg;
+        });
+
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
-        const result = this.function(...args as (string | number | ErrorValue | Date | number[])[]);
+        const result = this.function(...flattenedArgs as (string | number | ErrorValue | number[] | string[])[]);
 
         // If the return type is Date:
         if (result instanceof Date) {
@@ -599,7 +612,7 @@ export class FunCall extends Expr {
 
         const args: (string | number | object | null | undefined)[] = es.map(expr => {
 
-            if (expr instanceof ExprArray) {
+            if (expr instanceof ExprArray) { // E.g. [2,4] in GUI
                 return FunCall.getExprValues(sheet, col, row, expr.GetExprArray());
             }
             const value = expr.Eval(sheet, col, row);
@@ -611,9 +624,11 @@ export class FunCall extends Expr {
                 return NumberValue.ToNumber(value)
             }
             if (value instanceof TextValue) {
+                console.log("reached here")
+                console.log(TextValue.ToString(value))
                 return TextValue.ToString(value)
             }
-            if (value instanceof ArrayView) {
+            if (value instanceof ArrayView) { // E.g. A1:C3 in GUI
                 const result = [];
 
                 for (let r = 0; r < value.Rows; r++) {
