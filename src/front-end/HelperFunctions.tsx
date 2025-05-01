@@ -1,7 +1,3 @@
-import {Sheet, SheetRep} from "../back-end/Sheet.ts";
-import {Workbook} from "../back-end/Workbook.ts";
-import {Cell} from "../back-end/Cells.ts";
-
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
@@ -37,65 +33,55 @@ export function lettersToNumber(letters:string):number {
 
 export function exportAsCSV() {
     const currentSheet = WorkbookManager.getActiveSheet();
-    if (!currentSheet) return;
+    const sheetData = currentSheet?.getCells();
+    if(!sheetData) {return}
+    let output: string = "";
 
-    for (let r = 0; r < currentSheet.Rows; r++) {
-        for (let c = 0; c < currentSheet.Cols; c++) {
-            const cell: Cell | null = currentSheet.Get(c, r);
-            if (cell != null) {
+    for(const cell of sheetData) {
 
-            }
-        }
     }
 }
 
 export function exportAsXML() {
-    const xmlHeader = "<?xml version=\"1.0\"?>\n" +
+    let xmlOutput = "<?xml version=\"1.0\"?>\n" +
         "<?mso-application progid=\"Excel.Sheet\"?>\n" +
         "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
         "          xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n" +
         "          xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n" +
         "          xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
         "          xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
-    const xmlFooter = "" +
-        "</Workbook>";
 
-    let xmlOutput = xmlHeader
     const sheetNames = WorkbookManager.getSheetNames();
 
-    for(const sheet of sheetNames) {
+    for(const sheetName of sheetNames) {
         const xmlSheetHeader = `
-                 <Worksheet ss:Name="${sheet}">
+                 <Worksheet ss:Name="${sheetName}">
                      <Table>`;
         xmlOutput += xmlSheetHeader
 
-        const sheetContent = WorkbookManager.getWorkbook().getSheet(sheet)
-        if(!sheetContent) {return}
-        for (let r = 0; r < sheetContent.Rows; r++) {
-            let newRowFlag = false;
-            for (let c = 0; c < sheetContent.Cols; c++) {
-                const cell: Cell | null = sheetContent.Get(c, r);
-                if (cell != null) {
-                    if(!newRowFlag) {
-                        newRowFlag = true;
-                        const xmlRowStart = "" +
-                            `<Row>`
-                        xmlOutput += xmlRowStart
-                    }
-                    const xmlCell =  `    <Cell><Data ss:Type="String">${cell.showValue(sheetContent, c, r)}</Data></Cell>`
-                    xmlOutput += xmlCell
-                }
-            }
-            const xmlRowEnd = "" +
-                "</Row>"
-            xmlOutput += xmlRowEnd;
+        const sheet = WorkbookManager.getWorkbook().getSheet(sheetName)
+        if(!sheet) {return}
+        const sheetCells = sheet.getCells();
+
+        for(const cell of sheetCells) {
+            const text =    '<Row ss:Index="4" ss:AutoFitHeight="0">' +
+                '<Cell ss:Index="3"><Data ss:Type="Number">2</Data></Cell>' +
+            '</Row>';
         }
+        const xmlRowStart = "" +
+            `<Row>`
+        const xmlRowEnd = "" +
+            "</Row>"
     }
 
     const xmlSheetFooter = "" +
         "        </Table>\n" +
         "    </Worksheet>\n";
     xmlOutput += xmlSheetFooter;
+
+    const xmlFooter = "" +
+        "</Workbook>";
+    xmlOutput += xmlFooter;
 
     const blob = new Blob([xmlOutput], {type: "application/xml"});
     const link = document.createElement("a");

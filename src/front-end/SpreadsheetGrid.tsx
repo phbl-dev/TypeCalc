@@ -569,15 +569,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
     useEffect(() => {
-        const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
-        const input = document.getElementById("cellIdInput") as HTMLInputElement;
-        const boldButton = document.getElementById("bold") as HTMLButtonElement;
-        const italicButton = document.getElementById("italic") as HTMLButtonElement;
-        const underlineButton = document.getElementById("underline") as HTMLButtonElement;
-        const cellColor = document.getElementById("cellColorPicker") as HTMLInputElement;
-        const textColor = document.getElementById("textColorPicker") as HTMLInputElement;
-        if (!jumpButton || !input) return; // In case either element doesn't exist/is null
-
         // Handle file drop events entirely in React
         function handleDrop(event: DragEvent) {
             event.preventDefault();
@@ -610,9 +601,12 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             event.preventDefault();
         }
 
+        const input = document.getElementById("cellIdInput") as HTMLInputElement;
+        const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
+        if (!jumpButton || !input) return; // In case either element doesn't exist/is null
+
         // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
         // and must trigger twice to do so.
-
         const handleJump = () => {
             const cellID = input.value.trim();
 
@@ -643,6 +637,14 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             }
         }
 
+        // Event listener management
+        //--------------------------------------
+        const boldButton = document.getElementById("bold") as HTMLButtonElement;
+        const italicButton = document.getElementById("italic") as HTMLButtonElement;
+        const underlineButton = document.getElementById("underline") as HTMLButtonElement;
+        const cellColor = document.getElementById("cellColorPicker") as HTMLInputElement;
+        const textColor = document.getElementById("textColorPicker") as HTMLInputElement;
+
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
         jumpButton.addEventListener("click", handleJump); // Jump to cell
@@ -664,8 +666,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             }
         });
 
-
-
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop
             window.removeEventListener("dragover", handleDragOver); // Drag and drop
@@ -676,6 +676,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         };
     }, [scrollOffset]);
 
+    //TODO: Hvorfor er der en useEffect mere, kan den slåes sammen med den første?
     //Handling the formulabox input
     useEffect(() => {
         const formulaBox = document.getElementById("formulaBox") as HTMLInputElement;
