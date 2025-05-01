@@ -4,7 +4,7 @@ import { Sheet, SheetRep } from "../src/back-end/Sheet";
 import {Cell, Formula, NumberCell, TextCell} from "../src/back-end/Cells";
 import { FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "../src/back-end/CellAddressing";
 import {CellRef, Expr, FunCall, NumberConst} from "../src/back-end/Expressions";
-import {NumberValue, TextValue} from "../src/back-end/Value";
+import {NumberValue, TextValue} from "../src/back-end/Values";
 
 
 describe("Workbook", () => {

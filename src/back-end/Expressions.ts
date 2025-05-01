@@ -1,5 +1,5 @@
 import  { Sheet } from "./Sheet";
-import {ArrayExplicit, ArrayView, ErrorValue, NumberValue, TextValue, Value} from "./Value";
+import {ArrayExplicit, ArrayView, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
 import { Adjusted, FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "./CellAddressing";
 import {Cell} from "./Cells";
 import { type Formats, ImpossibleException } from "./Types";
@@ -246,6 +246,13 @@ export class ExprArray extends Expr {
         return this.es.some(expr => expr.isVolatile);    }
 }
 
+// Why does it work without Date?? Because Date results are converted to string in FunCall.Eval().
+/**
+ *
+ */
+type functionType = (...args: (string | number | ErrorValue | number[] | string[])[])
+    => string | number | boolean | ErrorValue | Date | number[] | undefined;
+
 /**
  * A FunCall expression is an operator application such as 1+$A$4 or a function
  * call such as RAND() or SIN(4*A$7) or SUM(B4:B52; 3) or IF(A1; A2; 1/A1).
@@ -256,12 +263,12 @@ export class FunCall extends Expr {
     // It's a replacement of the previous "Function" type and the purpose
     // of it is to match formulajs which is not a class but an object
     // containing various spreadsheet functions:
-    public readonly function: (...args: unknown[]) => unknown;
+    public readonly function: functionType;
     public es: Expr[];           // Non-null, elements non-null
     public nonStrict: boolean;        // We implemented a flag for non-strict functions such that we know if some of their arguments should not be evaluated.
-    public isChoose: boolean          // TODO: Are we still using this field?
+    public isChoose: boolean
 
-    private constructor (name: string | ((...args: unknown[]) => unknown), es: Expr[]) {
+    private constructor (name: string | functionType, es: Expr[]) {
         super();
         if (typeof name === "function") {
             this.function = name;
@@ -273,23 +280,23 @@ export class FunCall extends Expr {
         this.isChoose = false;
     }
 
-    public static getFunctionByName(name: string): (...args: unknown[]) => unknown {
+    public static getFunctionByName(name: string): functionType {
         if (name in formulajs) {
             // "typeof formulajs" is "object" and it contains all the spreadsheet functions.
             // "keyof" that object are function names like "SUM" and "PRODUCT".
             // "name as" compares the string to the function names. At last, we cast it as the
-            // type of the "function" field:
-            return formulajs[name as keyof typeof formulajs] as (...args: unknown[]) => unknown;
+            // functionType:
+            return formulajs[name as keyof typeof formulajs] as functionType;
         }
         throw new Error(`Function ${name} not found in formulajs`);
     }
 
     private static IF(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
             if (args[0]) {
-                return args[1];
+                return args[1] as string | number | boolean | ErrorValue | Date | number[] | undefined;
             } else {
-                return args[2];
+                return args[2] as string | number | boolean | ErrorValue | Date | number[] | undefined;
             }
         }
 
@@ -303,9 +310,9 @@ export class FunCall extends Expr {
 
 
     private static CHOOSE(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
             if((args[0] as Value).ToObject() as number >= 1 && (args[0] as Value).ToObject() as number <= args.length) {
-                return args[0];
+                return args[0] as string | number | boolean | ErrorValue | Date | number[] | undefined;
             }
         }
 
@@ -335,7 +342,7 @@ export class FunCall extends Expr {
         if (name === "CONCATENATE") {return this.CONCATENATE(es)}
         if (name === "ARRAY") {return ExprArray.MakeExprArray(es);}
 
-        const func: ((...args: unknown[]) => unknown) | null = FunCall.getFunctionByName(name);
+        const func: functionType | null = FunCall.getFunctionByName(name);
         if (func === null) {
             throw new Error(`Function ${name} not found in formulajs`); // MakeUnknown was called here previously.
         }
@@ -354,7 +361,7 @@ export class FunCall extends Expr {
      * "func" now but instead pass it on to a new FunCall instantiation.
      */
     private static EQUALS(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
                 return args[0] === args[1];
             }
 
@@ -362,7 +369,7 @@ export class FunCall extends Expr {
     }
 
     private static CONCATENATE(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
 
             return args.join('');  // Join all arguments as strings
         }
@@ -374,7 +381,7 @@ export class FunCall extends Expr {
      * or vice versa.
      */
     private static NEG(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
             const arg = args[0] as number;
             return -arg;
         }
@@ -386,14 +393,14 @@ export class FunCall extends Expr {
      */
 
     private static NOTEQUALS(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
                 return args[0] !== args[1];
         }
         return new FunCall(func, es)
     }
 
     private static GEQ(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
 
                 return (args[0] as number) > (args[1] as number);
 
@@ -403,7 +410,7 @@ export class FunCall extends Expr {
 
     }
     private static LEQ(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
                 return (args[0] as number) < (
                     args[1] as number);
 
@@ -414,7 +421,7 @@ export class FunCall extends Expr {
     }
 
     private static LEQUALS(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
                 return (args[0] as number) <= (
                     args[1] as number);
 
@@ -425,7 +432,7 @@ export class FunCall extends Expr {
     }
 
     private static GEQUALS(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
                 return (args[0] as number) >= (
                     args[1] as number);
 
@@ -440,7 +447,7 @@ export class FunCall extends Expr {
      * DIVIDE is a function that we implemented ourselves to divide two numbers
      */
     private static DIVIDE(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
             return (args[0] as number)/(args[1] as number);
         }
         return new FunCall(func, es)
@@ -451,7 +458,7 @@ export class FunCall extends Expr {
      */
 
     private static ADD(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
             return (args[0] as number) + (args[1] as number);
         }
         return new FunCall(func, es)
@@ -460,7 +467,7 @@ export class FunCall extends Expr {
      * SUB is a function that we implemented ourselves to subtract two or more numbers
      */
     private static SUB(es: Expr[]) {
-        const func = (...args: unknown[]): unknown => {
+        const func: functionType = (...args)=> {
             return (args[0] as number) - (args[1] as number);
         };
         return new FunCall(func, es);
@@ -507,9 +514,22 @@ export class FunCall extends Expr {
             return errorArg;
         }
 
+
+        // Flatten nested arrays consistently before passing to function.
+        // We need to do this because the recursive call in getExprValues()
+        // creates nested array arguments which cannot be handled by some
+        // Formula.js functions such as WORKDAY which takes string array
+        // arguments.
+        const flattenedArgs = args.map(arg => {
+            if (Array.isArray(arg) && arg.length === 1 && Array.isArray(arg[0])) {
+                return arg[0]; // Flatten exactly one level if needed
+            }
+            return arg;
+        });
+
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
-        const result = this.function(...args);
+        const result = this.function(...flattenedArgs as (string | number | ErrorValue | number[] | string[])[]);
 
         // If the return type is Date:
         if (result instanceof Date) {
@@ -575,8 +595,10 @@ export class FunCall extends Expr {
      * the expressions in the es-array.
      * - If the expr is an instance of ExprArray then we are dealing with a nested array. Therefore,
      * we call getExprValues() recursively on this expr and return the resulting array from this call.
+     * - If the value is an instance of ErrorValue we simply return this ErrorValue.
      * - If the value is an instance of NumberValue we extract the number from them using ToNumber().
      * - If the expr holds a TextValue we extract the string from it using ToString().
+     * - If the value is an instance of ArrayView, we create a result array where all the values of the ArrayView are pushed onto.
      * - Otherwise, we return null.
      *
      * We store the result in an array called args of (string | number | object | null | undefined)[].
@@ -590,7 +612,7 @@ export class FunCall extends Expr {
 
         const args: (string | number | object | null | undefined)[] = es.map(expr => {
 
-            if (expr instanceof ExprArray) {
+            if (expr instanceof ExprArray) { // E.g. [2,4] in GUI
                 return FunCall.getExprValues(sheet, col, row, expr.GetExprArray());
             }
             const value = expr.Eval(sheet, col, row);
@@ -598,14 +620,15 @@ export class FunCall extends Expr {
             if (value instanceof ErrorValue) {
                 return value;
             }
-
             if (value instanceof NumberValue) {
                 return NumberValue.ToNumber(value)
             }
             if (value instanceof TextValue) {
+                console.log("reached here")
+                console.log(TextValue.ToString(value))
                 return TextValue.ToString(value)
             }
-            if (value instanceof ArrayView) {
+            if (value instanceof ArrayView) { // E.g. A1:C3 in GUI
                 const result = [];
 
                 for (let r = 0; r < value.Rows; r++) {
@@ -732,7 +755,9 @@ export class FunCall extends Expr {
     }
 }
 
-
+/**
+ * A RefSet is a set of CellRefs and CellAreas already seen by a VisitRefs visitor.
+ */
 class RefSet {
     private readonly cellRefsSeen: Set<CellRef> = new Set<CellRef>();
     private readonly cellAreasSeen: Set<CellArea> = new Set<CellArea>();

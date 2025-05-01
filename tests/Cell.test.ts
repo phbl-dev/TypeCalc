@@ -3,7 +3,7 @@ import { Cell } from "../src/back-end/Cells";
 import { Sheet } from "../src/back-end/Sheet";
 // import { Expr } from "../Expressions"; // This should be imported when it's done
 import { SupportSet, Interval } from "../src/back-end/CellAddressing";
-import {NumberValue, Value} from "../src/back-end/Value";
+import {NumberValue, Value} from "../src/back-end/Values";
 // import { Formats } from "../src/Types";
 import { Workbook } from "../src/back-end/Workbook";
 

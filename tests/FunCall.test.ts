@@ -7,7 +7,7 @@ import {SuperRARef} from "../src/back-end/CellAddressing";
 import { BlankCell, Cell, Formula, NumberCell } from "../src/back-end/Cells";
 import {CyclicException} from "../src/back-end/Types";
 
-import {ErrorValue, NumberValue, TextValue} from "../src/back-end/Value"; // Importing formulajs
+import {ErrorValue, NumberValue, TextValue} from "../src/back-end/Values"; // Importing formulajs
 
 
 describe("Formula.js", () => {
