@@ -630,7 +630,7 @@ export class FunCall extends Expr {
                 return TextValue.ToString(value)
             }
             if (value instanceof ArrayView) { // E.g. A1:C3 in GUI
-                const result: (number | null | ErrorValue)[] = [];
+                const result = [];
 
                 for (let r = 0; r < value.Rows; r++) {
 
