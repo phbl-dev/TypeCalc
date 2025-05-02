@@ -251,7 +251,7 @@ export class ExprArray extends Expr {
  *
  */
 type functionType = (...args: (string | number | ErrorValue | number[] | string[])[])
-    => string | number | boolean | ErrorValue | Date | number[] | undefined;
+    => string | number | boolean | ErrorValue | Date | number[];
 
 /**
  * A FunCall expression is an operator application such as 1+$A$4 or a function
@@ -294,9 +294,9 @@ export class FunCall extends Expr {
     private static IF(es: Expr[]) {
         const func: functionType = (...args)=> {
             if (args[0]) {
-                return args[1] as string | number | boolean | ErrorValue | Date | number[] | undefined;
+                return args[1] as string | number | boolean | ErrorValue | Date | number[];
             } else {
-                return args[2] as string | number | boolean | ErrorValue | Date | number[] | undefined;
+                return args[2] as string | number | boolean | ErrorValue | Date | number[];
             }
         }
 
@@ -312,7 +312,9 @@ export class FunCall extends Expr {
     private static CHOOSE(es: Expr[]) {
         const func: functionType = (...args)=> {
             if((args[0] as Value).ToObject() as number >= 1 && (args[0] as Value).ToObject() as number <= args.length) {
-                return args[0] as string | number | boolean | ErrorValue | Date | number[] | undefined;
+                return args[0] as string | number | boolean | ErrorValue | Date | number[];
+            } else {
+                return ErrorValue.valueError // In case the user provided an index that is out of bounds
             }
         }
 
@@ -608,9 +610,10 @@ export class FunCall extends Expr {
      * @param es
      * @public
      */
-    public static getExprValues(sheet: Sheet, col: number, row: number, es: Expr[]) {
+    public static getExprValues(sheet: Sheet, col: number, row: number, es: Expr[]):
+        (string | number | ErrorValue | number[] | string[])[] {
 
-        const args: (string | number | object | null | undefined)[] = es.map(expr => {
+        const args = es.map(expr => {
 
             if (expr instanceof ExprArray) { // E.g. [2,4] in GUI
                 return FunCall.getExprValues(sheet, col, row, expr.GetExprArray());
@@ -624,8 +627,6 @@ export class FunCall extends Expr {
                 return NumberValue.ToNumber(value)
             }
             if (value instanceof TextValue) {
-                console.log("reached here")
-                console.log(TextValue.ToString(value))
                 return TextValue.ToString(value)
             }
             if (value instanceof ArrayView) { // E.g. A1:C3 in GUI
@@ -648,7 +649,7 @@ export class FunCall extends Expr {
             }
             return null;
         });
-        return args;
+        return args as (string | number | ErrorValue | number[] | string[])[];
     }
 
     public override Move(deltaCol: number, deltaRow: number): Expr {
