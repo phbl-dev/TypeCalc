@@ -610,9 +610,10 @@ export class FunCall extends Expr {
      * @param es
      * @public
      */
-    public static getExprValues(sheet: Sheet, col: number, row: number, es: Expr[]) {
+    public static getExprValues(sheet: Sheet, col: number, row: number, es: Expr[]):
+        (string | number | ErrorValue | number[] | string[])[] {
 
-        const args: (string | number | object | null | undefined)[] = es.map(expr => {
+        const args = es.map(expr => {
 
             if (expr instanceof ExprArray) { // E.g. [2,4] in GUI
                 return FunCall.getExprValues(sheet, col, row, expr.GetExprArray());
@@ -626,12 +627,10 @@ export class FunCall extends Expr {
                 return NumberValue.ToNumber(value)
             }
             if (value instanceof TextValue) {
-                console.log("reached here")
-                console.log(TextValue.ToString(value))
                 return TextValue.ToString(value)
             }
             if (value instanceof ArrayView) { // E.g. A1:C3 in GUI
-                const result = [];
+                const result: (number | null | ErrorValue)[] = [];
 
                 for (let r = 0; r < value.Rows; r++) {
 
@@ -648,9 +647,9 @@ export class FunCall extends Expr {
                 }
                 return result;
             }
-            return null;
+            return ErrorValue.valueError;
         });
-        return args;
+        return args as (string | number | ErrorValue | number[] | string[])[];
     }
 
     public override Move(deltaCol: number, deltaRow: number): Expr {
