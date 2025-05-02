@@ -647,7 +647,7 @@ export class FunCall extends Expr {
                 }
                 return result;
             }
-            return ErrorValue.valueError;
+            return null;
         });
         return args as (string | number | ErrorValue | number[] | string[])[];
     }
