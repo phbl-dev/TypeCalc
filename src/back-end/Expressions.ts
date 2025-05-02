@@ -1,5 +1,5 @@
 import  { Sheet } from "./Sheet";
-import {ArrayExplicit, ArrayView, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
+import {ArrayExplicit, ArrayView, BooleanValue, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
 import { Adjusted, FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "./CellAddressing";
 import {Cell} from "./Cells";
 import { type Formats, ImpossibleException } from "./Types";
@@ -72,7 +72,11 @@ abstract class Const extends Expr {
     public static Make(value: Value): Const {
         if (value instanceof NumberValue) {
             return new NumberConst((value as NumberValue).value);
-        } else if (value instanceof TextValue) {
+        }
+            else if (value instanceof BooleanValue) {
+                return new BooleanConst((value as BooleanValue).value);
+            }
+         else if (value instanceof TextValue) {
             return new TextConst((value as TextValue).value as string);
         } else return new ValueConst(value);
     }
@@ -143,6 +147,23 @@ export class TextConst extends Const {
     }
 }
 
+export class BooleanConst extends Const {
+    public readonly value: BooleanValue;
+
+    constructor(b: boolean) {
+        super();
+        this.value = BooleanValue.Make(b);
+    }
+
+    public override Eval(sheet: Sheet, col: number, row: number): Value {
+        return this.value;
+    }
+
+    Show(col: number, row: number, ctxpre: number, fo: Formats): string {
+        return this.value.value ? "TRUE" : "FALSE";
+    }
+}
+
 /**
  * A ValueConst is an arbitrary constant valued expression, used only
  * for partial evaluation; there is no corresponding formula source syntax.
@@ -196,7 +217,6 @@ export class Error extends Const {
  * like AGGREGATE takes arrays as arguments. And ExprArray is then the type we use for
  * these nested arrays.
  */
-//TODO: Should extend expr instead of Const because it should also be able to take cellrefs
 export class ExprArray extends Expr {
     public readonly es: Expr[];
 
@@ -245,6 +265,8 @@ export class ExprArray extends Expr {
         // Check if any of the expressions in the array are volatile
         return this.es.some(expr => expr.isVolatile);    }
 }
+
+
 
 // Why does it work without Date?? Because Date results are converted to string in FunCall.Eval().
 /**
@@ -552,7 +574,7 @@ export class FunCall extends Expr {
 
         // If the return type is boolean:
         if (typeof result === "boolean") {
-            return TextValue.Make((result as boolean).toString());
+            return BooleanValue.Make(result)
         }
 
         if (Array.isArray(result)) {
@@ -576,19 +598,9 @@ export class FunCall extends Expr {
         return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
     }
 
-    private FindBoolValue(sheet: Sheet, col: number, row: number) {
-        let conditionValue = false;
-
+    private FindBoolValue(sheet: Sheet, col: number, row: number): boolean {
         const args_0: Value = this.es[0].Eval(sheet, col, row);
-
-
-        if (args_0 instanceof NumberValue) {
-            conditionValue = NumberValue.ToBoolean(args_0) as unknown as boolean;
-        } else if (args_0 instanceof TextValue) {
-            const text: string = TextValue.ToString(args_0)!;
-            conditionValue = text.toLowerCase() === "true" || text === "1";
-        }
-        return conditionValue;
+        return Value.ToBoolean(args_0);
     }
 
     /**
@@ -625,6 +637,10 @@ export class FunCall extends Expr {
             }
             if (value instanceof NumberValue) {
                 return NumberValue.ToNumber(value)
+            }
+
+            if (value instanceof BooleanValue) {
+                return value.value
             }
             if (value instanceof TextValue) {
                 return TextValue.ToString(value)

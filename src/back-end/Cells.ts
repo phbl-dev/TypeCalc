@@ -1,6 +1,6 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
-import type { Sheet } from "./Sheet";
-import {ArrayValue, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
+import  { Sheet } from "./Sheet";
+import {ArrayValue, BooleanValue, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
 import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
 import {Error, type Expr} from "./Expressions"; // This should be imported when it's done
 import { Formats } from "./Types";
@@ -39,7 +39,7 @@ export abstract class Cell {
     In a TextCell, QuoteCell, and NumberCell the method will be overwritten and just return the value of the cell
     without any further computation.
 
-    In Formula, ArrayFormula, and CachedArrayFormula the method is overwritten but further computation is added
+    In Formula, ArrayFormula, and CachedArrayFormula the method is overwritten, but further computation is added
     before the method can return a valid value.
      */
     public abstract Eval(sheet: Sheet, col: number, row: number): Value | null;
@@ -365,6 +365,31 @@ export class QuoteCell extends ConstCell {
 
     public override CloneCell(col: number, row: number): Cell {
         return new QuoteCell(this);
+    }
+
+}
+// A BooleanCell is a cell, that contains a boolean value
+export class BooleanCell extends ConstCell {
+    public readonly value: BooleanValue
+
+    constructor(argument: boolean | BooleanCell) {
+        super();
+        if (argument instanceof BooleanCell) {
+            this.value = argument.value;
+        } else {
+            this.value = BooleanValue.Make(argument);
+        }
+    }
+    CloneCell(col: number, row: number): Cell {
+        return this;
+    }
+
+    Eval(sheet: Sheet, col: number, row: number): Value | null {
+        return this.value;
+    }
+
+    Show(col: number, row: number, fo: Formats): string {
+        return "" + this.value.value + "";
     }
 
 }
