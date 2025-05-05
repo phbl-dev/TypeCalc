@@ -58,6 +58,7 @@ export function exportAsXML() {
         "          xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
 
     const sheetNames = WorkbookManager.getSheetNames();
+    console.log(sheetNames)
 
     for(const sheetName of sheetNames) {
         const xmlSheetHeader = `
