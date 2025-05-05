@@ -72,7 +72,8 @@ export function exportAsXML() {
 
         for(const cell of sheetCells) {
             const cellContent = cell.GetText();
-            const text = `<Cell ss:Index="3"><Data ss:Type="Number">${cellContent}</Data></Cell>`
+            const cellCol = cell.GetCol();
+            const text = `<Cell ss:Index=${cellCol}><Data ss:Type="Number">${cellContent}</Data></Cell>`
             xmlOutput += text;
         }
         const xmlRowStart = "" +

@@ -23,8 +23,8 @@ export abstract class Cell {
     private row: number | null = null;
 
     public SetColAndRow(col: number, row: number): void {
-        this.col = col;
-        this.row = row;
+        this.col = col + 1;
+        this.row = row + 1;
     }
 
     public GetCol(): number | null {
