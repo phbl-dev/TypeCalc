@@ -212,6 +212,7 @@ export class Sheet {
         this.Set(col as number, cell, row);
         if (cell != null) {
             cell.AddToSupportSets(this, col, row, 1, 1);
+            cell.SetColAndRow(col, row);
         }
     }
 

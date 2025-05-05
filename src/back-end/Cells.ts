@@ -22,6 +22,19 @@ export abstract class Cell {
     private col : number | null = null;
     private row: number | null = null;
 
+    public SetColAndRow(col: number, row: number): void {
+        this.col = col;
+        this.row = row;
+    }
+
+    public GetCol(): number | null {
+        return this.col;
+    }
+
+    public GetRow(): number | null {
+        return this.row;
+    }
+
     // Method made for testing:
     public GetSupportSet(): SupportSet | null {
         return this.supportSet;
