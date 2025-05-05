@@ -590,6 +590,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
         // Event listener management
         //--------------------------------------
+        const exportButton = document.getElementById("export") as HTMLButtonElement;
         const boldButton = document.getElementById("bold") as HTMLButtonElement;
         const italicButton = document.getElementById("italic") as HTMLButtonElement;
         const underlineButton = document.getElementById("underline") as HTMLButtonElement;
@@ -598,15 +599,15 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
+
         jumpButton.addEventListener("click", handleJump); // Jump to cell
         input.addEventListener("keydown", (e) => { // Jump to cell
             if (e.key === "Enter") handleJump();
         })
-
+        exportButton.addEventListener("click", exportAsXML)
         boldButton.addEventListener("click", makeBold)
         italicButton.addEventListener("click", makeItalic)
         underlineButton.addEventListener("click", makeUnderlined)
-
         cellColor.addEventListener("input", setCellColor);
         textColor.addEventListener("input", setTextColor);
 
@@ -622,6 +623,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop
             window.removeEventListener("dragover", handleDragOver); // Drag and drop
+            exportButton.removeEventListener("click", exportAsXML);
             jumpButton.removeEventListener("click", handleJump); // Jump to cell
             boldButton.removeEventListener("click", makeBold)
             italicButton.removeEventListener("click", makeItalic)

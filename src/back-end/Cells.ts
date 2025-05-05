@@ -4,12 +4,8 @@ import {ArrayValue, BooleanValue, ErrorValue, NumberValue, TextValue, Value} fro
 import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
 import {Error, type Expr} from "./Expressions"; // This should be imported when it's done
 import { Formats } from "./Types";
-import type { Workbook } from "./Workbook"; // This should be imported when it's done
-
 import {SpreadsheetVisitor} from "./Parser.ts";
-
-
-
+import type { Workbook } from "./Workbook"; // This should be imported when it's done
 
 export enum CellState {
     Dirty = 0,
@@ -22,7 +18,9 @@ export enum CellState {
 // of a spreadsheet cell.
 export abstract class Cell {
     protected supportSet: SupportSet | null = null;
-    private ogText:string|null = null;
+    private ogText: string | null = null;
+    private col : number | null = null;
+    private row: number | null = null;
 
     // Method made for testing:
     public GetSupportSet(): SupportSet | null {

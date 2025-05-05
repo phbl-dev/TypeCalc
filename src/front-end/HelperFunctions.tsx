@@ -38,8 +38,14 @@ export function exportAsCSV() {
     let output: string = "";
 
     for(const cell of sheetData) {
-
+        output += cell.GetText + ",";
     }
+
+    const blob = new Blob([output], {type: "application/csv"});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "workbook.csv";
+    link.click();
 }
 
 export function exportAsXML() {
@@ -64,12 +70,12 @@ export function exportAsXML() {
         const sheetCells = sheet.getCells();
 
         for(const cell of sheetCells) {
-            const text =    '<Row ss:Index="4" ss:AutoFitHeight="0">' +
-                '<Cell ss:Index="3"><Data ss:Type="Number">2</Data></Cell>' +
-            '</Row>';
+            const cellContent = cell.GetText();
+            const text = `<Cell ss:Index="3"><Data ss:Type="Number">${cellContent}</Data></Cell>`
+            xmlOutput += text;
         }
         const xmlRowStart = "" +
-            `<Row>`
+            '<Row ss:Index="1" ss:AutoFitHeight="0">'
         const xmlRowEnd = "" +
             "</Row>"
     }
@@ -123,15 +129,8 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
             if(newColNum <= 0) {
                 return "'[FIX IN adjustFormula]'"
             }
-
             console.log(`Values inside adjustFormula: ${colNum}, ${newColNum}, ${newColumn}`)
-
-
-
         }
-
-
-
         return colAbs + newColumn + rowAbs + newRow;
     });
 }

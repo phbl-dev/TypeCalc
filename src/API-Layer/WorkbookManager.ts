@@ -22,7 +22,7 @@ export class WorkbookManager {
             this.instance = new Workbook();
             console.log("[WorkbookManager] Creating Workbook");
         }
-        return this.instance.get(this.activeSheet);
+        return this.instance.getSheet(this.activeSheet);
     }
 
     static getActiveCell(): string | null {

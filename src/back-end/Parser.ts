@@ -574,7 +574,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
                 e = FunCall.Make(op, [e, e2]);
             }
         }
-
         return e;
     }
 
@@ -586,7 +585,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @protected
      */
     protected number(ctx: any): number {
-
         return Number.parseFloat(ctx["Number"][0].image);
     }
 
@@ -610,7 +608,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         } else {
             e = FunCall.Make(s.toUpperCase(), []);
         }
-
         return e;
     }
 
@@ -714,7 +711,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
         if (ctx["SheetRef"]) {
             const sheetName = ctx["SheetRef"][0].image;
-            s1 = this.workbook.get(sheetName.substring(0, sheetName.length - 1));
+            s1 = this.workbook.getSheet(sheetName.substring(0, sheetName.length - 1));
             if (s1 === null) {
                 sheetError = true;
             }
