@@ -1,4 +1,4 @@
-import {createToken, CstElement, type CstNode, CstParser, Lexer, type ParserMethod, type TokenType} from "chevrotain";
+import {createToken, type CstNode, CstParser, Lexer, type TokenType} from "chevrotain";
 import type {Workbook} from "./Workbook.ts";
 import {BooleanCell, Cell, Formula, NumberCell, QuoteCell, TextCell} from "./Cells.ts";
 import {
@@ -19,10 +19,10 @@ import {A1RARef, R1C1RARef, SuperRARef} from "./CellAddressing.ts";
 /**
  * @class SpreadsheetLexer
  * @desc <B>Lexer class</b>. The purpose of this class is to store the Tokens, which are lexed during the parsing step.
- * Each of the Tokens is defined using ECMAscript regex and the class utilises the chevrotain package.
- * The all follow the same syntax, containing a name and a pattern.
+ * Each of the Tokens is defined using ECMAscript regex, and the class uses the chevrotain package.
+ * They all follow the same syntax, containing a name and a pattern.
  * If you are looking for documentation, please refer to
- * [Chevrotain Lexing Documention ](https://chevrotain.io/docs/tutorial/step1_lexing.html)
+ * [Chevrotain Lexing Documentation ](https://chevrotain.io/docs/tutorial/step1_lexing.html)
  */
 export class SpreadsheetLexer {
     static WhiteSpace: TokenType = createToken({name: "WhiteSpace", pattern: /\s+/, group: Lexer.SKIPPED});
@@ -74,12 +74,12 @@ export class SpreadsheetLexer {
 
     /**
      * Array of all tokens used in the project.
-     * Please note that the ordering of Tokens are important,
+     * Please note that the ordering of Tokens is important
      * since they determine which tokens are read first.
      *
      * SpreadsheetLexer.XMLSSRARef11 must be defined after SpreadsheetLexer.XMLSSRARef12,
      * This is because they share elements in their regex expressions,
-     * and if XMLSSRARef11 is defined first it will ignore XMLSSRARef12
+     * and if XMLSSRARef11 is defined first, it will ignore XMLSSRARef12
      */
     static AllTokens: TokenType[] = [
 
@@ -133,7 +133,7 @@ export class SpreadsheetLexer {
  * This provides a good insight into what goes on in the tree.
  * @desc <b> Parser class </b> The parser class follows the parsing rules laid out by the Spreadsheet.ATG file from CoreCalc
  * The rules of parsing of tokens are used subsequently to manipulate cellContents in the visitor class.
- * It parses the tokens, and returns them in a CST (Concrete Syntax tree).
+ * It parses the tokens and returns them in a CST (Concrete Syntax tree).
  * Please note that it is not possible to manipulate the parser class, only define its rules.
  *
  * If the goal is to manipulate the CST, please use the Visitor class.
@@ -142,7 +142,7 @@ export class SpreadsheetLexer {
  */
 export class SpreadsheetParser extends CstParser {
     // @ts-ignore
-    [x: string]: ParserMethod<unknown[], CstNode>;
+    [x: string]: any
     constructor() {
         super(SpreadsheetLexer.AllTokens);
 
@@ -483,17 +483,22 @@ export class SpreadsheetParser extends CstParser {
  * @desc <b>Visitor Class </b>.This class relies on the implementation of the SpreadSheetParser class to generate a CST (Concrete Syntax Tree),
  * to which is it traversing the tree, and manipulates the outcome.
  * @example new SpreadsheetVisitor().ParseCell("= 10 + 10)", new Workbook(), 1, 1); // Can be used to parse the input "= 10 + 10".
- * Please note, that while this will parse and set the cells up for evaluation, this method doesn't evaluate the cells. This process goes on in the Expressions class.
+ * Please note that while this will parse and set the cells up for evaluation, this method doesn't evaluate the cells. This process goes on in the Expressions class.
  */
 export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisitorConstructor() {
-    private workbook!: Workbook;
-    private cell!: Cell;
-    private col!: number;
-    private row!: number;
+
+    private readonly workbook: Workbook;
+    private cell: Cell | undefined;
+    private readonly col: number;
+    private readonly row: number;
 
 
-    constructor() {
+    constructor(workbook: Workbook, col: number, row: number) {
         super();
+
+        this.workbook = workbook;
+        this.col = col;
+        this.row = row;
 
         this.validateVisitor();
     }
@@ -503,29 +508,22 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * This method should be the only one that is accessed by outside classes.
      * This method is in charge of handling values.
      * @param parseString
-     * @param workbook
-     * @param col
-     * @param row
      * @constructor
      */
-    public ParseCell(parseString: string, workbook: Workbook, col: number, row: number): Cell | null | undefined {
-        this.workbook = workbook;
-        this.col = col;
-        this.row = row;
+    public ParseCell(parseString: string): Cell | undefined {
 
         const parser = new SpreadsheetParser();
         const _ = new Lexer(SpreadsheetLexer.AllTokens);
         parser.input = _.tokenize(parseString).tokens;
         const cst: CstNode = parser.cellContents();
-        this.visit(cst);
+        this.visit(cst); // This is the cellContents root being visited by the parser.
 
         return this.cell;
     }
 
 
     /**
-     * powFactor (or powerFactor) is the method, that evaluates exponents
-     * , which have been written with "^". It is placed in the lowest section of the CST,
+     * powFactor (or powerFactor) is the method that evaluates exponents *, which have been written with "^". It is placed in the lowest section of the CST
      * since it needs to be evaluated prior to other arithmetic rules.
      * @param ctx - the current node in the CST
      * @protected
@@ -543,7 +541,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     /**
-     * logicalTerm is the method, that evaluates the
+     * logicalTerm is the method that evaluates the
      * lowest priority arithmetic rules and string concatenation.
      * Since there can be multiple instances of logicalTerms and operators,
      * this method can run multiple times.
@@ -567,7 +565,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
                 } else if (op === "&") {
                     op = "CONCATENATE";
                 }
-                // It will not parse correctly in the parser class, if there is not a term on the right hand side,
+                // It will not parse correctly in the parser class if there is not a term on the right-hand side,
                 // Therefore, we never have to account for this in logicalTerm.
                 const e2 = this.visit(ctx["term"][i + 1]);
 
@@ -580,8 +578,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     /**
      * Simply, yet extremely important method.
-     * This method returns a number, when matched as a rule in the parser.
-     * It uses float parsing, since it allows both integers and floating points to exist.
+     * This method returns a number when matched as a rule in the parser.
+     * It uses float parsing since it allows both integers and floating points to exist.
      * @param ctx - the current node in the CST
      * @protected
      */
@@ -627,8 +625,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         elist.push(e1);
 
         if (ctx["expression"].length > 1) {
-            for (let i = 1; i < ctx["expression"].length; i++) {
-                const e2 = this.visit(ctx["expression"][i]);
+            for (let i:number = 1; i < ctx["expression"].length; i++) {
+                const e2:Expr = this.visit(ctx["expression"][i]);
                 elist.push(e2);
             }
         }
@@ -637,7 +635,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     protected addOp(ctx: any): string {
 
-        let op = "";
+        let op:string = "";
 
         if (ctx.Plus) {
             op = "+";
@@ -665,13 +663,13 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
     protected term(ctx: any): Expr {
-        let e = this.visit(ctx["powFactor"][0]);
+        let e:Expr = this.visit(ctx["powFactor"][0]);
 
         if (ctx["mulOp"] && ctx["mulOp"].length > 0) {
-            for (let i = 0; i < ctx["mulOp"].length; i++) {
-                const op = this.visit(ctx["mulOp"][i]);
+            for (let i:number = 0; i < ctx["mulOp"].length; i++) {
+                const op:string = this.visit(ctx["mulOp"][i]);
 
-                const e2 = this.visit(ctx["powFactor"][i + 1]);
+                const e2:Expr = this.visit(ctx["powFactor"][i + 1]);
 
                 e = FunCall.Make(op, [e, e2]);
             }
@@ -686,10 +684,10 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         e = this.visit(ctx["logicalTerm"][0]);
 
         if (ctx["Operator"] && ctx["logicalTerm"].length > 1) {
-            for (let i = 0; i < ctx["Operator"].length; i++) {
-                const op = this.visit(ctx["Operator"][i]);
+            for (let i:number = 0; i < ctx["Operator"].length; i++) {
+                const op:string = this.visit(ctx["Operator"][i]);
 
-                const nextTerm = this.visit(ctx["logicalTerm"][i + 1]);
+                const nextTerm:Expr = this.visit(ctx["logicalTerm"][i + 1]);
 
                 e = FunCall.Make(op, [e, nextTerm]);
             }
@@ -702,8 +700,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     protected factor(ctx: any): Expr {
 
 
-        let r1, r2;
-        let s1 = null;
+        let r1:SuperRARef, r2:SuperRARef;
+        let s1:Sheet | null = null;
         let d: number;
         let sheetError = false;
         let e = null;
@@ -713,7 +711,8 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         }
 
         if (ctx["SheetRef"]) {
-            const sheetName = ctx["SheetRef"][0].image;
+            const sheetName:string = ctx["SheetRef"][0].image;
+            
             s1 = this.workbook.get(sheetName.substring(0, sheetName.length - 1));
             if (s1 === null) {
                 sheetError = true;
@@ -723,12 +722,12 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             r1 = this.visit(ctx["raref"][0]);
 
 
-            e = sheetError ? new Error(ErrorValue.refError) : new CellRef(s1 as unknown as Sheet, r1);
+            e = sheetError ? new Error(ErrorValue.refError) : new CellRef(s1 as Sheet, r1);
 
             if (ctx["raref"][1]) {
                 r2 = this.visit(ctx["raref"][1]);
 
-                e = sheetError ? new Error(ErrorValue.refError) : new CellArea(s1 as unknown as Sheet, r1 as SuperRARef, r2 as SuperRARef);
+                e = sheetError ? new Error(ErrorValue.refError) : new CellArea(s1 as Sheet, r1, r2 );
             }
         }
 
@@ -828,6 +827,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         }
 
 
-        return this.cell;
+        return this.cell as Cell;
     }
 }
