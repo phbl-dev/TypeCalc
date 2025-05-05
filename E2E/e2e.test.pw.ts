@@ -240,8 +240,21 @@ test("Copy and cut single cell", async ({ page }) => {
 
 
 })
-
-
+test("Copy and paste single cell", async ({ page }) => {
+  await page.goto('http://localhost:5173/');
+  const C4 = page.locator('div#C4.Cell')
+  await C4.click()
+  await C4.type("= 10 + 20 * 30")
+  await page.keyboard.press("Enter")
+  await expect(C4).toContainText('610');
+  await C4.click()
+  await page.keyboard.press("Control+c")
+  const E8 = page.locator('div#E8.Cell')
+  await E8.click()
+  await page.keyboard.press("Control+v")
+  await expect(C4).toContainText('610');
+  await expect(E8).toContainText('610');
+})
 test("Copy and cut multiple cells", async ({ page }) => {
   await page.goto('http://localhost:5173/');
 
@@ -302,5 +315,105 @@ test("Copy and cut multiple cells", async ({ page }) => {
 
   await expect(C4).toContainText('');
   await expect(C6).toContainText('');
+
+})
+test("Copy and paste multiple cells", async ({ page }) => {
+  await page.goto('http://localhost:5173/');
+  const C4 = page.locator('div#C4.Cell')
+
+  await C4.click()
+
+  await C4.type("= 10 + 20 * 30")
+
+  await page.keyboard.press("Enter")
+
+  await expect(C4).toContainText('610');
+
+
+  const C6 = page.locator('div#C6.Cell')
+  await C6.click()
+  await C6.type("= 10 + 20 + 30")
+
+  await page.keyboard.press("Enter")
+  await expect(C6).toContainText('60');
+
+
+  await C4.click()
+
+  await page.keyboard.down("Shift")
+  await page.keyboard.press("ArrowDown")
+  await page.keyboard.press("ArrowDown")
+  await page.keyboard.press("ArrowDown")
+
+  await page.keyboard.up("Shift")
+
+
+  await page.keyboard.down("Control")
+  await page.keyboard.press("c")
+
+
+  await page.keyboard.up("Control")
+
+
+  const E8 = page.locator('div#E8.Cell')
+  const E10 = page.locator('div#E10.Cell')
+
+
+  await E8.click()
+
+  await page.keyboard.down("Control")
+  await page.keyboard.press("v")
+
+
+  await page.keyboard.up("Control")
+
+
+  await expect(E8).toContainText('610');
+
+  await expect(E10).toContainText('60');
+
+  await expect(C4).toContainText('610');
+  await expect(C6).toContainText('60');
+
+})
+
+test("Copy and cut multiple cells with cell refs", async ({ page }) => {
+  await page.goto('http://localhost:5173/');
+  const C4 = page.locator('div#C4.Cell')
+  await C4.click()
+  await C4.type("=A1")
+  await page.keyboard.press("Enter")
+  await expect(C4).toContainText('=A1');
+  await C4.click()
+  await page.keyboard.down("Shift")
+  await page.keyboard.press("ArrowDown")
+  await page.keyboard.press("ArrowDown")
+
+  await page.keyboard.up("Shift")
+  await page.keyboard.down("Control")
+  await page.keyboard.press("c")
+
+
+  await page.keyboard.up("Control")
+
+  const C5 = page.locator('div#C5.Cell')
+  await C5.click()
+
+  await page.keyboard.down("Control")
+  await page.keyboard.press("v")
+
+
+  await page.keyboard.up("Control")
+
+
+  const A1 = page.locator('div#A1.Cell')
+
+  await A1.click()
+  await A1.type("= 10")
+  await page.keyboard.press("Enter")
+
+  await expect(C4).toContainText('10');
+  await expect(A1).toContainText('10');
+
 
 })
