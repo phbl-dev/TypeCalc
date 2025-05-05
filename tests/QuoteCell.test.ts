@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { Value } from "../src/back-end/Value";
+import { Value } from "../src/back-end/Values";
 import { Formats } from "../src/back-end/Types";
 import { Cell, QuoteCell } from "../src/back-end/Cells";
 import { Workbook } from "../src/back-end/Workbook";
@@ -45,7 +45,7 @@ describe ("QuoteCell", () => {
     });
 
     /**
-     * Eval returns the field value of type Value.
+     * Eval returns the field value of type Values.
      */
     test ("Eval Test", () => {
         expect(quoteCell.Eval(sheet, 0, 0) instanceof Value).toBe(true);

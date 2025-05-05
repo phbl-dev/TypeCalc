@@ -1,13 +1,13 @@
 import {beforeEach, describe, expect, should, test} from "vitest";
 import * as formulajs from '@formulajs/formulajs'
-import {CellRef, Expr, ExprArray, FunCall, NumberConst, TextConst} from "../src/back-end/Expressions";
+import {BooleanConst, CellRef, Expr, ExprArray, FunCall, NumberConst, TextConst} from "../src/back-end/Expressions";
 import { Sheet } from "../src/back-end/Sheet";
 import { Workbook } from "../src/back-end/Workbook";
 import {SuperRARef} from "../src/back-end/CellAddressing";
 import { BlankCell, Cell, Formula, NumberCell } from "../src/back-end/Cells";
 import {CyclicException} from "../src/back-end/Types";
 
-import {ErrorValue, NumberValue, TextValue} from "../src/back-end/Value"; // Importing formulajs
+import {ErrorValue, NumberValue, TextValue} from "../src/back-end/Values"; // Importing formulajs
 
 
 describe("Formula.js", () => {
@@ -290,8 +290,8 @@ describe("Formula.js", () => {
         let funCall: Expr = FunCall.Make("ISEVEN", [expr1]);
         let funCall2: Expr = FunCall.Make("ISEVEN", [expr2]);
 
-        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("true");
-        expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe("true");
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(true);
+        expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe(true);
     });
 
     test("Eval with FACT", () => {
@@ -459,8 +459,8 @@ describe("Formula.js", () => {
         let funCall: Expr = FunCall.Make("EXACT", [expr1, expr2]);
         let funCall2: Expr = FunCall.Make("EXACT", [expr1, expr3]);
 
-        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe("false");
-        expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe("true");
+        expect(NumberValue.ToNumber(funCall.Eval(sheet,0,0))).toBe(false);
+        expect(NumberValue.ToNumber(funCall2.Eval(sheet,0,0))).toBe(true);
     });
 
     test("Eval with FIND", () => {
@@ -526,7 +526,7 @@ describe("Formula.js", () => {
 
         let funCall: Expr = FunCall.Make("AND", [expr1, expr2]);
 
-        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("false");
+        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe(false);
     });
 
     test("Eval with IF", () => {
@@ -561,8 +561,8 @@ describe("Formula.js", () => {
 
     // Testing that a cyclic is NOT detected in certain IF() situations (where it's not required).
     test("Eval with IF2", () => {
-        const trueExpr: Expr = new NumberConst(1); // We don't have a BooleanConst, but we can make boolean NumberConst
-        const falseExpr: Expr = new NumberConst(0); // We don't have a BooleanConst, but we can make boolean NumberConst
+        const trueExpr: Expr = new BooleanConst(true); // We don't have a BooleanConst, but we can make boolean NumberConst
+        const falseExpr: Expr = new BooleanConst(false); // We don't have a BooleanConst, but we can make boolean NumberConst
         const expr3: Expr = new NumberConst(42); // Some default value
 
         // If we divide 1/0 we get an error value as we should:
@@ -630,8 +630,8 @@ describe("Formula.js", () => {
         const funCall: Expr = FunCall.Make("EQUALS", [cellRef1, cellRef2])
         const funCall2: Expr = FunCall.Make("EQUALS", [cellRef1, cellRef3])
 
-        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe("false");
-        expect(TextValue.ToString(funCall2.Eval(sheet,0,0))).toBe("true");
+        expect(TextValue.ToString(funCall.Eval(sheet,0,0))).toBe(false);
+        expect(TextValue.ToString(funCall2.Eval(sheet,0,0))).toBe(true);
     })
 
 

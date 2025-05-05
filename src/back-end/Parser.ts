@@ -1,8 +1,18 @@
-import {createToken, type CstNode, CstParser, Lexer, type ParserMethod, type TokenType} from "chevrotain";
+import {createToken, CstElement, type CstNode, CstParser, Lexer, type ParserMethod, type TokenType} from "chevrotain";
 import type {Workbook} from "./Workbook.ts";
-import {Cell, Formula, NumberCell, QuoteCell, TextCell} from "./Cells.ts";
-import {CellArea, CellRef, Error, Expr, ExprArray, FunCall, NumberConst, TextConst} from "./Expressions.ts";
-import {ErrorValue, NumberValue} from "./Value.ts";
+import {BooleanCell, Cell, Formula, NumberCell, QuoteCell, TextCell} from "./Cells.ts";
+import {
+    BooleanConst,
+    CellArea,
+    CellRef,
+    Error,
+    Expr,
+    ExprArray,
+    FunCall,
+    NumberConst,
+    TextConst
+} from "./Expressions.ts";
+import {ErrorValue, NumberValue} from "./Values.ts";
 import type {Sheet} from "./Sheet.ts";
 import {A1RARef, R1C1RARef, SuperRARef} from "./CellAddressing.ts";
 
@@ -25,7 +35,8 @@ export class SpreadsheetLexer {
     static Colon: TokenType = createToken({name: "Colon", pattern: /:/});
     static Identifier: TokenType = createToken({name: "Identifier", pattern: /[A-Za-z][A-Za-z0-9_]*/}); // aka name in ATG file.
     static StringLiteral: TokenType = createToken({name: "StringLiteral", pattern: /"([^"\\]|\\.)*"/});
-
+    static TRUE:TokenType = createToken({name: "TRUE", pattern: /true/i});
+    static FALSE:TokenType = createToken({name: "FALSE", pattern: /false/i});
     static QuoteCell: TokenType = createToken({
         name: "QuoteCell",
         pattern: /'([^'\\]|\\.)*'/,
@@ -84,6 +95,8 @@ export class SpreadsheetLexer {
         SpreadsheetLexer.XMLSSRARef11,
         SpreadsheetLexer.SheetRef,
         SpreadsheetLexer.Ampersand,
+        SpreadsheetLexer.TRUE,
+        SpreadsheetLexer.FALSE,
         SpreadsheetLexer.Identifier,
 
         SpreadsheetLexer.LBracket,
@@ -270,7 +283,16 @@ export class SpreadsheetParser extends CstParser {
                             $.SUBRULE($.number);
                     },
                 },
-
+                {
+                    ALT: () => {
+                        $.CONSUME(SpreadsheetLexer.TRUE);
+                    },
+                },
+                {
+                    ALT: () => {
+                        $.CONSUME(SpreadsheetLexer.FALSE);
+                    },
+                },
                 {
                     ALT: () => {
                         $.CONSUME(SpreadsheetLexer.StringLiteral);
@@ -435,6 +457,16 @@ export class SpreadsheetParser extends CstParser {
                         $.SUBRULE2($.number);
                     },
                 },
+                {
+                    ALT: () => {
+                        $.CONSUME(SpreadsheetLexer.TRUE);
+                    },
+                },
+                {
+                    ALT: () => {
+                        $.CONSUME(SpreadsheetLexer.FALSE);
+                    },
+                },
             ]);
             return;
         }
@@ -498,7 +530,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @param ctx - the current node in the CST
      * @protected
      */
-    protected powFactor(ctx: any): Expr {
+    protected powFactor(ctx:any): any {
         let e2: Expr;
 
         let e = this.visit(ctx["factor"][0]);
@@ -519,7 +551,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @param ctx - the current node in the CST
      * @protected
      */
-    protected logicalTerm(ctx: any): Expr {
+    protected logicalTerm(ctx: any): any {
         let e: Expr;
 
         e = this.visit(ctx["term"][0]);
@@ -576,7 +608,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             es = this.visit(ctx["exprs1"]);
             e = FunCall.Make(s.toUpperCase(), es); // es is an array of Expr[], which is returned by following exprs1.
         } else {
-            e = FunCall.Make(s.toUpperCase(), []); // TODO: Understand why this makes sense?
+            e = FunCall.Make(s.toUpperCase(), []);
         }
 
         return e;
@@ -700,6 +732,15 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             }
         }
 
+        if(ctx["TRUE"]) {
+            e = new BooleanConst(true)
+        }
+
+        if(ctx["FALSE"]) {
+            e = new BooleanConst(false)
+        }
+
+
         if (ctx["NEGATIVE"]) {
 
             const innerExpr = this.visit(ctx["NEGATIVE"]);
@@ -763,13 +804,18 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     protected cellContents(ctx: any): Cell {
         const e: any = this.visit(ctx.expression);
-
         if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.QuoteCell) {
             const helperConst = ctx["QuoteCell"][0].image
             this.cell = new QuoteCell(helperConst.substring(1, helperConst.length - 1));
-        } else if (ctx.StringLiteral) {
+        } else if (ctx.TRUE) {
+            this.cell = new BooleanCell(true);
+        } else if (ctx.FALSE) {
+            this.cell = new BooleanCell(false);
+        }
+
+        else if (ctx.StringLiteral) {
             const helperConst = ctx["StringLiteral"][0].image
             this.cell = new TextCell(helperConst.substring(1, helperConst.length - 1));
         } else if (ctx.Minus) {

@@ -1,6 +1,6 @@
 import type { Formats } from "./Types";
 import type { Sheet } from "./Sheet";
-import type { Value } from "./Value";
+import type { Value } from "./Values.ts";
 import type { Cell } from "./Cells";
 
 //An interval represents a range of numbers from a min to a max, including both
@@ -244,9 +244,6 @@ export class A1RARef extends SuperRARef {
         if (i < this.a1ref.length && this.a1ref[i] == "$") {
             this.colAbs = true;
             i++;
-        } else {
-
-            this.colAbs = true;
         }
 
         let val = -1;
@@ -261,8 +258,6 @@ export class A1RARef extends SuperRARef {
         if (i < this.a1ref.length && this.a1ref[i] == "$") {
             this.rowAbs = true;
             i++;
-        } else {
-            this.rowAbs = true;
         }
 
         val = this.parseIntWithIndex(this.a1ref, i).value;

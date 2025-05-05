@@ -25,6 +25,18 @@ export abstract class Value {
         act(this);
     }
 
+    public static ToBoolean(value: Value): boolean {
+        if (value instanceof BooleanValue) {
+            return value.value;
+        } else if (value instanceof NumberValue) {
+            return (value as NumberValue).value !== 0;        }
+        else if (value instanceof TextValue) {
+            const text = TextValue.ToString(value);
+            return text !== null && (text!.toLowerCase() === "true" || text === "1");
+        }
+        return false;
+    }
+
     public static MakeVoid(): Value {
         return this.createTextValue();
     }
@@ -129,6 +141,35 @@ export class ErrorValue extends Value {
     }
 }
 
+export class BooleanValue extends Value {
+    public readonly value: boolean;
+
+    public static readonly type: typeof BooleanValue = BooleanValue;
+
+    // Defining the constructor:
+    private constructor(s: boolean) {
+        super(); // Calling the parent constructor
+        this.value = s; // Setting value to be the argument given in s
+    }
+
+    Equals(v: Value): boolean {
+        return false;
+    }
+
+    ToObject(): unknown {
+        return this.value;
+    }
+
+
+    public static Make(s: boolean): BooleanValue {
+        if (s === null) {
+            throw new Error("s cannot be null");
+        }
+            return new BooleanValue(s);
+        }
+
+}
+
 /*
 The TextValue class represents the value of a cell when it contains a string. It ensures that identical text
 values are stored only once (interning). So if two different cells store the same string value then each of
@@ -223,7 +264,7 @@ export class TextValue extends Value {
     }
 
     /*
-    The ToString() method takes "v" as argument of type Value.
+    The ToString() method takes "v" as argument of type Values.
     It then attempts to cast "v" as a TextValue and calls it "tv".
     - If "tv" is not null its value is returned.
     - Otherwise, null is returned.
@@ -273,7 +314,7 @@ export class TextValue extends Value {
     }
 
     /*
-    The ToChar() method takes "v" as argument of type Value.
+    The ToChar() method takes "v" as argument of type Values.
     It then attempts to cast "v" as a TextValue and calls it "tv".
     - If tv is not null and its values is not undefined and it has a length of at least 1 then it returns the first character of the value.
     - Otherwise it returns null.
@@ -364,7 +405,7 @@ export class NumberValue extends Value {
      * @param d - Input value of type number.
      * Supports signed and unsigned values ranging from a singular bit to 64 bits. Input must be finite and cannot be null!
      * @constructor
-     * @return Value - the resulting NumberValue as type Value
+     * @return Value - the resulting NumberValue as type Values
      */
     public static Make(d: number): Value {
         if (!Number.isFinite(Number(d))) {
@@ -385,7 +426,7 @@ export class NumberValue extends Value {
 
     /**
      *
-     * @param v another type of Value
+     * @param v another type of Values
      * @constructor
      * @return whether or not two NumberValues are equal
      */
@@ -449,12 +490,6 @@ export class NumberValue extends Value {
         } else {
             return ErrorValue.numError as Value;
         }
-    }
-
-    public static ToBoolean(v: Value): object | null {
-        const nv: NumberValue = v as NumberValue;
-
-        return nv != null ? <object>(<unknown>(<number>nv.value != 0)) : null;
     }
 }
 
