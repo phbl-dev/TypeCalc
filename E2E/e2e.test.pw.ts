@@ -253,8 +253,11 @@ test("Copy and paste single cell", async ({ page }) => {
   const E8 = page.locator('div#E8.Cell')
   await E8.click()
   await page.keyboard.press("Control+v")
+  await page.keyboard.press("Enter")
+
   await expect(C4).toContainText('610');
   await expect(E8).toContainText('610');
+
 })
 test("Copy and cut multiple cells", async ({ page }) => {
   await page.goto('http://localhost:5173/');
