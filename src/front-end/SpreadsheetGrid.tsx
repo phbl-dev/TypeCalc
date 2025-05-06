@@ -139,7 +139,39 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         return AreaArray;
     }
 
-    function CellCopyCut(areaRef: string, copy: boolean = false) {
+    function PasteArea(areaRef: string) {
+        const range = JSON.parse(areaRef);
+        const targetCellRef = new A1RefCellAddress(ID);
+
+        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
+            const { row, col, cell, content, relRow, relCol } = cellInfo;
+            const targetRow = targetCellRef.row + relRow;
+            const targetCol = targetCellRef.col + relCol;
+
+            if (cellInfo.cell instanceof Formula) {
+                const nextFormula = adjustFormula(
+                    content!,
+                    targetRow - row,
+                    targetCol - col
+                );
+                let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
+                handleInput(targetRow, targetCol, nextFormula!);
+
+                if (newCell!.classList.contains("active-cell")){
+                    (newCell as HTMLInputElement).innerText = nextFormula as string;
+                }
+            }
+            else {
+                WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
+            }
+            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+
+        }
+
+        AreaMarked = false;
+    }
+
+    function CutArea(areaRef: string) {
         const range = JSON.parse(areaRef);
         const targetCellRef = new A1RefCellAddress(ID);
 
@@ -155,33 +187,32 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         targetRow - row,
                         targetCol - col
                     );
-                    const colAsLetter:string = numberToLetters(targetCol + 1);
-                    const addr:string = colAsLetter + (targetRow + 1).toString();
-                    let newCell = document.getElementById(addr);
-                    if (copy) {
-                        handleInput(targetRow, targetCol, nextFormula!);
-                    } else {
+                    let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
                         handleInput(targetRow, targetCol, nextFormula!);
                         WorkbookManager.getActiveSheet()?.RemoveCell(col, row);
-                    }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     if (newCell!.classList.contains("active-cell")){
                         (newCell as HTMLInputElement).innerText = nextFormula as string;
                     }
                 }
                 else {
                     WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
-                    if (copy) {
-                        WorkbookManager.getActiveSheet()?.SetCell(cell, col, row);
-                    }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                 }
+                EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+
         }
-        if (!copy) {
             clearVisualHighlight();
-        }
+
         AreaMarked = false;
     }
+
+    function DeleteArea(areaRef:string) {
+        const range = JSON.parse(areaRef);
+        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
+            WorkbookManager.getActiveSheet()?.RemoveCell(cellInfo.col, cellInfo.row);
+        }
+        EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+    }
+
 // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
@@ -223,18 +254,16 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     event.preventDefault();
                     areaRef = sessionStorage.getItem('selectionRange');
                     if (areaRef) {
-                        CellCopyCut(areaRef);
+                        CutArea(areaRef);
                     }
                     sessionStorage.removeItem('selectionRange');
-                    //EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
                 case "v":
                     event.preventDefault();
                     areaRef = sessionStorage.getItem('selectionRange');
                     if(areaRef) {
-                        CellCopyCut(areaRef, true);
+                        PasteArea(areaRef);
                     }
-                    //EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
                 case "b":
                     makeBold();
@@ -250,6 +279,18 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
 
         switch (event.key) {
+            case "Backspace":
+                if (AreaMarked) {
+                    setHighlight(selectionStartCell!, true);
+                    areaRef = sessionStorage.getItem('selectionRange')!;
+
+                    DeleteArea(areaRef);
+                }
+                clearVisualHighlight()
+                AreaMarked = false
+
+                break;
+
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1);
                 if (isShiftKeyDown) {
