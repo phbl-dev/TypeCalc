@@ -235,6 +235,7 @@ test("Copy and cut single cell", async ({ page }) => {
   const E8 = page.locator('div#E8.Cell')
   await E8.click()
   await page.keyboard.press("Control+x")
+  await page.keyboard.press("Enter")
   await expect(C4).toContainText("")
   await expect(E8).toContainText('610');
 
