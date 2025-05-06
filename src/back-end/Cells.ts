@@ -87,7 +87,7 @@ export abstract class Cell {
      */
     public abstract Reset(): void;
 
-    // Mark the cell dirty, for subsequent evaluation
+    // Mark the cell dirty, for later evaluation
     public abstract MarkDirty(): void;
 
     public static MarkCellDirty(sheet: Sheet, col: number, row: number): void {
@@ -95,6 +95,10 @@ export abstract class Cell {
         if (cell != null) {
             cell.MarkDirty();
         }
+    }
+
+    public setOgText(text: string):void {
+        this.ogText = text
     }
 
     // Enqueue this cell for evaluation
