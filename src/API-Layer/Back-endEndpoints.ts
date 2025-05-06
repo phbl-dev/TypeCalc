@@ -101,7 +101,9 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
                     const cell = sheet.Get(col - 1, row - 1);
+
                     if (cell != null) {
+
                         let cellEval = cell.Eval(sheet, 0, 0);
                         if (cellEval instanceof ErrorValue) {
                             cellHTML.innerText = cellEval.message;

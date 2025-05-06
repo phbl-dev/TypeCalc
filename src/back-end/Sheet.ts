@@ -231,7 +231,7 @@ export class Sheet {
      */
     public SetArrayFormula(cell: Cell, col: number, row: number, ulCa: SuperCellAddress, lrCa: SuperCellAddress): void {
 
-        const formula: Formula = cell as unknown as Formula;
+        const formula: Formula = cell as Formula;
         if (cell == null) {
             throw new Error("Invalid array formula");
         } else {
@@ -248,9 +248,20 @@ export class Sheet {
 
             for (let c = 0; c < cols; c++) {
                 for (let r = 0; r < rows; r++) {
-                    this.Set(ulCa.col + c, new ArrayFormula(caf, c, r) as unknown as Cell, ulCa.row + r);
+                    const f = new ArrayFormula(caf, c, r);
+
+                    if(c == 0 && r == 0) {
+
+                        f.setOgText(caf.formula.GetText()!)
+                    }
+                    this.SetCell(f, ulCa.col + c, ulCa.row + r);
                 }
             }
+
+
+
+
+
         }
     }
 
@@ -604,10 +615,6 @@ export class Sheet {
 
     public toString(): string {
         return this.name;
-    }
-
-    getHashCode() {
-        return 0;
     }
 }
 

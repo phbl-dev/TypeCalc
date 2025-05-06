@@ -14,7 +14,7 @@ import {
     setCellColor,
     setTextColor
 } from "./HelperFunctions.tsx";
-import {Cell as BackendCell, Formula} from "../back-end/Cells";
+import {ArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 
@@ -323,6 +323,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
+
+
+        const checkCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
+        if (checkCell instanceof ArrayFormula) {return}
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         console.log(cellToBeAdded);
         if (!cellToBeAdded) {return}
@@ -336,7 +340,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         if (!cell) return; // Check that cell is not null
         const result = cell.Eval(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
 
+
+
         if (cell instanceof Formula && result instanceof ArrayExplicit) {
+            console.log("This is an array formula:")
             WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
                 cell, // cell
                 columnIndex,
@@ -344,6 +351,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 new SuperCellAddress(columnIndex, rowIndex),
                 new SuperCellAddress(columnIndex, rowIndex + result!.values[0].length - 1)
             )
+
         }
     }
 
