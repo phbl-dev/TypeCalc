@@ -176,6 +176,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     if (copy) {
                         WorkbookManager.getActiveSheet()?.SetCell(cell, col, row);
                     }
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                 }
         }
         if (!copy) {
