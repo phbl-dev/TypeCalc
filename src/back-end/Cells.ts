@@ -146,8 +146,8 @@ export abstract class Cell {
      */
     public static Parse(text: string, workbook: Workbook, col: number, row: number): Cell | null {
         if (text) {
-            const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
-            let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
+            const parser: SpreadsheetVisitor = new SpreadsheetVisitor(workbook,col,row);
+            let cellToBeAdded = parser.ParseCell(text);
             if (!text.trim()) {
                 return new BlankCell();
             }
