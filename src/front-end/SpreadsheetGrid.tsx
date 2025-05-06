@@ -155,12 +155,20 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         targetRow - row,
                         targetCol - col
                     );
-                    console.log(nextFormula);
                     if (copy) {
+                        const colAsLetter:string = numberToLetters(targetCol + 1);
+                        const addr:string = colAsLetter + (targetRow + 1).toString();
+                        let newCell = document.getElementById(addr);
                         handleInput(targetRow, targetCol, nextFormula!);
+                        (newCell as HTMLInputElement).innerText = nextFormula as string;
                     } else {
+                        const colAsLetter:string = numberToLetters(targetCol + 1);
+                        const addr:string = colAsLetter + (targetRow + 1).toString();
+                        let newCell = document.getElementById(addr);
                         handleInput(targetRow, targetCol, nextFormula!);
                         WorkbookManager.getActiveSheet()?.RemoveCell(col, row);
+                        EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                        (newCell as HTMLInputElement).innerText = nextFormula as string;
                     }
                 }
                 else {
@@ -219,7 +227,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         CellCopyCut(areaRef);
                     }
                     sessionStorage.removeItem('selectionRange');
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    //EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
                 case "v":
                     event.preventDefault();
@@ -227,7 +235,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     if(areaRef) {
                         CellCopyCut(areaRef, true);
                     }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    //EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
                 case "b":
                     makeBold();
