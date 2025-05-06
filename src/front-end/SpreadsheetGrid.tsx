@@ -155,12 +155,18 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         targetRow - row,
                         targetCol - col
                     );
-                    console.log(nextFormula);
+                    const colAsLetter:string = numberToLetters(targetCol + 1);
+                    const addr:string = colAsLetter + (targetRow + 1).toString();
+                    let newCell = document.getElementById(addr);
                     if (copy) {
                         handleInput(targetRow, targetCol, nextFormula!);
                     } else {
                         handleInput(targetRow, targetCol, nextFormula!);
                         WorkbookManager.getActiveSheet()?.RemoveCell(col, row);
+                    }
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    if (newCell!.classList.contains("active-cell")){
+                        (newCell as HTMLInputElement).innerText = nextFormula as string;
                     }
                 }
                 else {
@@ -168,6 +174,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     if (copy) {
                         WorkbookManager.getActiveSheet()?.SetCell(cell, col, row);
                     }
+                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                 }
         }
         if (!copy) {
@@ -219,7 +226,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         CellCopyCut(areaRef);
                     }
                     sessionStorage.removeItem('selectionRange');
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    //EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
                 case "v":
                     event.preventDefault();
@@ -227,7 +234,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     if(areaRef) {
                         CellCopyCut(areaRef, true);
                     }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    //EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
                 case "b":
                     makeBold();
