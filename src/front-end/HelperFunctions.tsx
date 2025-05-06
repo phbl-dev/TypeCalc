@@ -37,8 +37,23 @@ export function exportAsCSV() {
     if(!sheetData) {return}
     let output: string = "";
 
-    for(const cell of sheetData) {
-        output += cell.GetText + ",";
+    let currentRow = 1;
+    let currentCol = 1;
+
+    for(const cell of sheetData.iterateForExport()) {
+        const cellRow = cell.GetRow();
+        const cellCol = cell.GetCol();
+        if(cellRow !== currentRow) {
+            currentRow = cellRow!;
+            output += "\n";
+        }
+        const diff = cellCol! - currentCol;
+        currentCol = cellCol!;
+        for(let i = 0; i < diff; i++){
+            output += ",";
+        }
+
+        output += cell.GetText();
     }
 
     const blob = new Blob([output], {type: "application/csv"});
@@ -49,42 +64,59 @@ export function exportAsCSV() {
 }
 
 export function exportAsXML() {
-    let xmlOutput = "<?xml version=\"1.0\"?>\n" +
+    let xmlOutput =
+        "<?xml version=\"1.0\"?>\n" +
         "<?mso-application progid=\"Excel.Sheet\"?>\n" +
         "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
-        "          xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n" +
-        "          xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n" +
-        "          xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
-        "          xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
+        " xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n" +
+        " xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n" +
+        " xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
+        " xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
 
     const sheetNames = WorkbookManager.getSheetNames();
     console.log(sheetNames)
 
     for(const sheetName of sheetNames) {
-        const xmlSheetHeader = `
-                 <Worksheet ss:Name="${sheetName}">
-                     <Table>`;
+        const xmlSheetHeader =
+            `  <Worksheet ss:Name="${sheetName}">` +
+            "   <Table>";
         xmlOutput += xmlSheetHeader
 
         const sheet = WorkbookManager.getWorkbook().getSheet(sheetName)
         if(!sheet) {return}
         const sheetCells = sheet.getCells();
+        let currentRow = 0;
+        let firstRow = true;
 
-        for(const cell of sheetCells) {
+        for(const cell of sheetCells.iterateForExport()) {
+            const cellRow = cell.GetRow();
+            if(cellRow !== currentRow) {
+                currentRow = cellRow!;
+                let xmlNewRow = "\n"
+                if(firstRow) {
+                    xmlNewRow +=
+                        `     <Row ss:Index=${cellRow} ss:AutoFitHeight="0">`
+                    firstRow = false;
+                }
+                else {
+                    xmlNewRow +=
+                        "     </Row>\n" +
+                        `     <Row ss:Index=${cellRow} ss:AutoFitHeight="0">`
+                }
+                xmlOutput += xmlNewRow;
+            }
+
             const cellContent = cell.GetText();
             const cellCol = cell.GetCol();
-            const text = `<Cell ss:Index=${cellCol}><Data ss:Type="Number">${cellContent}</Data></Cell>`
+            const text = "\n" +
+                    `      <Cell ss:Index=${cellCol}><Data ss:Type="Number">${cellContent}</Data></Cell>`
             xmlOutput += text;
         }
-        const xmlRowStart = "" +
-            '<Row ss:Index="1" ss:AutoFitHeight="0">'
-        const xmlRowEnd = "" +
-            "</Row>"
     }
 
-    const xmlSheetFooter = "" +
-        "        </Table>\n" +
-        "    </Worksheet>\n";
+    const xmlSheetFooter =
+        "\n   </Table>\n" +
+        "  </Worksheet>\n";
     xmlOutput += xmlSheetFooter;
 
     const xmlFooter = "" +

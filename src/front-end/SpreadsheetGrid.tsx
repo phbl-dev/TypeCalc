@@ -10,7 +10,7 @@ import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewport,
     ParseToActiveCell} from "../API-Layer/Back-endEndpoints.ts";
 import {getCell, adjustFormula, numberToLetters, lettersToNumber,
-    exportAsXML, makeBold, makeItalic, makeUnderlined,
+    exportAsCSV, exportAsXML, makeBold, makeItalic, makeUnderlined,
     setCellColor, setTextColor} from "./HelperFunctions.tsx";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
@@ -604,7 +604,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         input.addEventListener("keydown", (e) => { // Jump to cell
             if (e.key === "Enter") handleJump();
         })
-        exportButton.addEventListener("click", exportAsXML)
+        exportButton.addEventListener("click", exportAsCSV)
         boldButton.addEventListener("click", makeBold)
         italicButton.addEventListener("click", makeItalic)
         underlineButton.addEventListener("click", makeUnderlined)
@@ -623,7 +623,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop
             window.removeEventListener("dragover", handleDragOver); // Drag and drop
-            exportButton.removeEventListener("click", exportAsXML);
+            exportButton.removeEventListener("click", exportAsCSV);
             jumpButton.removeEventListener("click", handleJump); // Jump to cell
             boldButton.removeEventListener("click", makeBold)
             italicButton.removeEventListener("click", makeItalic)
