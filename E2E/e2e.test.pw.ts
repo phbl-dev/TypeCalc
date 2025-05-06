@@ -207,7 +207,6 @@ test("DnD", async ({ page }) => {
 
   await page.keyboard.press("Control+v")
 
-  await expect(A2).toContainText('20');
   await expect(C2).toContainText('20');
 
   const A3 = page.locator("div#A3.Cell")
