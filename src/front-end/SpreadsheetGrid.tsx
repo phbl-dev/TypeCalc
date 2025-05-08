@@ -14,7 +14,7 @@ import {
     setCellColor,
     setTextColor
 } from "./HelperFunctions.tsx";
-import {Cell as BackendCell, Formula} from "../back-end/Cells";
+import {ArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 
@@ -79,6 +79,16 @@ let selectionStartCell: string | null = null
 let isShiftKeyDown = false
 let AreaMarked = false
 
+type CellInfo = {
+    row: number;
+    col: number;
+    cell: BackendCell;
+    content: string;
+    relRow: number;
+    relCol: number;
+};
+
+
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
@@ -107,113 +117,107 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         });
     }
 
-    const clearSelection = () => {
-        clearVisualHighlight();
-        sessionStorage.removeItem('selectionRange');
-    }
 
-    function MultiCellMove(areaRef: string, copy: boolean = false) {
-        const range = JSON.parse(areaRef);
-        const {startCol, startRow, endCol, endRow} = range;
-        const targetCellRef = new A1RefCellAddress(ID);
-
-        const cellsToCopy = [];
+    function ReadArea(startRow: number, endRow: number, startCol: number, endCol: number) {
+        let AreaArray: CellInfo[] = [];
 
         for (let i = startRow; i <= endRow; i++) {
             for (let j = startCol; j <= endCol; j++) {
                 const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
                 if (cell) {
-                    cellsToCopy.push({
+                    AreaArray.push({
                         row: i,
                         col: j,
                         cell: cell,
-                        content: cell.GetText(),
+                        content: cell.GetText()!,
                         relRow: i - startRow,
                         relCol: j - startCol
                     });
                 }
             }
         }
+        return AreaArray;
+    }
 
-        for (const cellInfo of cellsToCopy) {
+    function PasteArea(areaRef: string) {
+        const range = JSON.parse(areaRef);
+        const targetCellRef = new A1RefCellAddress(ID);
+
+        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
             const { row, col, cell, content, relRow, relCol } = cellInfo;
             const targetRow = targetCellRef.row + relRow;
             const targetCol = targetCellRef.col + relCol;
-            if (content!.startsWith('=')) {
-                const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
-                if (copy) {
-                    const newForm = adjustFormula(
-                        content!,
-                        targetRow - row,
-                        targetCol - col
-                    );
-                    handleInput(targetRow, targetCol, newForm);
-                    if (targetCellElement) {
-                        targetCellElement.innerText = newForm;
-                    }
-                } else {
-                    WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
-                    handleInput(targetRow, targetCol, content!);
-                    if (targetCellElement) {
-                        targetCellElement.innerText = content!;
-                    }
 
-                    const origCellElement = document.getElementById(numberToLetters(col + 1) + (row + 1));
-                    if (origCellElement) {
-                        origCellElement.innerText = "";
-                    }
+            if (cellInfo.cell instanceof Formula) {
+                const nextFormula = adjustFormula(
+                    content!,
+                    targetRow - row,
+                    targetCol - col
+                );
+                let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
+                handleInput(targetRow, targetCol, nextFormula!);
 
+                if (newCell!.classList.contains("active-cell")){
+                    (newCell as HTMLInputElement).innerText = nextFormula as string;
                 }
             }
             else {
                 WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
-                if (copy) {
-                    WorkbookManager.getActiveSheet()?.SetCell(cell, col, row);
-                } else {
-                    const origCellElement = document.getElementById(numberToLetters(col + 1) + (row + 1));
-                    if (origCellElement) {
-                        origCellElement.innerText = "";
-                    }
-                }
-                const targetCellElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1));
-                if (targetCellElement) {
-                    const movedCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(targetCol, targetRow);
-                    if (movedCell) {
-                        targetCellElement.innerText = movedCell.GetText()!;
-                    }
-                }
             }
-        }
-        //WorkbookManager.getWorkbook().Recalculate();
+            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
-        if (!copy) {
-            clearVisualHighlight();
         }
+
         AreaMarked = false;
     }
 
-    function singleCellMove(storedRef: string, copy: boolean = false) {
-        const parsedRef = JSON.parse(storedRef);
-        const wb = WorkbookManager.getActiveSheet()
-        if(copy) {
-            const tmpCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(parsedRef.col, parsedRef.row)!
+    function CutArea(areaRef: string) {
+        const range = JSON.parse(areaRef);
+        const targetCellRef = new A1RefCellAddress(ID);
 
-            wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-            wb!.SetCell(tmpCell.CloneCell(parsedRef.col, parsedRef.row), parsedRef.col, parsedRef.row)
+        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
+                const { row, col, cell, content, relRow, relCol } = cellInfo;
+                const targetRow = targetCellRef.row + relRow;
+                const targetCol = targetCellRef.col + relCol;
 
-        } else {
+                // If cell is a formula
+                if (cellInfo.cell instanceof Formula) {
+                    const nextFormula = adjustFormula(
+                        content!,
+                        targetRow - row,
+                        targetCol - col
+                    );
+                    let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
+                        handleInput(targetRow, targetCol, nextFormula!);
+                        WorkbookManager.getActiveSheet()?.RemoveCell(col, row);
+                    if (newCell!.classList.contains("active-cell")){
+                        (newCell as HTMLInputElement).innerText = nextFormula as string;
+                    }
+                }
+                else {
+                    WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
+                }
+                EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
-            wb!.MoveCell(parsedRef.col, parsedRef.row, columnIndex, rowIndex);
-            sessionStorage.removeItem('tmpCellRef');
-
-            WorkbookManager.getWorkbook()?.Recalculate();
         }
+            clearVisualHighlight();
+
+        AreaMarked = false;
+    }
+
+    function DeleteArea(areaRef:string) {
+        const range = JSON.parse(areaRef);
+        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
+            WorkbookManager.getActiveSheet()?.RemoveCell(cellInfo.col, cellInfo.row);
+        }
+        EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
     }
 
 // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
+        let areaRef
 
         if(event.ctrlKey) {
             switch (event.key) {
@@ -223,7 +227,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                     WorkbookManager.getActiveSheet()?.undo()
 
-                    // Refresh UI with wider range to ensure all affected cells are updated
+                    // Refresh UI with a wider range to ensure all affected cells are updated
                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
@@ -233,7 +237,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                     WorkbookManager.getActiveSheet()?.redo()
 
-                    // Refresh UI with wider range to ensure all affected cells are updated
+                    // Refresh UI with a wider range to ensure all affected cells are updated
                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
@@ -243,38 +247,23 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                         sessionStorage.removeItem("tmpCellRef");
                         setHighlight(selectionStartCell!, true);
                     } else {
-                        const singleCellRef = new A1RefCellAddress(ID)
-                        sessionStorage.setItem('tmpCellRef', JSON.stringify({
-                            ID: ID,
-                            col: singleCellRef.col,
-                            row: singleCellRef.row
-                        }));
-                        clearSelection()
+                        setHighlight(ID, true);
                     }
                     break
                 case "x":
                     event.preventDefault();
-                    const storedRef = sessionStorage.getItem('tmpCellRef');
-                    const areaRef = sessionStorage.getItem('selectionRange');
+                    areaRef = sessionStorage.getItem('selectionRange');
                     if (areaRef) {
-                        MultiCellMove(areaRef);
-                    } else if (storedRef) {
-                        singleCellMove(storedRef);
+                        CutArea(areaRef);
                     }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    sessionStorage.removeItem('selectionRange');
                     break
                 case "v":
                     event.preventDefault();
-                    const storedRef2 = sessionStorage.getItem('tmpCellRef');
-                    const areaRef2 = sessionStorage.getItem('selectionRange');
-                    if(areaRef2) {
-                        MultiCellMove(areaRef2,true);
+                    areaRef = sessionStorage.getItem('selectionRange');
+                    if(areaRef) {
+                        PasteArea(areaRef);
                     }
-                    else if (storedRef2) {
-                        singleCellMove(storedRef2,true);
-                    }
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
-                    WorkbookManager.getWorkbook()?.Recalculate()
                     break
                 case "b":
                     makeBold();
@@ -290,6 +279,18 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
 
         switch (event.key) {
+            case "Backspace":
+                if (AreaMarked) {
+                    setHighlight(selectionStartCell!, true);
+                    areaRef = sessionStorage.getItem('selectionRange')!;
+
+                    DeleteArea(areaRef);
+                }
+                clearVisualHighlight()
+                AreaMarked = false
+
+                break;
+
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1);
                 if (isShiftKeyDown) {
@@ -350,7 +351,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
 
         // After an arrow key is pressed, gets the next cell's ID and then the cell itself by the ID
-        // so we can focus the cell. Also updates the cell ID displayed to show current cell's ID.
+        // so we can focus the cell. Also updates the cell ID displayed to show the current cell's ID.
         const nextCellID = numberToLetters(nextCol + 1) + (nextRow + 1);
         const nextCell = document.getElementById(nextCellID);
         const cellIdInput = document.getElementById("cellIdInput") as HTMLInputElement;
@@ -363,6 +364,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
+
+
+        const checkCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
+        if (checkCell instanceof ArrayFormula) {return}
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         console.log(cellToBeAdded);
         if (!cellToBeAdded) {return}
@@ -376,7 +381,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         if (!cell) return; // Check that cell is not null
         const result = cell.Eval(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
 
+
+
         if (cell instanceof Formula && result instanceof ArrayExplicit) {
+            console.log("This is an array formula:")
             WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
                 cell, // cell
                 columnIndex,
@@ -384,6 +392,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 new SuperCellAddress(columnIndex, rowIndex),
                 new SuperCellAddress(columnIndex, rowIndex + result!.values[0].length - 1)
             )
+
         }
     }
 
@@ -396,7 +405,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
-    function setHighlight(endCell:string, saveHighlight:boolean = false,  arrowOptCol?:number, arrowOptRow?:number) {
+    function setHighlight(endCell:string, saveHighlight:boolean = false,  arrowOptCol?:number, arrowOptRow?:number): void {
         const endCellRef = new A1RefCellAddress(endCell);
         let currentActiveCellRef;
         if(arrowOptCol && arrowOptRow) {
@@ -406,7 +415,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 }
         let {ulCa,lrCa} = A1RefCellAddress.normalizeArea(currentActiveCellRef,endCellRef)
 
-        // Clear any existing highlight
         clearVisualHighlight()
 
         // Highlight all cells in the range
@@ -419,7 +427,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 }
             }
         }
-
         if(saveHighlight) {
             sessionStorage.setItem('selectionRange', JSON.stringify({
                 startCol : ulCa.col,
@@ -429,7 +436,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             }));
         }
     }
-
     return (
         <div className="Cell" contentEditable={true} id={ID} title={ID}
              style={{

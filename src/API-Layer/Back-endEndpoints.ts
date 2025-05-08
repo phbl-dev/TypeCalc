@@ -50,8 +50,10 @@ export function GetRawCellContent(cellID: string): string | null {
         return null;
     }
 
+    console.log("This is the cell", cell.GetText())
     // Special handling for Formula cells
     if (cell instanceof Formula) {
+        console.log("This is a formula cell");
         let formulaText = cell.GetText()!;
         // Ensure it starts with equals sign
         if (!formulaText.startsWith("=")) {
@@ -99,7 +101,9 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
                     const cell = sheet.Get(col - 1, row - 1);
+
                     if (cell != null) {
+
                         let cellEval = cell.Eval(sheet, 0, 0);
                         if (cellEval instanceof ErrorValue) {
                             cellHTML.innerText = cellEval.message;

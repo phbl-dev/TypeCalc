@@ -244,9 +244,6 @@ export class A1RARef extends SuperRARef {
         if (i < this.a1ref.length && this.a1ref[i] == "$") {
             this.colAbs = true;
             i++;
-        } else {
-
-            this.colAbs = true;
         }
 
         let val = -1;
@@ -261,8 +258,6 @@ export class A1RARef extends SuperRARef {
         if (i < this.a1ref.length && this.a1ref[i] == "$") {
             this.rowAbs = true;
             i++;
-        } else {
-            this.rowAbs = true;
         }
 
         val = this.parseIntWithIndex(this.a1ref, i).value;

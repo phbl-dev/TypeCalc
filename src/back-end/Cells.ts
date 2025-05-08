@@ -1,6 +1,6 @@
 // All the files from the old Cells folder has been moved here to avoid cyclic dependencies.
-import type { Sheet } from "./Sheet";
-import {ArrayValue, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
+import  { Sheet } from "./Sheet";
+import {ArrayValue, BooleanValue, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
 import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
 import {Error, type Expr} from "./Expressions"; // This should be imported when it's done
 import { Formats } from "./Types";
@@ -39,7 +39,7 @@ export abstract class Cell {
     In a TextCell, QuoteCell, and NumberCell the method will be overwritten and just return the value of the cell
     without any further computation.
 
-    In Formula, ArrayFormula, and CachedArrayFormula the method is overwritten but further computation is added
+    In Formula, ArrayFormula, and CachedArrayFormula the method is overwritten, but further computation is added
     before the method can return a valid value.
      */
     public abstract Eval(sheet: Sheet, col: number, row: number): Value | null;
@@ -87,7 +87,7 @@ export abstract class Cell {
      */
     public abstract Reset(): void;
 
-    // Mark the cell dirty, for subsequent evaluation
+    // Mark the cell dirty, for later evaluation
     public abstract MarkDirty(): void;
 
     public static MarkCellDirty(sheet: Sheet, col: number, row: number): void {
@@ -95,6 +95,10 @@ export abstract class Cell {
         if (cell != null) {
             cell.MarkDirty();
         }
+    }
+
+    public setOgText(text: string):void {
+        this.ogText = text
     }
 
     // Enqueue this cell for evaluation
@@ -146,13 +150,13 @@ export abstract class Cell {
      */
     public static Parse(text: string, workbook: Workbook, col: number, row: number): Cell | null {
         if (text) {
-            const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
-            let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
+            const parser: SpreadsheetVisitor = new SpreadsheetVisitor(workbook,col,row);
+            let cellToBeAdded = parser.ParseCell(text);
             if (!text.trim()) {
                 return new BlankCell();
             }
             if (cellToBeAdded == undefined) {
-                const err = new TextCell(ErrorValue.Make("#SYNTAX").message)
+                const err = new TextCell(ErrorValue.valueError.message)
                 err.ogText = text
                 return err
             }
@@ -368,6 +372,31 @@ export class QuoteCell extends ConstCell {
     }
 
 }
+// A BooleanCell is a cell, that contains a boolean value
+export class BooleanCell extends ConstCell {
+    public readonly value: BooleanValue
+
+    constructor(argument: boolean | BooleanCell) {
+        super();
+        if (argument instanceof BooleanCell) {
+            this.value = argument.value;
+        } else {
+            this.value = BooleanValue.Make(argument);
+        }
+    }
+    CloneCell(col: number, row: number): Cell {
+        return this;
+    }
+
+    Eval(sheet: Sheet, col: number, row: number): Value | null {
+        return this.value;
+    }
+
+    Show(col: number, row: number, fo: Formats): string {
+        return "" + this.value.value + "";
+    }
+
+}
 
 // A TextCell is a cell containing a double-quoted string constant.
 export class TextCell extends ConstCell {
@@ -455,7 +484,7 @@ export class Formula extends Cell {
                 console.log("Computing");
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
-                const err = ErrorValue.Make("#CYCLE!");
+                const err = ErrorValue.cycleError;
                 this.v = err;
                 console.error(msg);
                 return this.v;

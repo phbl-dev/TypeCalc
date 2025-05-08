@@ -1,5 +1,5 @@
 import  { Sheet } from "./Sheet";
-import {ArrayExplicit, ArrayView, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
+import {ArrayExplicit, ArrayView, BooleanValue, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
 import { Adjusted, FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "./CellAddressing";
 import {Cell} from "./Cells";
 import { type Formats, ImpossibleException } from "./Types";
@@ -72,7 +72,11 @@ abstract class Const extends Expr {
     public static Make(value: Value): Const {
         if (value instanceof NumberValue) {
             return new NumberConst((value as NumberValue).value);
-        } else if (value instanceof TextValue) {
+        }
+            else if (value instanceof BooleanValue) {
+                return new BooleanConst((value as BooleanValue).value);
+            }
+         else if (value instanceof TextValue) {
             return new TextConst((value as TextValue).value as string);
         } else return new ValueConst(value);
     }
@@ -143,6 +147,23 @@ export class TextConst extends Const {
     }
 }
 
+export class BooleanConst extends Const {
+    public readonly value: BooleanValue;
+
+    constructor(b: boolean) {
+        super();
+        this.value = BooleanValue.Make(b);
+    }
+
+    public override Eval(sheet: Sheet, col: number, row: number): Value {
+        return this.value;
+    }
+
+    Show(col: number, row: number, ctxpre: number, fo: Formats): string {
+        return this.value.value ? "TRUE" : "FALSE";
+    }
+}
+
 /**
  * A ValueConst is an arbitrary constant valued expression, used only
  * for partial evaluation; there is no corresponding formula source syntax.
@@ -196,7 +217,6 @@ export class Error extends Const {
  * like AGGREGATE takes arrays as arguments. And ExprArray is then the type we use for
  * these nested arrays.
  */
-//TODO: Should extend expr instead of Const because it should also be able to take cellrefs
 export class ExprArray extends Expr {
     public readonly es: Expr[];
 
@@ -246,12 +266,14 @@ export class ExprArray extends Expr {
         return this.es.some(expr => expr.isVolatile);    }
 }
 
+
+
 // Why does it work without Date?? Because Date results are converted to string in FunCall.Eval().
 /**
  *
  */
 type functionType = (...args: (string | number | ErrorValue | number[] | string[])[])
-    => string | number | boolean | ErrorValue | Date | number[] | undefined;
+    => string | number | boolean | ErrorValue | Date | number[];
 
 /**
  * A FunCall expression is an operator application such as 1+$A$4 or a function
@@ -266,21 +288,22 @@ export class FunCall extends Expr {
     public readonly function: functionType;
     public es: Expr[];           // Non-null, elements non-null
     public nonStrict: boolean;        // We implemented a flag for non-strict functions such that we know if some of their arguments should not be evaluated.
-    public isChoose: boolean
+    public isChoose: boolean;
+    public static ErrorFunction: boolean = false;
 
     private constructor (name: string | functionType, es: Expr[]) {
         super();
         if (typeof name === "function") {
             this.function = name;
         } else {
-            this.function = FunCall.getFunctionByName(name);
+            this.function = FunCall.getFunctionByName(name)!;
         }
         this.es = es;
         this.nonStrict = false;
         this.isChoose = false;
     }
 
-    public static getFunctionByName(name: string): functionType {
+    public static getFunctionByName(name: string): functionType | null {
         if (name in formulajs) {
             // "typeof formulajs" is "object" and it contains all the spreadsheet functions.
             // "keyof" that object are function names like "SUM" and "PRODUCT".
@@ -288,15 +311,16 @@ export class FunCall extends Expr {
             // functionType:
             return formulajs[name as keyof typeof formulajs] as functionType;
         }
-        throw new Error(`Function ${name} not found in formulajs`);
+        FunCall.ErrorFunction = true;
+        return null;
     }
 
     private static IF(es: Expr[]) {
         const func: functionType = (...args)=> {
             if (args[0]) {
-                return args[1] as string | number | boolean | ErrorValue | Date | number[] | undefined;
+                return args[1] as string | number | boolean | ErrorValue | Date | number[];
             } else {
-                return args[2] as string | number | boolean | ErrorValue | Date | number[] | undefined;
+                return args[2] as string | number | boolean | ErrorValue | Date | number[];
             }
         }
 
@@ -312,7 +336,9 @@ export class FunCall extends Expr {
     private static CHOOSE(es: Expr[]) {
         const func: functionType = (...args)=> {
             if((args[0] as Value).ToObject() as number >= 1 && (args[0] as Value).ToObject() as number <= args.length) {
-                return args[0] as string | number | boolean | ErrorValue | Date | number[] | undefined;
+                return args[0] as string | number | boolean | ErrorValue | Date | number[];
+            } else {
+                return ErrorValue.valueError // In case the user provided an index that is out of bounds
             }
         }
 
@@ -344,12 +370,12 @@ export class FunCall extends Expr {
 
         const func: functionType | null = FunCall.getFunctionByName(name);
         if (func === null) {
-            throw new Error(`Function ${name} not found in formulajs`); // MakeUnknown was called here previously.
+            return new Error(ErrorValue.nameError); // MakeUnknown was called here previously.
         }
 
         for (let i = 0; i < es.length; i++) {
             if (es[i] === null || es[i] === undefined) {
-                es[i] = new Error("#SYNTAX") as unknown as Expr;
+                es[i] = new Error(ErrorValue.valueError);
             }
         }
         return new FunCall(func, es);
@@ -550,7 +576,7 @@ export class FunCall extends Expr {
 
         // If the return type is boolean:
         if (typeof result === "boolean") {
-            return TextValue.Make((result as boolean).toString());
+            return BooleanValue.Make(result)
         }
 
         if (Array.isArray(result)) {
@@ -568,22 +594,12 @@ export class FunCall extends Expr {
             return new ArrayExplicit(start, end, values);
         }
 
-        return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
+        return ErrorValue.nameError; // If the function is not implemented we return an ErrorValue.
     }
 
-    private FindBoolValue(sheet: Sheet, col: number, row: number) {
-        let conditionValue = false;
-
+    private FindBoolValue(sheet: Sheet, col: number, row: number): boolean {
         const args_0: Value = this.es[0].Eval(sheet, col, row);
-
-
-        if (args_0 instanceof NumberValue) {
-            conditionValue = NumberValue.ToBoolean(args_0) as unknown as boolean;
-        } else if (args_0 instanceof TextValue) {
-            const text: string = TextValue.ToString(args_0)!;
-            conditionValue = text.toLowerCase() === "true" || text === "1";
-        }
-        return conditionValue;
+        return Value.ToBoolean(args_0);
     }
 
     /**
@@ -605,9 +621,10 @@ export class FunCall extends Expr {
      * @param es
      * @public
      */
-    public static getExprValues(sheet: Sheet, col: number, row: number, es: Expr[]) {
+    public static getExprValues(sheet: Sheet, col: number, row: number, es: Expr[]):
+        (string | number | ErrorValue | number[] | string[])[] {
 
-        const args: (string | number | object | null | undefined)[] = es.map(expr => {
+        const args = es.map(expr => {
 
             if (expr instanceof ExprArray) { // E.g. [2,4] in GUI
                 return FunCall.getExprValues(sheet, col, row, expr.GetExprArray());
@@ -620,9 +637,11 @@ export class FunCall extends Expr {
             if (value instanceof NumberValue) {
                 return NumberValue.ToNumber(value)
             }
+
+            if (value instanceof BooleanValue) {
+                return value.value
+            }
             if (value instanceof TextValue) {
-                console.log("reached here")
-                console.log(TextValue.ToString(value))
                 return TextValue.ToString(value)
             }
             if (value instanceof ArrayView) { // E.g. A1:C3 in GUI
@@ -645,7 +664,7 @@ export class FunCall extends Expr {
             }
             return null;
         });
-        return args;
+        return args as (string | number | ErrorValue | number[] | string[])[];
     }
 
     public override Move(deltaCol: number, deltaRow: number): Expr {

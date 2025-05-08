@@ -25,6 +25,18 @@ export abstract class Value {
         act(this);
     }
 
+    public static ToBoolean(value: Value): boolean {
+        if (value instanceof BooleanValue) {
+            return value.value;
+        } else if (value instanceof NumberValue) {
+            return (value as NumberValue).value !== 0;        }
+        else if (value instanceof TextValue) {
+            const text = TextValue.ToString(value);
+            return text !== null && (text!.toLowerCase() === "true" || text === "1");
+        }
+        return false;
+    }
+
     public static MakeVoid(): Value {
         return this.createTextValue();
     }
@@ -47,18 +59,12 @@ export class ErrorValue extends Value {
         );
 
     public static readonly numError: ErrorValue = this.Make("#NUM!");
-    public static readonly argCountError: ErrorValue =
-        this.Make("#ERR: ArgCount");
     public static readonly argTypeError: ErrorValue = this.Make("#ERR: ArgType!");
     public static readonly nameError: ErrorValue = this.Make("#NAME?");
     public static readonly refError: ErrorValue = this.Make("#REF!");
-    public static readonly cycleError: ErrorValue = this.Make("#CYCLE!"); //TODO: Why is this unused?
+    public static readonly cycleError: ErrorValue = this.Make("#CYCLE!");
     public static readonly valueError: ErrorValue = this.Make("#VALUE!");
     public static readonly naError: ErrorValue = this.Make("#NA");
-    public static readonly tooManyArgsError: ErrorValue = this.Make(
-        "#ERR: Too many arguments",
-    );
-
     private constructor(message: string, errorIndex: number) {
         super();
         this.message = message;
@@ -127,6 +133,35 @@ export class ErrorValue extends Value {
         // Convert to int and return
         return Number(bits & BigInt(0xffffffffffffffffn));
     }
+}
+
+export class BooleanValue extends Value {
+    public readonly value: boolean;
+
+    public static readonly type: typeof BooleanValue = BooleanValue;
+
+    // Defining the constructor:
+    private constructor(s: boolean) {
+        super(); // Calling the parent constructor
+        this.value = s; // Setting value to be the argument given in s
+    }
+
+    Equals(v: Value): boolean {
+        return false;
+    }
+
+    ToObject(): unknown {
+        return this.value;
+    }
+
+
+    public static Make(s: boolean): BooleanValue {
+        if (s === null) {
+            throw new Error("s cannot be null");
+        }
+            return new BooleanValue(s);
+        }
+
 }
 
 /*
@@ -449,12 +484,6 @@ export class NumberValue extends Value {
         } else {
             return ErrorValue.numError as Value;
         }
-    }
-
-    public static ToBoolean(v: Value): object | null {
-        const nv: NumberValue = v as NumberValue;
-
-        return nv != null ? <object>(<unknown>(<number>nv.value != 0)) : null;
     }
 }
 
