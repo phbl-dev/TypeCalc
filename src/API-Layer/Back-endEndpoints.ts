@@ -25,7 +25,7 @@ export function ParseToActiveCell(content: string): void {
         console.debug("[WorkbookIO] ParseToActiveCell cellToBeAdded not found!");
         return;
     }
-    WorkbookManager.getWorkbook().get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, cellCol, cellRow);
+    WorkbookManager.getWorkbook().getSheet(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, cellCol, cellRow);
 }
 
 export function GetRawCellContent(cellID: string): string | null {
@@ -93,7 +93,7 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
     const endCol: number = rightCornerCol;
     const startRow: number = topCornerRow;
     const endRow: number = bottomCornerRow;
-    const sheet: Sheet = wb.get(activeSheet) as Sheet; //This needs to be updated
+    const sheet: Sheet = wb.getSheet(activeSheet) as Sheet; //This needs to be updated
     if (sheet) {
         for (let col: number = startCol; col <= endCol; col++) {
             for (let row: number = startRow; row <= endRow; row++) {

@@ -12,7 +12,6 @@ export class WorkbookManager {
         if (!this.instance) {
             this.instance = new Workbook();
             const baseSheet: Sheet = new Sheet(this.instance, "Sheet1", 65536, 1048576, true);
-            this.instance.AddSheet(baseSheet);
         }
         return this.instance;
     }
@@ -22,7 +21,7 @@ export class WorkbookManager {
             this.instance = new Workbook();
             console.log("[WorkbookManager] Creating Workbook");
         }
-        return this.instance.get(this.activeSheet);
+        return this.instance.getSheet(this.activeSheet);
     }
 
     static getActiveCell(): string | null {

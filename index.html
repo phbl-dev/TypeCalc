@@ -11,6 +11,14 @@
   <body>
     <header>
       <button class="menuButton" type = "reset" id = "reset" onclick = "localStorage.clear(); location.reload()">Clear</button> <!-- Clear's the local storage and reloads the page -->
+      <div class="dropdown">
+        <button class="dropbtn">Export</button>
+        <div class="dropdown-content">
+          <button class="dropdownOption" id="xmlExport">XML</button>
+          <button class="dropdownOption" id="csvExport">CSV</button>
+        </div>
+      </div>
+
       <button class="menuButton" type = "button" id = "jumpToCell">Go to</button>
       <label for="cellIdInput"></label><input class="menuTextField" type = "text" id = "cellIdInput">
       <button class="styleButton" type = "button" id = "bold">B</button>

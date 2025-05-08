@@ -42,11 +42,11 @@ describe("Workbook", () => {
      */
     test("get",  () => {
         workbook.AddSheet(sheet);                                       // Add one sheet to the array
-        expect(workbook.get(0)).not.toBeNull();                         // Ensures it's not null
-        expect(workbook.get(0)!.getName()).toBe("TestSheet");           // Test that get() is able to return the sheet when the argument is a number. Since we just checked that workbook.get(0) was not null it is safe to use ! (the non-null assertion operator).
+        expect(workbook.getSheet(0)).not.toBeNull();                         // Ensures it's not null
+        expect(workbook.getSheet(0)!.getName()).toBe("TestSheet");           // Test that get() is able to return the sheet when the argument is a number. Since we just checked that workbook.get(0) was not null it is safe to use ! (the non-null assertion operator).
 
-        expect(workbook.get("TestSheet")).not.toBeNull();               // Ensure it's not null when getting the sheet by its name
-        expect(workbook.get("TestSheet")!.getName()).toBe("TestSheet"); // Test that get() is able to return the sheet when the argument is a string
+        expect(workbook.getSheet("TestSheet")).not.toBeNull();               // Ensure it's not null when getting the sheet by its name
+        expect(workbook.getSheet("TestSheet")!.getName()).toBe("TestSheet"); // Test that get() is able to return the sheet when the argument is a string
     });
 
     /**

@@ -36,6 +36,7 @@ header button {
     width: 65px;
     padding-top: 2px;
     font-size: 16px;
+    z-index: 1;
 }
 
 input.menuTextField {
@@ -62,6 +63,52 @@ header h4 {
 .styleButton {
     font-size: 16px;
     width: 40px;
+}
+
+.dropdown {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    margin-top: 5px;
+    padding-top: 22px;
+    min-height: 60px;
+    min-width: 60px;
+    background-color: #f1f1f1;
+    border: 1px solid #ddd;
+    border-radius: 0 0 5px 5px;
+    overflow-y: auto;
+}
+
+.dropdown-content button {
+    background-color: rgba(0, 0, 0, 0);
+    color: black;
+    width: 100%;
+    border-radius: 0;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+    border: 2px solid #4a7e76;
+}
+
+.dropdown-content button:hover {
+    background-color: #4A7E76FF;
+    color: white;
+}
+
+#export {
+    margin-left: -15px;
+}
+
+#exportOptions {
+    display: none;
+    position: absolute;
+    z-index: 1;
 }
 
 #bold {

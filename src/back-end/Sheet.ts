@@ -215,6 +215,7 @@ export class Sheet {
         this.Set(col as number, cell, row);
         if (cell != null) {
             cell.AddToSupportSets(this, col, row, 1, 1);
+            cell.SetColAndRow(col, row);
         }
     }
 
@@ -724,5 +725,62 @@ export class SheetRep {
             }
             i0++;
         });
+    }
+
+    /**
+     * Iterates through SheetRep row by row rather than column by column as this is how
+     * the export formats structure the output.
+     */
+    public *iterateForExport(): IterableIterator<Cell> {
+        const cells: { cell: Cell, row: number, col: number }[] = [];
+
+        let i0 = 0;
+        for (const tile1 of this.tile0) {
+            if (tile1 != null) {
+                const c0 = (i0 >> this.LOGH) << (3 * this.LOGW);
+                const r0 = (i0 & this.MH) << (3 * this.LOGH);
+
+                let i1 = 0;
+                for (const tile2 of tile1) {
+                    if (tile2 != null) {
+                        const c1 = (i1 >> this.LOGH) << (2 * this.LOGW);
+                        const r1 = (i1 & this.MH) << (2 * this.LOGH);
+
+                        let i2 = 0;
+                        for (const tile3 of tile2) {
+                            if (tile3 != null) {
+                                const c2 = (i2 >> this.LOGH) << this.LOGW;
+                                const r2 = (i2 & this.MH) << this.LOGH;
+
+                                let i3 = 0;
+                                for (const cell of tile3) {
+                                    if (cell != null) {
+                                        const col = c0 | c1 | c2 | (i3 >> this.LOGH);
+                                        const row = r0 | r1 | r2 | (i3 & this.MH);
+                                        cells.push({ cell, row, col });
+                                    }
+                                    i3++;
+                                }
+                            }
+                            i2++;
+                        }
+                    }
+                    i1++;
+                }
+            }
+            i0++;
+        }
+
+        // Sort by row then by col
+        cells.sort((a, b) => {
+            if (a.row !== b.row) {
+                return a.row - b.row;
+            }
+            return a.col - b.col;
+        });
+
+        for (const { cell } of cells) {
+            yield cell;
+        }
     }
 }

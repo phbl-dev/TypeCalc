@@ -1,32 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {
-    XMLReader
-} from "../API-Layer/WorkbookIO.ts";
-import {
-    getCell,
-    adjustFormula,
-    numberToLetters,
-    lettersToNumber,
-    makeBold,
-    makeItalic,
-    makeUnderlined,
-    setCellColor,
-    setTextColor
-} from "./HelperFunctions.tsx";
+import {XMLReader} from "../API-Layer/WorkbookIO.ts";
 import {ArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 
 import {ArrayExplicit} from "../back-end/Values.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
-import {
-    EvalCellsInViewport,
-    GetRawCellContent,
-    GetSupportsInViewport,
-    ParseToActiveCell
-} from "../API-Layer/Back-endEndpoints.ts";
-
+import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewport,
+    ParseToActiveCell} from "../API-Layer/Back-endEndpoints.ts";
+import {getCell, adjustFormula, numberToLetters, lettersToNumber,
+    exportAsCSV, exportAsXML, makeBold, makeItalic, makeUnderlined,
+    setCellColor, setTextColor} from "./HelperFunctions.tsx";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -366,33 +351,32 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
 
 
-        const checkCell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
+        const checkCell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
         if (checkCell instanceof ArrayFormula) {return}
         const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
         console.log(cellToBeAdded);
         if (!cellToBeAdded) {return}
-        WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
+        WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
 
         //Handle Array Results for different cells.
         WorkbookManager.getWorkbook().Recalculate();
 
         //Handle Array Results for different cells.
-        const cell = WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
+        const cell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
         if (!cell) return; // Check that cell is not null
-        const result = cell.Eval(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
+        const result = cell.Eval(WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
 
 
 
         if (cell instanceof Formula && result instanceof ArrayExplicit) {
             console.log("This is an array formula:")
-            WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
+            WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
                 cell, // cell
                 columnIndex,
                 rowIndex,
                 new SuperCellAddress(columnIndex, rowIndex),
                 new SuperCellAddress(columnIndex, rowIndex + result!.values[0].length - 1)
             )
-
         }
     }
 
@@ -498,9 +482,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
              }}
              onBlur={(e) => {
 
-                 console.debug("Values not found:" ,WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
+                 console.debug("Values not found:" ,WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
 
-                 console.log(WorkbookManager.getWorkbook()?.get(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
+                 console.log(WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
                  //Only update cell if the contents have changed!
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
@@ -584,7 +568,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      width = window.innerWidth,
      height = window.innerHeight * 0.92,
  }) => {
-    // Used to synchronize scrolling between the referenced objects
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
@@ -593,15 +576,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
     useEffect(() => {
-        const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
-        const input = document.getElementById("cellIdInput") as HTMLInputElement;
-        const boldButton = document.getElementById("bold") as HTMLButtonElement;
-        const italicButton = document.getElementById("italic") as HTMLButtonElement;
-        const underlineButton = document.getElementById("underline") as HTMLButtonElement;
-        const cellColor = document.getElementById("cellColorPicker") as HTMLInputElement;
-        const textColor = document.getElementById("textColorPicker") as HTMLInputElement;
-        if (!jumpButton || !input) return; // In case either element doesn't exist/is null
-
         // Handle file drop events entirely in React
         function handleDrop(event: DragEvent) {
             event.preventDefault();
@@ -634,9 +608,12 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             event.preventDefault();
         }
 
+        const input = document.getElementById("cellIdInput") as HTMLInputElement;
+        const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
+        if (!jumpButton || !input) return; // In case either element doesn't exist/is null
+
         // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
         // and must trigger twice to do so.
-
         const handleJump = () => {
             const cellID = input.value.trim();
 
@@ -667,13 +644,25 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             }
         }
 
+        // Event listener management
+        //--------------------------------------
+        const xmlExport = document.getElementById("xmlExport") as HTMLElement;
+        const csvExport = document.getElementById("csvExport") as HTMLElement;
+        const boldButton = document.getElementById("bold") as HTMLButtonElement;
+        const italicButton = document.getElementById("italic") as HTMLButtonElement;
+        const underlineButton = document.getElementById("underline") as HTMLButtonElement;
+        const cellColor = document.getElementById("cellColorPicker") as HTMLInputElement;
+        const textColor = document.getElementById("textColorPicker") as HTMLInputElement;
+
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
+
         jumpButton.addEventListener("click", handleJump); // Jump to cell
         input.addEventListener("keydown", (e) => { // Jump to cell
             if (e.key === "Enter") handleJump();
         })
-
+        xmlExport.addEventListener("click", exportAsXML)
+        csvExport.addEventListener("click", exportAsCSV)
         boldButton.addEventListener("click", makeBold)
         italicButton.addEventListener("click", makeItalic)
         underlineButton.addEventListener("click", makeUnderlined)
@@ -688,11 +677,11 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             }
         });
 
-
-
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop
             window.removeEventListener("dragover", handleDragOver); // Drag and drop
+            xmlExport.removeEventListener("click", exportAsXML);
+            csvExport.removeEventListener("click", exportAsCSV);
             jumpButton.removeEventListener("click", handleJump); // Jump to cell
             boldButton.removeEventListener("click", makeBold)
             italicButton.removeEventListener("click", makeItalic)
