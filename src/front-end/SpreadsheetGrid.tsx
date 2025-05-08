@@ -568,7 +568,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      width = window.innerWidth,
      height = window.innerHeight * 0.92,
  }) => {
-    // Used to synchronize scrolling between the referenced objects
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
@@ -677,8 +676,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                 console.log('Shift released', isShiftKeyDown);
             }
         });
-
-
 
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop

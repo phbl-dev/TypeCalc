@@ -727,11 +727,13 @@ export class SheetRep {
         });
     }
 
+    /**
+     * Iterates through SheetRep row by row rather than column by column as this is how
+     * the export formats structure the output.
+     */
     public *iterateForExport(): IterableIterator<Cell> {
-        // Array to store objects of specified type
         const cells: { cell: Cell, row: number, col: number }[] = [];
 
-        // Loops through SheetRep
         let i0 = 0;
         for (const tile1 of this.tile0) {
             if (tile1 != null) {

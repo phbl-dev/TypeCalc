@@ -31,6 +31,9 @@ export function lettersToNumber(letters:string):number {
     return output;
 }
 
+/**
+ * Exports the active sheet's contents as a CSV file.
+ */
 export function exportAsCSV() {
     const currentSheet = WorkbookManager.getActiveSheet();
     const sheetData = currentSheet?.getCells();
@@ -64,6 +67,9 @@ export function exportAsCSV() {
     link.click();
 }
 
+/**
+ * Exports the workbook contents as an Excel 2003 XML File (XMLSS).
+ */
 export function exportAsXML() {
     let xmlOutput =
         "<?xml version=\"1.0\"?>\n" +
@@ -76,7 +82,7 @@ export function exportAsXML() {
 
     xmlOutput +=
         " <DocumentProperties xmlns=\"urn:schemas-microsoft-com:office:office\">\n" +
-        "  <Author>Generated Export</Author>\n" +
+        "  <Author>TypeCalc Export</Author>\n" +
         "  <Created>" + new Date().toISOString() + "</Created>\n" +
         " </DocumentProperties>\n";
 
