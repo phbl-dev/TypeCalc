@@ -45,6 +45,7 @@ export function exportAsCSV() {
         const cellCol = cell.GetCol();
         if(cellRow !== currentRow) {
             currentRow = cellRow!;
+            currentCol = 1;
             output += "\n";
         }
         const diff = cellCol! - currentCol;
