@@ -111,18 +111,23 @@ export function exportAsXML() {
 
         const sheetCells = sheet.getCells();
         let currentRow = -1; // Instantiate with an invalid row number
-        let newRow = false; //TODO: Test om 
+        let firstRow = true; // Used to create the first <Row> without a closing </Row> before it
 
         for(const cell of sheetCells.iterateForExport()) {
             const cellRow = cell.GetRow();
 
             // If the row changes, close the row and start a new one
             if(cellRow !== currentRow) {
-                if(newRow)
+                if(firstRow){
+                    firstRow = false;
+                    currentRow = cellRow!;
+                    xmlOutput += `\n     <Row ss:Index="${cellRow}" ss:AutoFitHeight="0">`;
+                }
+                else {
                     xmlOutput += "\n     </Row>";
-                currentRow = cellRow!;
-                xmlOutput += `\n     <Row ss:Index="${cellRow}" ss:AutoFitHeight="0">`;
-                newRow = true;
+                    currentRow = cellRow!;
+                    xmlOutput += `\n     <Row ss:Index="${cellRow}" ss:AutoFitHeight="0">`;
+                }
             }
 
             const cellContent = cell.GetText();
@@ -144,13 +149,11 @@ export function exportAsXML() {
                     .replace(/"/g, '&quot;') // Escape "
                     .replace(/'/g, '&apos;'); // Escape '
             }
-
             xmlOutput += `\n      <Cell ss:Index="${cellCol}"><Data ss:Type="${cellType}">${cellValue}</Data></Cell>`;
         }
 
         // Close the last row
-        if(newRow)
-            xmlOutput += "\n     </Row>";
+        xmlOutput += "\n     </Row>";
 
         const xmlSheetFooter =
             "\n   </Table>\n" +

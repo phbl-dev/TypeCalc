@@ -647,8 +647,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
         // Event listener management
         //--------------------------------------
-        const xmlExport = document.getElementById("xmlExport") as HTMLButtonElement;
-        const csvExport = document.getElementById("csvExport") as HTMLButtonElement;
+        const xmlExport = document.getElementById("xmlExport") as HTMLElement;
+        const csvExport = document.getElementById("csvExport") as HTMLElement;
         const boldButton = document.getElementById("bold") as HTMLButtonElement;
         const italicButton = document.getElementById("italic") as HTMLButtonElement;
         const underlineButton = document.getElementById("underline") as HTMLButtonElement;
