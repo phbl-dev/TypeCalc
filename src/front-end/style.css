@@ -64,8 +64,48 @@ header h4 {
     width: 40px;
 }
 
+.dropdown {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    margin-top: 30px;
+    min-width: 65px;
+    background-color: #f1f1f1;
+    border: 1px solid #ddd;
+    z-index: 1;
+    overflow-y: auto;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+input[type=checkbox] {
+    margin-right: 5px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.submit-btn {
+    margin-top: 10px;
+}
+
 #export {
     margin-left: -15px;
+}
+
+#exportOptions {
+    display: none;
+    position: absolute;
+    z-index: 1;
 }
 
 #bold {

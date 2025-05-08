@@ -11,7 +11,15 @@
   <body>
     <header>
       <button class="menuButton" type = "reset" id = "reset" onclick = "localStorage.clear(); location.reload()">Clear</button> <!-- Clear's the local storage and reloads the page -->
-      <button class="menuButton" type = "button" id = "export">Export</button>
+      <div class="dropdown">
+        <button class="dropbtn">Export</button>
+        <div class="dropdown-content">
+          <input type="checkbox" id="item1"
+                 value="HTML"><label for="item1">XML</label><br>
+          <input type="checkbox" id="item2"
+                 value="CSS"><label for="item2">CSV</label><br>
+        </div>
+      </div>
       <button class="menuButton" type = "button" id = "jumpToCell">Go to</button>
       <label for="cellIdInput"></label><input class="menuTextField" type = "text" id = "cellIdInput">
       <button class="styleButton" type = "button" id = "bold">B</button>

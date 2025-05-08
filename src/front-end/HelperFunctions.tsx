@@ -73,54 +73,92 @@ export function exportAsXML() {
         " xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
         " xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
 
+    xmlOutput +=
+        " <DocumentProperties xmlns=\"urn:schemas-microsoft-com:office:office\">\n" +
+        "  <Author>Generated Export</Author>\n" +
+        "  <Created>" + new Date().toISOString() + "</Created>\n" +
+        " </DocumentProperties>\n";
+
+    xmlOutput +=
+        " <Styles>\n" +
+        "  <Style ss:ID=\"Default\" ss:Name=\"Normal\">\n" +
+        "   <Alignment ss:Vertical=\"Bottom\"/>\n" +
+        "   <Borders/>\n" +
+        "   <Font/>\n" +
+        "   <Interior/>\n" +
+        "   <NumberFormat/>\n" +
+        "   <Protection/>\n" +
+        "  </Style>\n" +
+        " </Styles>\n";
+
     const sheetNames = WorkbookManager.getSheetNames();
-    console.log(sheetNames)
 
     for(const sheetName of sheetNames) {
-        const xmlSheetHeader =
-            `  <Worksheet ss:Name="${sheetName}">` +
-            "   <Table>";
-        xmlOutput += xmlSheetHeader
+        // Escape special characters in sheetName
+        const escapedSheetName = sheetName.replace(/&/g, '&amp;') // Escape &
+            .replace(/</g, '&lt;') // Escape <
+            .replace(/>/g, '&gt;') // Escape >
+            .replace(/"/g, '&quot;') // Escape "
+            .replace(/'/g, '&apos;'); // Escape '
 
-        const sheet = WorkbookManager.getWorkbook().getSheet(sheetName)
-        if(!sheet) {return}
+        const xmlSheetHeader =
+            `  <Worksheet ss:Name="${escapedSheetName}">\n` +
+            "   <Table ss:ExpandedColumnCount=\"1000\" ss:ExpandedRowCount=\"1000\" x:FullColumns=\"1\" x:FullRows=\"1\">\n";
+        xmlOutput += xmlSheetHeader;
+
+        const sheet = WorkbookManager.getWorkbook().getSheet(sheetName);
+        if(!sheet) {continue;} // Skip invalid sheets
+
         const sheetCells = sheet.getCells();
-        let currentRow = 0;
-        let firstRow = true;
+        let currentRow = -1; // Instantiate with an invalid row number
+        let newRow = false; //TODO: Test om 
 
         for(const cell of sheetCells.iterateForExport()) {
             const cellRow = cell.GetRow();
+
+            // If the row changes, close the row and start a new one
             if(cellRow !== currentRow) {
+                if(newRow)
+                    xmlOutput += "\n     </Row>";
                 currentRow = cellRow!;
-                let xmlNewRow = "\n"
-                if(firstRow) {
-                    xmlNewRow +=
-                        `     <Row ss:Index=${cellRow} ss:AutoFitHeight="0">`
-                    firstRow = false;
-                }
-                else {
-                    xmlNewRow +=
-                        "     </Row>\n" +
-                        `     <Row ss:Index=${cellRow} ss:AutoFitHeight="0">`
-                }
-                xmlOutput += xmlNewRow;
+                xmlOutput += `\n     <Row ss:Index="${cellRow}" ss:AutoFitHeight="0">`;
+                newRow = true;
             }
 
             const cellContent = cell.GetText();
             const cellCol = cell.GetCol();
-            const text = "\n" +
-                    `      <Cell ss:Index=${cellCol}><Data ss:Type="Number">${cellContent}</Data></Cell>`
-            xmlOutput += text;
+
+            // Determine cell data type, with String as default
+            let cellType = "String";
+            let cellValue = cellContent;
+
+            // Try to detect numbers, if any change dataType to Number
+            if(/^-?\d+(\.\d+)?$/.test(cellContent!))
+                cellType = "Number";
+
+            // If the cell is a String, escape special characters
+            if(cellType === "String") {
+                cellValue = cellContent!.replace(/&/g, '&amp;') // Escape &
+                    .replace(/</g, '&lt;') // Escape <
+                    .replace(/>/g, '&gt;') // Escape >
+                    .replace(/"/g, '&quot;') // Escape "
+                    .replace(/'/g, '&apos;'); // Escape '
+            }
+
+            xmlOutput += `\n      <Cell ss:Index="${cellCol}"><Data ss:Type="${cellType}">${cellValue}</Data></Cell>`;
         }
+
+        // Close the last row
+        if(newRow)
+            xmlOutput += "\n     </Row>";
+
+        const xmlSheetFooter =
+            "\n   </Table>\n" +
+            "  </Worksheet>\n";
+        xmlOutput += xmlSheetFooter;
     }
 
-    const xmlSheetFooter =
-        "\n   </Table>\n" +
-        "  </Worksheet>\n";
-    xmlOutput += xmlSheetFooter;
-
-    const xmlFooter = "" +
-        "</Workbook>";
+    const xmlFooter = "</Workbook>";
     xmlOutput += xmlFooter;
 
     const blob = new Blob([xmlOutput], {type: "application/xml"});
@@ -128,19 +166,6 @@ export function exportAsXML() {
     link.href = URL.createObjectURL(blob);
     link.download = "workbook.xml";
     link.click();
-}
-
-function escapeCharsXML(unsafe: string): string {
-    return unsafe.replace(/[<>&'"]/g, function (c) {
-        switch (c) {
-            case '<': return '&lt;';
-            case '>': return '&gt;';
-            case '&': return '&amp;';
-            case '\'': return '&apos;';
-            case '"': return '&quot;';
-            default: return c;
-        }
-    });
 }
 
 /**
