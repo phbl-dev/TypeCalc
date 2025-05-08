@@ -577,15 +577,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
 
     useEffect(() => {
-        const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
-        const input = document.getElementById("cellIdInput") as HTMLInputElement;
-        const boldButton = document.getElementById("bold") as HTMLButtonElement;
-        const italicButton = document.getElementById("italic") as HTMLButtonElement;
-        const underlineButton = document.getElementById("underline") as HTMLButtonElement;
-        const cellColor = document.getElementById("cellColorPicker") as HTMLInputElement;
-        const textColor = document.getElementById("textColorPicker") as HTMLInputElement;
-        if (!jumpButton || !input) return; // In case either element doesn't exist/is null
-
         // Handle file drop events entirely in React
         function handleDrop(event: DragEvent) {
             event.preventDefault();
