@@ -155,18 +155,6 @@ export class Workbook {
         });
     }
 
-    /**
-     * This method listens
-     * @private
-     * (Probably only used for FunCalc)
-     */
-    //private onFunctionsAltered(listener: (functions: string[]) => void): void {
-    //    this.addEventListener("functionsAltered", (event: Event) => {
-    //        const functions = (event as CustomEvent<string[]>).detail;
-    //        listener(functions);
-    //    });
-    //}
-
     public AddToQueue(sheet: Sheet, col: number, row: number) {
         this.awaitsEvaluation.push(new FullCellAddress(sheet, null, col, row));
     }
@@ -198,8 +186,6 @@ export class Workbook {
         return swStop - swBegin;
     }
 
-
-    // TODO: CheckForModifiedSdf() (NB: We probably don't have to make this since it's FunCalc related)
 
     private ResetCellState(): void {
         this.sheets.forEach((sheet: Sheet) => {

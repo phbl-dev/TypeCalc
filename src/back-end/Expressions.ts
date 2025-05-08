@@ -288,21 +288,22 @@ export class FunCall extends Expr {
     public readonly function: functionType;
     public es: Expr[];           // Non-null, elements non-null
     public nonStrict: boolean;        // We implemented a flag for non-strict functions such that we know if some of their arguments should not be evaluated.
-    public isChoose: boolean
+    public isChoose: boolean;
+    public static ErrorFunction: boolean = false;
 
     private constructor (name: string | functionType, es: Expr[]) {
         super();
         if (typeof name === "function") {
             this.function = name;
         } else {
-            this.function = FunCall.getFunctionByName(name);
+            this.function = FunCall.getFunctionByName(name)!;
         }
         this.es = es;
         this.nonStrict = false;
         this.isChoose = false;
     }
 
-    public static getFunctionByName(name: string): functionType {
+    public static getFunctionByName(name: string): functionType | null {
         if (name in formulajs) {
             // "typeof formulajs" is "object" and it contains all the spreadsheet functions.
             // "keyof" that object are function names like "SUM" and "PRODUCT".
@@ -310,7 +311,8 @@ export class FunCall extends Expr {
             // functionType:
             return formulajs[name as keyof typeof formulajs] as functionType;
         }
-        throw new Error(`Function ${name} not found in formulajs`);
+        FunCall.ErrorFunction = true;
+        return null;
     }
 
     private static IF(es: Expr[]) {
@@ -368,12 +370,12 @@ export class FunCall extends Expr {
 
         const func: functionType | null = FunCall.getFunctionByName(name);
         if (func === null) {
-            throw new Error(`Function ${name} not found in formulajs`); // MakeUnknown was called here previously.
+            return new Error(ErrorValue.nameError); // MakeUnknown was called here previously.
         }
 
         for (let i = 0; i < es.length; i++) {
             if (es[i] === null || es[i] === undefined) {
-                es[i] = new Error("#SYNTAX") as unknown as Expr;
+                es[i] = new Error(ErrorValue.valueError);
             }
         }
         return new FunCall(func, es);
@@ -578,10 +580,7 @@ export class FunCall extends Expr {
         }
 
         if (Array.isArray(result)) {
-            const values: Value[][] = [];
-
-            // Works for a column-oriented result:
-            values[0] = [];
+            const values: Value[][] = [[]];// Works for a column-oriented result.
 
             // Fill the column with values
             for (let i = 0; i < result.length; i++) {
@@ -595,7 +594,7 @@ export class FunCall extends Expr {
             return new ArrayExplicit(start, end, values);
         }
 
-        return ErrorValue.Make("Function not implemented"); // If the function is not implemented we return an ErrorValue.
+        return ErrorValue.nameError; // If the function is not implemented we return an ErrorValue.
     }
 
     private FindBoolValue(sheet: Sheet, col: number, row: number): boolean {

@@ -186,7 +186,7 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
             newColumn = numberToLetters(newColNum);
 
             if(newColNum <= 0) {
-                return "'[FIX IN adjustFormula]'"
+                return
             }
             console.log(`Values inside adjustFormula: ${colNum}, ${newColNum}, ${newColumn}`)
         }

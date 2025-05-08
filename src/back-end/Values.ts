@@ -59,18 +59,12 @@ export class ErrorValue extends Value {
         );
 
     public static readonly numError: ErrorValue = this.Make("#NUM!");
-    public static readonly argCountError: ErrorValue =
-        this.Make("#ERR: ArgCount");
     public static readonly argTypeError: ErrorValue = this.Make("#ERR: ArgType!");
     public static readonly nameError: ErrorValue = this.Make("#NAME?");
     public static readonly refError: ErrorValue = this.Make("#REF!");
-    public static readonly cycleError: ErrorValue = this.Make("#CYCLE!"); //TODO: Why is this unused?
+    public static readonly cycleError: ErrorValue = this.Make("#CYCLE!");
     public static readonly valueError: ErrorValue = this.Make("#VALUE!");
     public static readonly naError: ErrorValue = this.Make("#NA");
-    public static readonly tooManyArgsError: ErrorValue = this.Make(
-        "#ERR: Too many arguments",
-    );
-
     private constructor(message: string, errorIndex: number) {
         super();
         this.message = message;

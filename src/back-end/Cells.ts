@@ -98,7 +98,7 @@ export abstract class Cell {
      */
     public abstract Reset(): void;
 
-    // Mark the cell dirty, for subsequent evaluation
+    // Mark the cell dirty, for later evaluation
     public abstract MarkDirty(): void;
 
     public static MarkCellDirty(sheet: Sheet, col: number, row: number): void {
@@ -106,6 +106,10 @@ export abstract class Cell {
         if (cell != null) {
             cell.MarkDirty();
         }
+    }
+
+    public setOgText(text: string):void {
+        this.ogText = text
     }
 
     // Enqueue this cell for evaluation
@@ -157,13 +161,13 @@ export abstract class Cell {
      */
     public static Parse(text: string, workbook: Workbook, col: number, row: number): Cell | null {
         if (text) {
-            const parser: SpreadsheetVisitor = new SpreadsheetVisitor();
-            let cellToBeAdded = parser.ParseCell(text,workbook, col, row);
+            const parser: SpreadsheetVisitor = new SpreadsheetVisitor(workbook,col,row);
+            let cellToBeAdded = parser.ParseCell(text);
             if (!text.trim()) {
                 return new BlankCell();
             }
             if (cellToBeAdded == undefined) {
-                const err = new TextCell(ErrorValue.Make("#SYNTAX").message)
+                const err = new TextCell(ErrorValue.valueError.message)
                 err.ogText = text
                 return err
             }
@@ -491,7 +495,7 @@ export class Formula extends Cell {
                 console.log("Computing");
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
-                const err = ErrorValue.Make("#CYCLE!");
+                const err = ErrorValue.cycleError;
                 this.v = err;
                 console.error(msg);
                 return this.v;
