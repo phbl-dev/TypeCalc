@@ -1,4 +1,5 @@
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
+import {Cell as BackendCell} from "../back-end/Cells.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
@@ -180,7 +181,7 @@ export function exportAsXML() {
 
 /**
  * Takes in a formula string, (10, 20,-20, A1, A$2, $A$2), and processes it.
- * It only processes the changes needed
+ * It is used to adjust the formula to account for the row and column changes.
  * @param formula
  * @param rowDiff
  * @param colDiff
@@ -224,6 +225,9 @@ export function makeBold() {
         button.style.outline = "2px solid white";
     }
 }
+
+// The following 5 functions are for styling the cell and its contents.
+// They are connected to the appropriate buttons in the header.
 export function makeItalic() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -241,6 +245,8 @@ export function makeItalic() {
         button.style.outline = "2px solid white";
     }
 }
+// The following 5 functions are for styling the cell and its contents.
+// They are connected to the appropriate buttons in the header.
 export function makeUnderlined() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -258,6 +264,8 @@ export function makeUnderlined() {
         button.style.outline = "2px solid white";
     }
 }
+// The following 5 functions are for styling the cell and its contents.
+// They are connected to the appropriate buttons in the header.
 export function setCellColor() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -270,6 +278,8 @@ export function setCellColor() {
         cell.style.backgroundColor = colorPicker.value;
     }
 }
+// The following 5 functions are for styling the cell and its contents.
+// They are connected to the appropriate buttons in the header.
 export function setTextColor() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -281,4 +291,47 @@ export function setTextColor() {
     if(colorPicker.value) {
         cell.style.color = colorPicker.value;
     }
+}
+
+/**
+ * The CellInfo type is used to store information about a cell.
+ * It is used to store the cell's row, column, content, relative row and relative column.
+ */
+type CellInfo = {
+    row: number;
+    col: number;
+    cell: BackendCell;
+    content: string;
+    relRow: number;
+    relCol: number;
+};
+
+
+/**
+ * Read area finds alls cells in the area and returns an array of CellInfo objects.
+ * @param startRow
+ * @param endRow
+ * @param startCol
+ * @param endCol
+ * @constructor
+ */
+export function ReadArea(startRow: number, endRow: number, startCol: number, endCol: number) {
+    let AreaArray: CellInfo[] = [];
+
+    for (let i = startRow; i <= endRow; i++) {
+        for (let j = startCol; j <= endCol; j++) {
+            const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
+            if (cell) {
+                AreaArray.push({
+                    row: i,
+                    col: j,
+                    cell: cell,
+                    content: cell.GetText()!,
+                    relRow: i - startRow,
+                    relCol: j - startCol
+                });
+            }
+        }
+    }
+    return AreaArray;
 }

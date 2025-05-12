@@ -3,7 +3,12 @@ import type { Sheet } from "./Sheet";
 import type { Value } from "./Values.ts";
 import type { Cell } from "./Cells";
 
-//An interval represents a range of numbers from a min to a max, including both
+/**
+ * @class Interval
+ * @classdesc An interval represents a range of numbers from a min to a max, including both
+ * @property {number} min - The minimum value of the interval
+ * @property {number} max - The maximum value of the interval
+ */
 export class Interval {
     readonly min: number;
     readonly max: number;
@@ -60,7 +65,14 @@ export class Interval {
     }
 }
 
-//Adjusted is used to represent an adjusted expression or reference, for use in method InsertRowCols //REVISIT LATER
+/**
+ * Adjusted is used to represent an adjusted expression or reference, for use in method InsertRowCols
+ * @param {Type} type The adjusted expression or reference
+ * @param {number} maxValidRow Adjustment is invalid for rows >= maxValidRow
+ * @param {boolean} isUnchanged Indicates if the adjustment is identical to the original
+ * @constructor
+ * @note This is a class that does not really have any use in the code, since InsertRowCols is not used.
+ */
 export class Adjusted<Type> {
     readonly type: Type; // The adjusted expression or reference
     readonly maxValidRow: number; // Adjustment is invalid for rows >= maxValidRow
@@ -87,11 +99,17 @@ export class SuperRARef {
         this.rowAbs = rowAbs;
         this.rowRef = rowRef;
     }
-
+    /**
+     * Checks if a character is a letter
+     */
     isAToZ(c: string): boolean {
         return ("a" <= c && c <= "z") || ("A" <= c && c <= "Z");
     }
 
+    /**
+     * Converts a letter to a value between 0 and 25
+     * @param c
+     */
     aToZValue(c: string): number {
         return (c.charCodeAt(0) - "A".charCodeAt(0)) % 32;
     }
@@ -213,10 +231,6 @@ export class SuperRARef {
 
     equals(that: SuperRARef): boolean {
         return that != null && this.colAbs === that.colAbs && this.colRef === that.colRef && this.rowAbs === that.rowAbs && this.rowRef === that.rowRef;
-    }
-
-    getHashCode() {
-        return ((this.colAbs ? 1 : 0) + (this.rowAbs ? 2 : 0) + this.colRef * 4) * 37 + this.rowRef;
     }
 }
 
@@ -351,11 +365,6 @@ export class SuperCellAddress {
         }
         return false;
     }
-
-    getHashCode(): number {
-        return 29 * this.col + this.row;
-    }
-
     toString(): string {
         return this.columnName(this.col) + (this.row + 1);
     }

@@ -11,9 +11,11 @@ import {
     EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
     ParseToActiveCell
 } from "../API-Layer/Back-endEndpoints.ts";
-import {getCell, adjustFormula, numberToLetters, lettersToNumber,
+import {
+    getCell, adjustFormula, numberToLetters, lettersToNumber,
     exportAsCSV, exportAsXML, makeBold, makeItalic, makeUnderlined,
-    setCellColor, setTextColor} from "./HelperFunctions.tsx";
+    setCellColor, setTextColor, ReadArea
+} from "./HelperFunctions.tsx";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -66,14 +68,6 @@ let selectionStartCell: string | null = null
 let isShiftKeyDown = false
 let AreaMarked = false
 
-type CellInfo = {
-    row: number;
-    col: number;
-    cell: BackendCell;
-    content: string;
-    relRow: number;
-    relCol: number;
-};
 
 
 
@@ -97,6 +91,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+    /**
+     * Clears the visual highlight of all cells in the range.
+     * Only works if an area is selected.
+     */
     const clearVisualHighlight = () => {
         const previousSelection = document.querySelectorAll('.selected-cell');
         previousSelection.forEach(cell => {
@@ -105,27 +103,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
 
-    function ReadArea(startRow: number, endRow: number, startCol: number, endCol: number) {
-        let AreaArray: CellInfo[] = [];
-
-        for (let i = startRow; i <= endRow; i++) {
-            for (let j = startCol; j <= endCol; j++) {
-                const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
-                if (cell) {
-                    AreaArray.push({
-                        row: i,
-                        col: j,
-                        cell: cell,
-                        content: cell.GetText()!,
-                        relRow: i - startRow,
-                        relCol: j - startCol
-                    });
-                }
-            }
-        }
-        return AreaArray;
-    }
-
+    /**
+     * Paste functionality. Based on the areaRef, it will paste the contents of the area into the current cell.
+     * If multiple cells are part of the copied area, it will paste onto multiple cells.
+     * If the copied area is a formula, it will adjust the formula to fit the current cell.
+     * @param areaRef
+     * @constructor
+     */
     function PasteArea(areaRef: string) {
         const range = JSON.parse(areaRef);
         const targetCellRef = new A1RefCellAddress(ID);
@@ -158,6 +142,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         AreaMarked = false;
     }
 
+    /**
+     * Cut functionality. Based on the areaRef, it will cut the contents of the area into the current cell.
+     * If multiple cells are part of the copied area, it will cut onto multiple cells.
+     * If the copied area is a formula, it will adjust the formula to fit the current cell.
+     * @param areaRef
+     * @constructor
+     */
     function CutArea(areaRef: string) {
         const range = JSON.parse(areaRef);
         const targetCellRef = new A1RefCellAddress(ID);
@@ -192,6 +183,12 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         AreaMarked = false;
     }
 
+    /**
+     * Delete functionality. Based on the areaRef, it will delete the contents of the area.
+     * If multiple cells are part of the copied area, it will delete onto multiple cells.
+     * @param areaRef
+     * @constructor
+     */
     function DeleteArea(areaRef:string) {
         const range = JSON.parse(areaRef);
         for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
@@ -228,7 +225,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                     WorkbookManager.getActiveSheet()?.undo()
 
-                    // Refresh UI with a wider range to ensure all affected cells are updated
                     EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
@@ -238,7 +234,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                     WorkbookManager.getActiveSheet()?.redo()
 
-                    // Refresh UI with a wider range to ensure all affected cells are updated
                     EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
