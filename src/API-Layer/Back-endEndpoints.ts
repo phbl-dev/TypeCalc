@@ -2,10 +2,16 @@ import {WorkbookManager} from "./WorkbookManager.ts";
 import {Sheet} from "../back-end/Sheet.ts";
 import {numberToLetters} from "../front-end/HelperFunctions.tsx";
 import {ErrorValue} from "../back-end/Values.ts";
-import {A1RefCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
+import {A1RefCellAddress, FullCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
 import {Cell, Formula} from "../back-end/Cells.ts";
 import {Workbook} from "../back-end/Workbook.ts";
 
+/**
+ * Parse the content of the active cell and add it to the workbook.
+ * Creates a new cell if the active cell is empty, otherwise updates the existing cell.
+ * @param content
+ * @constructor
+ */
 export function ParseToActiveCell(content: string): void {
     const a1Address: string | null = WorkbookManager.getActiveCell();
     if (!a1Address) {
@@ -28,6 +34,12 @@ export function ParseToActiveCell(content: string): void {
     WorkbookManager.getWorkbook().getSheet(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, cellCol, cellRow);
 }
 
+/**
+ * Retrieves the string representation of the cell with the given ID.
+ * returns null if the cell is not found.
+ * @param cellID
+ * @constructor
+ */
 export function GetRawCellContent(cellID: string): string | null {
     const ca: A1RefCellAddress = new A1RefCellAddress(cellID);
     const cellCol: number = ca.col;
@@ -44,7 +56,7 @@ export function GetRawCellContent(cellID: string): string | null {
     }
 
 
-    const cell = activeSheet.getCells().Get(cellCol, cellRow);
+    const cell = activeSheet.Get(cellCol, cellRow);
     if (!cell) {
         console.debug("[GetRawCellContent] No cell found!");
         return null;
@@ -55,15 +67,13 @@ export function GetRawCellContent(cellID: string): string | null {
     if (cell instanceof Formula) {
         console.log("This is a formula cell");
         let formulaText = cell.GetText()!;
-        // Ensure it starts with equals sign
         if (!formulaText.startsWith("=")) {
             formulaText = "=" + formulaText;
         }
         return formulaText;
     }
 
-    const cellContent: string | null | undefined = activeSheet.getCells().Get(cellCol, cellRow)?.GetText();
-    //console.log("this is the cellContent", cellContent)
+    const cellContent: string | null | undefined = activeSheet.Get(cellCol, cellRow)?.GetText();
     if (!cellContent && cellContent != "0") {
         console.debug("[GetRawCellContent] No cell found!");
         return null;
@@ -74,7 +84,6 @@ export function GetRawCellContent(cellID: string): string | null {
         console.debug("[GetRawCellContent] No cell found in frontend!");
         return null;
     }
-    //cellHTML.innerText = cellContent;
     return cellContent
 }
 
@@ -122,30 +131,12 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
     }
 }
 
-export function GetSupportsInViewport(leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number, colIndex: number, rowIndex: number): string[] {
+export function GetSupportsInViewPort(col: number, row:number): string[] {
     let supports: string[] = []
-    const startCol: number = leftCornerCol;
-    const endCol: number = rightCornerCol;
-    const startRow: number = topCornerRow;
-    const endRow: number = bottomCornerRow;
-    const sheet: Sheet = WorkbookManager.getActiveSheet() as Sheet; //This needs to be updated
-    if (sheet) {
-        for (let col: number = startCol; col <= endCol; col++) {
-            for (let row: number = startRow; row <= endRow; row++) {
-                let supportSet = sheet.getCells().Get(col, row)?.GetSupportSet()?.ranges;
-                if (!supportSet) {
-                    continue;
-                }
-                supportSet.forEach(function (value) {
-                    if (value instanceof SupportCell) {
-                        if (value.contains(sheet, colIndex - 1, rowIndex - 1)) {
-                            const refLetter: string = numberToLetters(col + 1);
-                            supports.push(refLetter + (row + 1) as string);
-                        }
-                    }
-                })
-            }
-        }
-    }
+    WorkbookManager.getActiveSheet()?.Get(col,row)?.ForEachReferred(WorkbookManager.getActiveSheet()!,col,row,((addr:FullCellAddress) => {
+    supports.push(numberToLetters(addr.cellAddress.col + 1) + (addr.cellAddress.row + 1) as string);
+    }));
+
     return supports;
+
 }

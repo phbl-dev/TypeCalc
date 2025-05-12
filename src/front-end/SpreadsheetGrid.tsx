@@ -7,8 +7,10 @@ import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts"
 
 import {ArrayExplicit} from "../back-end/Values.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
-import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewport,
-    ParseToActiveCell} from "../API-Layer/Back-endEndpoints.ts";
+import {
+    EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
+    ParseToActiveCell
+} from "../API-Layer/Back-endEndpoints.ts";
 import {getCell, adjustFormula, numberToLetters, lettersToNumber,
     exportAsCSV, exportAsXML, makeBold, makeItalic, makeUnderlined,
     setCellColor, setTextColor} from "./HelperFunctions.tsx";
@@ -198,11 +200,25 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
     }
 
+
+
+
 // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
         let areaRef
+
+        /** Special case for Backspace and Delete keys. Required because the backspace key is used to delete cell contents and needs to be overwritten differently*/
+        if (AreaMarked && (event.key === "Backspace" || event.key === "Delete")) {
+            setHighlight(selectionStartCell!, true);
+            areaRef = sessionStorage.getItem('selectionRange')!;
+
+            DeleteArea(areaRef);
+
+            clearVisualHighlight()
+            AreaMarked = false
+        }
 
         if(event.ctrlKey) {
             switch (event.key) {
@@ -264,18 +280,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
 
         switch (event.key) {
-            case "Backspace":
-                if (AreaMarked) {
-                    setHighlight(selectionStartCell!, true);
-                    areaRef = sessionStorage.getItem('selectionRange')!;
-
-                    DeleteArea(areaRef);
-                }
-                clearVisualHighlight()
-                AreaMarked = false
-
-                break;
-
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1);
                 if (isShiftKeyDown) {
@@ -462,10 +466,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
 
-                 //Also write the content in the formula box at the top
                  updateFormulaBox(ID, rawCellContent);
 
-                 mySupports = GetSupportsInViewport(columnIndex-20, columnIndex+20,rowIndex-20,rowIndex+20,columnIndex+1,rowIndex+1);
+
+
+                 mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
+
+
                  if (!mySupports) {
                      return;
                  }
