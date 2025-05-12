@@ -87,10 +87,17 @@ export function GetRawCellContent(cellID: string): string | null {
     return cellContent
 }
 
-//This is the method for retrieving cell data for the current view-port in the front-end.
-//Updates on every scroll, meaning that the values are stored only in back-end, and then repeatedly fetched
-//Makes sure that we only load data in the viewport, everything else stays in back-end.
-export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number): void {
+
+/**
+ * Evaluates all cells in the viewport and updates the front-end.
+ * This method is called every time the user scrolls the viewport.
+ * @param leftCornerCol
+ * @param rightCornerCol
+ * @param topCornerRow
+ * @param bottomCornerRow
+ * @constructor
+ */
+export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number): void {
     const wb = WorkbookManager.getWorkbook();
     if (!wb) {
         console.debug("[ShowWindowInGUI] No workbook found!");
@@ -102,7 +109,7 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
     const endCol: number = rightCornerCol;
     const startRow: number = topCornerRow;
     const endRow: number = bottomCornerRow;
-    const sheet: Sheet = wb.getSheet(activeSheet) as Sheet; //This needs to be updated
+    const sheet: Sheet = WorkbookManager.getActiveSheet()!; //This needs to be updated
     if (sheet) {
         for (let col: number = startCol; col <= endCol; col++) {
             for (let row: number = startRow; row <= endRow; row++) {
@@ -113,6 +120,7 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
 
                     if (cell != null) {
 
+                        // No recalculation needed if the cell is up to date
                         let cellEval = cell.Eval(sheet, 0, 0);
                         if (cellEval instanceof ErrorValue) {
                             cellHTML.innerText = cellEval.message;
@@ -131,6 +139,13 @@ export function EvalCellsInViewport(activeSheet: string, leftCornerCol: number, 
     }
 }
 
+/**
+ * Returns the supports in the viewport
+ * Uses the ForEachReferred method to iterate through the support set of the cell.
+ * @param col
+ * @param row
+ * @constructor
+ */
 export function GetSupportsInViewPort(col: number, row:number): string[] {
     let supports: string[] = []
     WorkbookManager.getActiveSheet()?.Get(col,row)?.ForEachReferred(WorkbookManager.getActiveSheet()!,col,row,((addr:FullCellAddress) => {

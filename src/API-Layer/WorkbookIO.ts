@@ -1,18 +1,19 @@
-/*
-  Currently, only Excel 2003 XMLSS format is supported.
- */
 import {XMLParser} from "fast-xml-parser";
 import {Workbook} from "../back-end/Workbook.ts";
 import {Sheet} from "../back-end/Sheet.ts";
 import {Cell} from "../back-end/Cells.ts";
-
 import {WorkbookManager} from "./WorkbookManager.ts";
 
-//The XMLReader is used to read an XML file via the method readFile(xml_filename)
-/*More in-depth explanation is as follows:
- * The readFile method makes use of the package fast-xml-parser to turn an XML file into a
- * JavaScript JSON Object. We then leaf through this object to extract workbooks, sheets,
- * cell addresses, values and types */
+/**
+ *  The readFile method makes use of the package fast-xml-parser to turn an XML file into a
+ *  JavaScript JSON Object. We then leaf through this object to extract workbooks, sheets,
+ *  cell addresses, values and types
+ * @constructor
+ * @param xml_filename The name of the XML file to be read.
+ * @returns A Promise that resolves when the file is read.
+ * @throws An error if the file cannot be read.
+ * @note Currently, only Excel 2003 XMLSS format is supported.
+ */
 export class XMLReader {
     constructor() {}
 

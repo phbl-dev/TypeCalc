@@ -151,7 +151,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             else {
                 WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
             }
-            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+            EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
         }
 
@@ -184,7 +184,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 else {
                     WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
                 }
-                EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
         }
             clearVisualHighlight();
@@ -197,7 +197,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
             WorkbookManager.getActiveSheet()?.RemoveCell(cellInfo.col, cellInfo.row);
         }
-        EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+        EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
     }
 
 
@@ -229,7 +229,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     WorkbookManager.getActiveSheet()?.undo()
 
                     // Refresh UI with a wider range to ensure all affected cells are updated
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
                 // Redo functionality:
@@ -239,7 +239,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     WorkbookManager.getActiveSheet()?.redo()
 
                     // Refresh UI with a wider range to ensure all affected cells are updated
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
                 case "c":
@@ -496,7 +496,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
-                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3);
+                     EvalCellsInViewport(columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3);
                      console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
@@ -508,7 +508,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                          }
                      }
                  }
-                 EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
+                 EvalCellsInViewport(columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
              }}
 
              onInput={(e) => {
@@ -529,7 +529,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
             {sheetNames.map((name:any) => (
                 <button
                     key={name}
-                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30)
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport(scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30)
                     document.getElementById("documentTitle")!.innerText = WorkbookManager.getActiveSheetName();}}
                     style={{
                         backgroundColor: activeSheet === name ? 'darkslategrey' : '',
@@ -602,7 +602,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                         setSheetNames(sheetNames);
                         setActiveSheet(sheetNames[0]);
                         WorkbookManager.setActiveSheet(sheetNames[0]);
-                        EvalCellsInViewport(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+                        EvalCellsInViewport(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
                     } catch (error) {
                         console.error("Error during load:", error);
                     }
@@ -731,7 +731,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         const updateCellContents = () => {
             valueChanged = false;
             ParseToActiveCell(value);
-            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+            EvalCellsInViewport(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
         }
 
         formulaBox.addEventListener("keydown", handleKeyDown);
@@ -837,7 +837,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                                               visibleColumnStopIndex,
                                           }) => {
                             EvalCellsInViewport(
-                                activeSheet,
                                 visibleColumnStartIndex,
                                 visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
                                 visibleRowStartIndex,
