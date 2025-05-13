@@ -927,6 +927,11 @@ export class CachedArrayFormula {
         this.supportAdded = false;
     }
 
+    /**
+     * Adds an Arrayformula to the supportSet
+     * @param supported
+     * @constructor
+     */
     public UpdateSupport(supported: Sheet) {
         if (!this.supportAdded) {
             this.formula.AddToSupportSets(supported, this.formulaCol, this.formulaRow, 1, 1);
@@ -934,6 +939,13 @@ export class CachedArrayFormula {
         }
     }
 
+    /**
+     * Removes an Arrayformula from the supportSet
+     * @param sheet
+     * @param col
+     * @param row
+     * @constructor
+     */
     public RemoveFromSupportSet(sheet: Sheet, col: number, row: number) {
         if (!this.supportRemoved) {
             this.formula.RemoveFromSupportSets(sheet, col, row);
@@ -941,6 +953,11 @@ export class CachedArrayFormula {
         }
     }
 
+    /**
+     * For each dependency to an arrayformula, perform an action
+     * @param act
+     * @constructor
+     */
     public ForEachReferred(act: (addr: FullCellAddress) => void): void {
         this.formula.ForEachReferred(this.sheet, this.formulaCol, this.formulaRow, act);
     }

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {XMLReader} from "../API-Layer/WorkbookIO.ts";
+import {XMLWriter, XMLReader} from "../API-Layer/WorkbookIO.ts";
 import {ArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
 import {A1RefCellAddress, SuperCellAddress, SuperRARef} from "../back-end/CellAddressing.ts";
@@ -13,7 +13,7 @@ import {
 } from "../API-Layer/Back-endEndpoints.ts";
 import {
     getCell, adjustFormula, numberToLetters, lettersToNumber,
-    exportAsCSV, exportAsXML, makeBold, makeItalic, makeUnderlined,
+    makeBold, makeItalic, makeUnderlined,
     setCellColor, setTextColor, ReadArea
 } from "./HelperFunctions.tsx";
 
@@ -665,8 +665,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         input.addEventListener("keydown", (e) => { // Jump to cell
             if (e.key === "Enter") handleJump();
         })
-        xmlExport.addEventListener("click", exportAsXML)
-        csvExport.addEventListener("click", exportAsCSV)
+        xmlExport.addEventListener("click", new XMLWriter().exportAsXML)
+        csvExport.addEventListener("click", new XMLWriter().exportAsCSV)
         boldButton.addEventListener("click", makeBold)
         italicButton.addEventListener("click", makeItalic)
         underlineButton.addEventListener("click", makeUnderlined)
@@ -684,8 +684,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop
             window.removeEventListener("dragover", handleDragOver); // Drag and drop
-            xmlExport.removeEventListener("click", exportAsXML);
-            csvExport.removeEventListener("click", exportAsCSV);
+            xmlExport.removeEventListener("click", new XMLWriter().exportAsXML);
+            csvExport.removeEventListener("click", new XMLWriter().exportAsCSV);
             jumpButton.removeEventListener("click", handleJump); // Jump to cell
             boldButton.removeEventListener("click", makeBold)
             italicButton.removeEventListener("click", makeItalic)
