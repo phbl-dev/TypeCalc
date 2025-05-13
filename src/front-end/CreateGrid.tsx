@@ -1,6 +1,10 @@
 import ReactDOM from "react-dom/client";
 import {VirtualizedGrid} from "./SpreadsheetGrid.tsx";
 
+/**
+ * Renders the grid to the DOM.
+ * @constructor
+ */
 export const renderGrid = () => {
     const location = document.getElementById('root');
     if (location) {

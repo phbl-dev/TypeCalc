@@ -1,4 +1,5 @@
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
+import {Cell as BackendCell} from "../back-end/Cells.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
@@ -32,161 +33,15 @@ export function lettersToNumber(letters:string):number {
 }
 
 /**
- * Exports the active sheet's contents as a CSV file.
- */
-export function exportAsCSV() {
-    const currentSheet = WorkbookManager.getActiveSheet();
-    const sheetData = currentSheet?.getCells();
-    if(!sheetData) {return}
-    let output: string = "";
-
-    let currentRow = 1;
-    let currentCol = 1;
-
-    for(const cell of sheetData.iterateForExport()) {
-        const cellRow = cell.GetRow();
-        const cellCol = cell.GetCol();
-        if(cellRow !== currentRow) {
-            currentRow = cellRow!;
-            currentCol = 1;
-            output += "\n";
-        }
-        const diff = cellCol! - currentCol;
-        currentCol = cellCol!;
-        for(let i = 0; i < diff; i++){
-            output += ",";
-        }
-
-        output += cell.GetText();
-    }
-
-    const blob = new Blob([output], {type: "application/csv"});
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "workbook.csv";
-    link.click();
-}
-
-/**
- * Exports the workbook contents as an Excel 2003 XML File (XMLSS).
- */
-export function exportAsXML() {
-    let xmlOutput =
-        "<?xml version=\"1.0\"?>\n" +
-        "<?mso-application progid=\"Excel.Sheet\"?>\n" +
-        "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
-        " xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n" +
-        " xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n" +
-        " xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n" +
-        " xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
-
-    xmlOutput +=
-        " <DocumentProperties xmlns=\"urn:schemas-microsoft-com:office:office\">\n" +
-        "  <Author>TypeCalc Export</Author>\n" +
-        "  <Created>" + new Date().toISOString() + "</Created>\n" +
-        " </DocumentProperties>\n";
-
-    xmlOutput +=
-        " <Styles>\n" +
-        "  <Style ss:ID=\"Default\" ss:Name=\"Normal\">\n" +
-        "   <Alignment ss:Vertical=\"Bottom\"/>\n" +
-        "   <Borders/>\n" +
-        "   <Font/>\n" +
-        "   <Interior/>\n" +
-        "   <NumberFormat/>\n" +
-        "   <Protection/>\n" +
-        "  </Style>\n" +
-        " </Styles>\n";
-
-    const sheetNames = WorkbookManager.getSheetNames();
-
-    for(const sheetName of sheetNames) {
-        // Escape special characters in sheetName
-        const escapedSheetName = sheetName.replace(/&/g, '&amp;') // Escape &
-            .replace(/</g, '&lt;') // Escape <
-            .replace(/>/g, '&gt;') // Escape >
-            .replace(/"/g, '&quot;') // Escape "
-            .replace(/'/g, '&apos;'); // Escape '
-
-        const xmlSheetHeader =
-            `  <Worksheet ss:Name="${escapedSheetName}">\n` +
-            "   <Table ss:ExpandedColumnCount=\"1000\" ss:ExpandedRowCount=\"1000\" x:FullColumns=\"1\" x:FullRows=\"1\">\n";
-        xmlOutput += xmlSheetHeader;
-
-        const sheet = WorkbookManager.getWorkbook().getSheet(sheetName);
-        if(!sheet) {continue;} // Skip invalid sheets
-
-        const sheetCells = sheet.getCells();
-        let currentRow = -1; // Instantiate with an invalid row number
-        let firstRow = true; // Used to create the first <Row> without a closing </Row> before it
-
-        for(const cell of sheetCells.iterateForExport()) {
-            const cellRow = cell.GetRow();
-
-            // If the row changes, close the row and start a new one
-            if(cellRow !== currentRow) {
-                if(firstRow){
-                    firstRow = false;
-                    currentRow = cellRow!;
-                    xmlOutput += `\n     <Row ss:Index="${cellRow}" ss:AutoFitHeight="0">`;
-                }
-                else {
-                    xmlOutput += "\n     </Row>";
-                    currentRow = cellRow!;
-                    xmlOutput += `\n     <Row ss:Index="${cellRow}" ss:AutoFitHeight="0">`;
-                }
-            }
-
-            const cellContent = cell.GetText();
-            const cellCol = cell.GetCol();
-
-            // Determine cell data type, with String as default
-            let cellType = "String";
-            let cellValue = cellContent;
-
-            // Try to detect numbers, if any change dataType to Number
-            if(/^-?\d+(\.\d+)?$/.test(cellContent!))
-                cellType = "Number";
-
-            // If the cell is a String, escape special characters
-            if(cellType === "String") {
-                cellValue = cellContent!.replace(/&/g, '&amp;') // Escape &
-                    .replace(/</g, '&lt;') // Escape <
-                    .replace(/>/g, '&gt;') // Escape >
-                    .replace(/"/g, '&quot;') // Escape "
-                    .replace(/'/g, '&apos;'); // Escape '
-            }
-            xmlOutput += `\n      <Cell ss:Index="${cellCol}"><Data ss:Type="${cellType}">${cellValue}</Data></Cell>`;
-        }
-
-        // Close the last row
-        xmlOutput += "\n     </Row>";
-
-        const xmlSheetFooter =
-            "\n   </Table>\n" +
-            "  </Worksheet>\n";
-        xmlOutput += xmlSheetFooter;
-    }
-
-    const xmlFooter = "</Workbook>";
-    xmlOutput += xmlFooter;
-
-    const blob = new Blob([xmlOutput], {type: "application/xml"});
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "workbook.xml";
-    link.click();
-}
-
-/**
  * Takes in a formula string, (10, 20,-20, A1, A$2, $A$2), and processes it.
- * It only processes the changes needed
+ * It is used to adjust the formula to account for the row and column changes.
  * @param formula
  * @param rowDiff
  * @param colDiff
  */
 export function adjustFormula(formula: string, rowDiff: number, colDiff: number): string {
     return formula.replace(/(\$?)([A-Z]+)(\$?)(\d+)/g, (match, colAbs, column, rowAbs, row) => {
+
         const newRow = rowAbs ? row : parseInt(row, 10) + rowDiff;
 
         let newColumn = column;
@@ -200,6 +55,7 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
             }
             console.log(`Values inside adjustFormula: ${colNum}, ${newColNum}, ${newColumn}`)
         }
+
         return colAbs + newColumn + rowAbs + newRow;
     });
 }
@@ -224,6 +80,9 @@ export function makeBold() {
         button.style.outline = "2px solid white";
     }
 }
+
+// The following 5 functions are for styling the cell and its contents.
+// They are connected to the appropriate buttons in the header.
 export function makeItalic() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -241,6 +100,8 @@ export function makeItalic() {
         button.style.outline = "2px solid white";
     }
 }
+// The following 5 functions are for styling the cell and its contents.
+// They are connected to the appropriate buttons in the header.
 export function makeUnderlined() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -258,6 +119,8 @@ export function makeUnderlined() {
         button.style.outline = "2px solid white";
     }
 }
+// The following 5 functions are for styling the cell and its contents.
+// They are connected to the appropriate buttons in the header.
 export function setCellColor() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -270,6 +133,8 @@ export function setCellColor() {
         cell.style.backgroundColor = colorPicker.value;
     }
 }
+// The following 5 functions are for styling the cell and its contents.
+// They are connected to the appropriate buttons in the header.
 export function setTextColor() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) { return null; }
@@ -281,4 +146,47 @@ export function setTextColor() {
     if(colorPicker.value) {
         cell.style.color = colorPicker.value;
     }
+}
+
+/**
+ * The CellInfo type is used to store information about a cell.
+ * It is used to store the cell's row, column, content, relative row and relative column.
+ */
+type CellInfo = {
+    row: number;
+    col: number;
+    cell: BackendCell;
+    content: string;
+    relRow: number;
+    relCol: number;
+};
+
+
+/**
+ * Read area finds alls cells in the area and returns an array of CellInfo objects.
+ * @param startRow
+ * @param endRow
+ * @param startCol
+ * @param endCol
+ * @constructor
+ */
+export function ReadArea(startRow: number, endRow: number, startCol: number, endCol: number) {
+    let AreaArray: CellInfo[] = [];
+
+    for (let i = startRow; i <= endRow; i++) {
+        for (let j = startCol; j <= endCol; j++) {
+            const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
+            if (cell) {
+                AreaArray.push({
+                    row: i,
+                    col: j,
+                    cell: cell,
+                    content: cell.GetText()!,
+                    relRow: i - startRow,
+                    relCol: j - startCol
+                });
+            }
+        }
+    }
+    return AreaArray;
 }

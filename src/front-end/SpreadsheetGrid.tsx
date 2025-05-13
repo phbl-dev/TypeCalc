@@ -1,17 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
-import {XMLReader} from "../API-Layer/WorkbookIO.ts";
+import {XMLWriter, XMLReader} from "../API-Layer/WorkbookIO.ts";
 import {ArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
-import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
+import {A1RefCellAddress, SuperCellAddress, SuperRARef} from "../back-end/CellAddressing.ts";
 
 import {ArrayExplicit} from "../back-end/Values.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
-import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewport,
-    ParseToActiveCell} from "../API-Layer/Back-endEndpoints.ts";
-import {getCell, adjustFormula, numberToLetters, lettersToNumber,
-    exportAsCSV, exportAsXML, makeBold, makeItalic, makeUnderlined,
-    setCellColor, setTextColor} from "./HelperFunctions.tsx";
+import {
+    EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
+    ParseToActiveCell
+} from "../API-Layer/Back-endEndpoints.ts";
+import {
+    getCell, adjustFormula, numberToLetters, lettersToNumber,
+    makeBold, makeItalic, makeUnderlined,
+    setCellColor, setTextColor, ReadArea
+} from "./HelperFunctions.tsx";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridInterface {
@@ -64,14 +68,6 @@ let selectionStartCell: string | null = null
 let isShiftKeyDown = false
 let AreaMarked = false
 
-type CellInfo = {
-    row: number;
-    col: number;
-    cell: BackendCell;
-    content: string;
-    relRow: number;
-    relCol: number;
-};
 
 
 
@@ -95,6 +91,10 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+    /**
+     * Clears the visual highlight of all cells in the range.
+     * Only works if an area is selected.
+     */
     const clearVisualHighlight = () => {
         const previousSelection = document.querySelectorAll('.selected-cell');
         previousSelection.forEach(cell => {
@@ -103,27 +103,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     }
 
 
-    function ReadArea(startRow: number, endRow: number, startCol: number, endCol: number) {
-        let AreaArray: CellInfo[] = [];
-
-        for (let i = startRow; i <= endRow; i++) {
-            for (let j = startCol; j <= endCol; j++) {
-                const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
-                if (cell) {
-                    AreaArray.push({
-                        row: i,
-                        col: j,
-                        cell: cell,
-                        content: cell.GetText()!,
-                        relRow: i - startRow,
-                        relCol: j - startCol
-                    });
-                }
-            }
-        }
-        return AreaArray;
-    }
-
+    /**
+     * Paste functionality. Based on the areaRef, it will paste the contents of the area into the current cell.
+     * If multiple cells are part of the copied area, it will paste onto multiple cells.
+     * If the copied area is a formula, it will adjust the formula to fit the current cell.
+     * @param areaRef
+     * @constructor
+     */
     function PasteArea(areaRef: string) {
         const range = JSON.parse(areaRef);
         const targetCellRef = new A1RefCellAddress(ID);
@@ -139,6 +125,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     targetRow - row,
                     targetCol - col
                 );
+
+                console.log(nextFormula);
                 let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
                 handleInput(targetRow, targetCol, nextFormula!);
 
@@ -149,13 +137,20 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             else {
                 WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
             }
-            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+            EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
         }
 
         AreaMarked = false;
     }
 
+    /**
+     * Cut functionality. Based on the areaRef, it will cut the contents of the area into the current cell.
+     * If multiple cells are part of the copied area, it will cut onto multiple cells.
+     * If the copied area is a formula, it will adjust the formula to fit the current cell.
+     * @param areaRef
+     * @constructor
+     */
     function CutArea(areaRef: string) {
         const range = JSON.parse(areaRef);
         const targetCellRef = new A1RefCellAddress(ID);
@@ -182,7 +177,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                 else {
                     WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
                 }
-                EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
         }
             clearVisualHighlight();
@@ -190,19 +185,39 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         AreaMarked = false;
     }
 
+    /**
+     * Delete functionality. Based on the areaRef, it will delete the contents of the area.
+     * If multiple cells are part of the copied area, it will delete onto multiple cells.
+     * @param areaRef
+     * @constructor
+     */
     function DeleteArea(areaRef:string) {
         const range = JSON.parse(areaRef);
         for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
             WorkbookManager.getActiveSheet()?.RemoveCell(cellInfo.col, cellInfo.row);
         }
-        EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+        EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
     }
+
+
+
 
 // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
         let nextCol = columnIndex;
         let areaRef
+
+        /** Special case for Backspace and Delete keys. Required because the backspace key is used to delete cell contents and needs to be overwritten differently*/
+        if (AreaMarked && (event.key === "Backspace" || event.key === "Delete")) {
+            setHighlight(selectionStartCell!, true);
+            areaRef = sessionStorage.getItem('selectionRange')!;
+
+            DeleteArea(areaRef);
+
+            clearVisualHighlight()
+            AreaMarked = false
+        }
 
         if(event.ctrlKey) {
             switch (event.key) {
@@ -212,8 +227,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                     WorkbookManager.getActiveSheet()?.undo()
 
-                    // Refresh UI with a wider range to ensure all affected cells are updated
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
                 // Redo functionality:
@@ -222,8 +236,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
                     WorkbookManager.getActiveSheet()?.redo()
 
-                    // Refresh UI with a wider range to ensure all affected cells are updated
-                    EvalCellsInViewport(WorkbookManager.getActiveSheetName(), columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
                 case "c":
@@ -264,18 +277,6 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
 
 
         switch (event.key) {
-            case "Backspace":
-                if (AreaMarked) {
-                    setHighlight(selectionStartCell!, true);
-                    areaRef = sessionStorage.getItem('selectionRange')!;
-
-                    DeleteArea(areaRef);
-                }
-                clearVisualHighlight()
-                AreaMarked = false
-
-                break;
-
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1);
                 if (isShiftKeyDown) {
@@ -348,6 +349,12 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+    /**
+     * Processes input into a specific cell location using its content, row, and column
+     * @param rowIndex
+     * @param columnIndex
+     * @param content
+     */
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
 
 
@@ -380,6 +387,11 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+    /**
+     * Updates the header FormulaBox with the values from within the active cell
+     * @param cellID
+     * @param content
+     */
     const updateFormulaBox = (cellID:string, content:string|null):void => {
         const formulaBox = document.getElementById("formulaBox");
         if (!formulaBox) {
@@ -389,6 +401,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
+    /**
+     * Highlights an area. If saveHighlight = true, it is saved as session storage
+     * @param endCell
+     * @param saveHighlight
+     * @param arrowOptCol
+     * @param arrowOptRow
+     */
     function setHighlight(endCell:string, saveHighlight:boolean = false,  arrowOptCol?:number, arrowOptRow?:number): void {
         const endCellRef = new A1RefCellAddress(endCell);
         let currentActiveCellRef;
@@ -462,10 +481,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
 
-                 //Also write the content in the formula box at the top
                  updateFormulaBox(ID, rawCellContent);
 
-                 mySupports = GetSupportsInViewport(columnIndex-20, columnIndex+20,rowIndex-20,rowIndex+20,columnIndex+1,rowIndex+1);
+
+
+                 mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
+
+
                  if (!mySupports) {
                      return;
                  }
@@ -489,7 +511,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
-                     EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3);
+                     EvalCellsInViewport(columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3);
                      console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
@@ -501,7 +523,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                          }
                      }
                  }
-                 EvalCellsInViewport(WorkbookManager.getActiveSheetName(),columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
+                 EvalCellsInViewport(columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
              }}
 
              onInput={(e) => {
@@ -515,6 +537,15 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     );
 };
 
+/**
+ * Used to differentiate between multiple sheets.
+ * @param sheetNames
+ * @param activeSheet
+ * @param setActiveSheet
+ * @param setSheetNames
+ * @param scrollOffset
+ * @constructor
+ */
 // @ts-ignore
 const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
     return (
@@ -522,7 +553,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
             {sheetNames.map((name:any) => (
                 <button
                     key={name}
-                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport(name, scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30)
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport(scrollOffset.left, scrollOffset.left+30, scrollOffset.top, scrollOffset.top+30)
                     document.getElementById("documentTitle")!.innerText = WorkbookManager.getActiveSheetName();}}
                     style={{
                         backgroundColor: activeSheet === name ? 'darkslategrey' : '',
@@ -553,7 +584,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
 };
 
 /** Creates the sheet itself with headers and body. It extends the GridInterface so that
- * we can create a sheet with a self-defined amount of rows and columns.
+ * we can create a sheet with a self-defined number of rows and columns.
  * The sheet itself consists of a top row flexbox with a corner cell and a row of column
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
  * additional grids; one for the row headers and one for the regular cells.
@@ -574,8 +605,20 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     let [scrollOffset] = useState({left: 0, top: 0});
     let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
-
+    const [windowDimensions, setWindowDimensions] = useState({
+        width: window.innerWidth,
+        height: window.innerHeight
+    });
     useEffect(() => {
+
+        addEventListener('resize', () => {
+            console.log("Change in window size detected. Updating UI...")
+            setWindowDimensions({
+                width: window.innerWidth,
+                height: window.innerHeight * 0.92
+            });
+        })
+
         // Handle file drop events entirely in React
         function handleDrop(event: DragEvent) {
             event.preventDefault();
@@ -595,7 +638,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                         setSheetNames(sheetNames);
                         setActiveSheet(sheetNames[0]);
                         WorkbookManager.setActiveSheet(sheetNames[0]);
-                        EvalCellsInViewport(activeSheet, scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+                        EvalCellsInViewport(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
                     } catch (error) {
                         console.error("Error during load:", error);
                     }
@@ -661,8 +704,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         input.addEventListener("keydown", (e) => { // Jump to cell
             if (e.key === "Enter") handleJump();
         })
-        xmlExport.addEventListener("click", exportAsXML)
-        csvExport.addEventListener("click", exportAsCSV)
+        xmlExport.addEventListener("click", new XMLWriter().exportAsXML)
+        csvExport.addEventListener("click", new XMLWriter().exportAsCSV)
         boldButton.addEventListener("click", makeBold)
         italicButton.addEventListener("click", makeItalic)
         underlineButton.addEventListener("click", makeUnderlined)
@@ -680,8 +723,8 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         return () => {
             window.removeEventListener("drop", handleDrop); // Drag and drop
             window.removeEventListener("dragover", handleDragOver); // Drag and drop
-            xmlExport.removeEventListener("click", exportAsXML);
-            csvExport.removeEventListener("click", exportAsCSV);
+            xmlExport.removeEventListener("click", new XMLWriter().exportAsXML);
+            csvExport.removeEventListener("click", new XMLWriter().exportAsCSV);
             jumpButton.removeEventListener("click", handleJump); // Jump to cell
             boldButton.removeEventListener("click", makeBold)
             italicButton.removeEventListener("click", makeItalic)
@@ -724,7 +767,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         const updateCellContents = () => {
             valueChanged = false;
             ParseToActiveCell(value);
-            EvalCellsInViewport(WorkbookManager.getActiveSheetName(), scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+            EvalCellsInViewport(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
         }
 
         formulaBox.addEventListener("keydown", handleKeyDown);
@@ -830,7 +873,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                                               visibleColumnStopIndex,
                                           }) => {
                             EvalCellsInViewport(
-                                activeSheet,
                                 visibleColumnStartIndex,
                                 visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
                                 visibleRowStartIndex,

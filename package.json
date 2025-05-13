@@ -1,5 +1,5 @@
 {
-  "name": "reactgrid",
+  "name": "TypeCalc",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:e2e": " playwright test"
+    "test:e2e": " playwright test",
+    "docs": "typedoc"
   },
   "dependencies": {
     "@formulajs/formulajs": "^4.4.11",
@@ -39,7 +40,9 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
+    "jsdoc": "^4.0.4",
     "playwright": "^1.51.1",
+    "typedoc": "^0.28.4",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
     "vite": "^6.2.0",

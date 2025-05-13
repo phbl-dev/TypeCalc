@@ -99,7 +99,7 @@ export class Sheet {
      * The functionality of the method will only be invoked if there are actions to undo, i.e.
      * the size of the undoCount is smaller than the length of the history array.
      *
-     * @returns Nothing
+     * @returns void
      */
     public undo(): void {
         // If the undoCount is smaller than the length of the history, then there are cells to undo.
@@ -222,7 +222,6 @@ export class Sheet {
     /**
      * Inserts the cell array formula onto the sheet.
      * It throws an error if the input given is invalid.
-     *
      * @param cell
      * @param col
      * @param row
@@ -253,7 +252,7 @@ export class Sheet {
 
                     if(c == 0 && r == 0) {
 
-                        f.setOgText(caf.formula.GetText()!)
+                        f.setTextField(caf.formula.GetText()!)
                     }
                     this.SetCell(f, ulCa.col + c, ulCa.row + r);
                 }
@@ -304,7 +303,6 @@ export class Sheet {
 
     /**
      * Inserts new Rows or Cols, depending on the doRows value.
-     * Is likely going to be changed depending on our frontend implementation.
      * @param R
      * @param N
      * @param doRows
@@ -533,6 +531,10 @@ export class Sheet {
         return this.name;
     }
 
+    /**
+     * //TODO: NO CLUE WHAT THIS DOES - CHECK FOR RELEVANCE
+     * @constructor
+     */
     public AddToSupportSets(): void {
         const sheetCols = this.Cols,
             sheetRows = this.Rows;
@@ -601,7 +603,16 @@ export class Sheet {
         return true;
     }
 
-    public AddSupport(col: number, row: number, supportedSheet: Sheet, supportedCols: Interval, supportedRows: Interval) {
+    /**
+     * Adds support to a specific cell in the given column and row with details from the supported sheet and intervals.
+     * @param {number} col - The column index of the cell to which support is added.
+     * @param {number} row - The row index of the cell to which support is added.
+     * @param {Sheet} supportedSheet - The sheet that provides the support.
+     * @param {Interval} supportedCols - The interval of columns in the supported sheet that define the support range.
+     * @param {Interval} supportedRows - The interval of rows in the supported sheet that define the support range.
+     * @return {void} Does not return a value.
+     */
+    public AddSupport(col: number, row: number, supportedSheet: Sheet, supportedCols: Interval, supportedRows: Interval): void {
         let cell: Cell | null = this.Get(col, row);
         if (cell == null) {
             cell = new BlankCell();
@@ -610,15 +621,25 @@ export class Sheet {
         cell.AddSupport(this, col, row, supportedSheet, supportedCols, supportedRows);
     }
 
+    /**
+     * Increases the volatile set, determining the number of updates needed.
+     * @constructor
+     */
     public IncreaseVolatileSet(): void {
         this.cells.Forall((col, row, cell) => this.workbook.IncreaseVolatileSet(cell, this, col, row));
     }
 
+    /**
+     * returns Sheet name.
+     */
     public toString(): string {
         return this.name;
     }
 }
 
+/**
+ * This class maintains the sheet using the QT4-structure as defined by Sestoft (2014)
+ */
 export class SheetRep {
     private LOGW = 4;
     W = 1 << this.LOGW;
@@ -631,6 +652,12 @@ export class SheetRep {
 
     private readonly tile0: Cell[][][][] | null[][][][] = new Array(this.W * this.H).fill(null).map(() => []);
 
+    /**
+     * Retrieve a cell value from the sheet.
+     * @param c
+     * @param r
+     * @constructor
+     */
     public Get(c: number, r: number): Cell | null {
         if (c < 0 || this.SIZEW <= c || r < 0 || this.SIZEH <= r) {
             return null;
@@ -650,6 +677,13 @@ export class SheetRep {
         return tile3[((c & this.MW) << this.LOGH) | (r & this.MH)];
     }
 
+    /**
+     * Insert a cell value into the sheet.
+     * @param c
+     * @param r
+     * @param value
+     * @constructor
+     */
     public Set(c: number, r: number, value: Cell | null): void {
         if (c < 0 || c >= this.SIZEW || r < 0 || r >= this.SIZEH) return;
 
@@ -673,6 +707,10 @@ export class SheetRep {
         }
     }
 
+    /**
+     * Loop through all active cells in the SheetRep
+     * @returns {IterableIterator<Cell>}
+     */
     public *[Symbol.iterator](): IterableIterator<Cell> {
         for (const tile1 of this.tile0) {
             if (tile1 != null) {
@@ -693,6 +731,11 @@ export class SheetRep {
         }
     }
 
+    /**
+     * Allows us to perform an action on every cell in the SheetRep
+     * @param act
+     * @constructor
+     */
     public Forall(act: (arg1: number, arg2: number, arg3: Cell) => void): void {
         let i0 = 0;
         this.tile0.forEach((tile1: Cell[][][] | null[][][]) => {

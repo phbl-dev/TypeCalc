@@ -3,9 +3,8 @@ import { CyclicException, Formats } from "./Types";
 import { FullCellAddress, SupportArea } from "./CellAddressing";
 import { Cell, type Formula } from "./Cells";
 
-// A Workbook is a collection of distinct named Sheets.
+// A Workbook is a collection of distinctly named Sheets.
 export class Workbook {
-    // public OnFunctionsAltered: (functions: string[]) => void; // We skip this field for now since it seems to be for FunCalc
 
     private readonly sheets: Sheet[] = new Array<Sheet>();
     public readonly format: Formats = new Formats();
@@ -18,10 +17,19 @@ export class Workbook {
     private readonly volatileCells: Set<FullCellAddress> = new Set<FullCellAddress>(); // Contains the cell addresses of the volatile cells (that needs to be recalculated if the workbook is recalculated)
     private readonly awaitsEvaluation: FullCellAddress[] = new Array<FullCellAddress>(); // Queue!
 
+    /**
+     * Retrieve the cyclicException if it exists.
+     * @constructor
+     */
     get Cyclic(): CyclicException | null {
         return this._Cyclic;
     }
 
+    /**
+     * Set the cyclicException if it exists.
+     * @param arg
+     * @constructor
+     */
     set Cyclic(arg: CyclicException | null) {
         this._Cyclic = arg;
     }
@@ -81,6 +89,11 @@ export class Workbook {
         this._UseSupportSets = true;
     }
 
+    /**
+     * Adds a new sheet to the workbook.
+     * @param sheet
+     * @constructor
+     */
     public AddSheet(sheet: Sheet): void {
         this.sheets.push(sheet);
     }
@@ -123,7 +136,6 @@ export class Workbook {
      * @constructor
      */
     public Recalculate(): number {
-        // Now Cyclic != null or for all formulas f, f.state==Uptodate
 
         return this.TimeRecalculation(() => {
             this.UseSupportSets = true;
@@ -193,6 +205,7 @@ export class Workbook {
         });
     }
 
+    // TODO: This is not used?
     public RebuildSupportGraph(): void {
         console.log("Rebuilding support graph");
         // For each sheet in sheets and for all cells in each sheet: call ResetSupportSet() from Cells.ts which sets the SupportSet to null.
