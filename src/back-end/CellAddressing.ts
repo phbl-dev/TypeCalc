@@ -85,7 +85,9 @@ export class Adjusted<Type> {
     }
 }
 
-//RARef = Relative or Absolute cell Reference
+/**
+ * The SuperRaref class is a Super class, and stands for Relative or Absolute cell reference
+ */
 export class SuperRARef {
     colAbs: boolean;
     colRef: number;
@@ -139,6 +141,7 @@ export class SuperRARef {
         return new RARefCellAddress(this, col, row);
     }
 
+    // TODO: Why is this here?
     insertRowCols(R: number, N: number, r: number, insertRow: boolean): Adjusted<SuperRARef> {
         let newRef: number;
         let upper: number;
@@ -192,6 +195,7 @@ export class SuperRARef {
         return { newRef: newRef, upper: upper };
     }
 
+
     move(deltaCol: number, deltaRow: number): SuperRARef {
         return new SuperRARef(this.colAbs, this.colAbs ? this.colRef : this.colRef + deltaCol, this.rowAbs, this.rowAbs ? this.rowRef : this.rowRef + deltaRow);
     }
@@ -219,6 +223,12 @@ export class SuperRARef {
         }
     }
 
+    /**
+     * R[1]C[1] and C0R0 formatting with respect to relative and absolute reference
+     * @param abs
+     * @param offset
+     * @param origo
+     */
     relAbsFormat(abs: boolean, offset: number, origo: number): string {
         if (abs) {
             return (offset + origo).toString();
@@ -229,16 +239,25 @@ export class SuperRARef {
         }
     }
 
+    /**
+     * determine if two SuperRaref are the same.
+     * @param that
+     */
     equals(that: SuperRARef): boolean {
         return that != null && this.colAbs === that.colAbs && this.colRef === that.colRef && this.rowAbs === that.rowAbs && this.rowRef === that.rowRef;
     }
 }
 
-//Signature RARef(String a1Ref, int col, int row) in C# source
+/**
+ * Signature RARef(String a1ref) in C# source
+ * It uses the A1 format.
+ *
+ */
 export class A1RARef extends SuperRARef {
     a1ref: string;
     readonly col: number;
     readonly row: number;
+
 
     constructor(a1ref: string, col: number, row: number) {
         super(true, col, true, row);  // Start with absolute references
@@ -279,8 +298,11 @@ export class A1RARef extends SuperRARef {
         this.rowRef = val - 1;
     }
 }
-
-//Signature RARef(String r1c1) in C# source
+/**
+ * Signature RARef(String r1c1Ref) in C# source
+ * It uses the R1C1 format.
+ *
+ */
 export class R1C1RARef extends SuperRARef {
     r1c1: string;
 
@@ -325,7 +347,9 @@ export class R1C1RARef extends SuperRARef {
     }
 }
 
-//Cell addressing
+/**
+ * SuperCellAddress denotes a cell location based on its column and row.
+ */
 export class SuperCellAddress {
     readonly col: number;
     readonly row: number;
@@ -335,8 +359,13 @@ export class SuperCellAddress {
         this.row = row;
     }
 
-    //Signature NormalizeArea(CellAddr ca1, CellAddr ca2, out CellAddr ulCa, out CellAddr lrCa) in CoreCalc
-    //Need to verify functionality with future code.
+    /**
+     * Normalizes an area, such that the upper-left cell is found and the lower right cell is found.
+     * This is useful when wanting to designate an area.
+     *
+     * @param ca1
+     * @param ca2
+     */
     static normalizeArea(ca1: SuperCellAddress, ca2: SuperCellAddress): { ulCa: SuperCellAddress; lrCa: SuperCellAddress } {
         let minCol: number = ca1.col;
         let minRow: number = ca1.row;
@@ -352,6 +381,7 @@ export class SuperCellAddress {
         }
         return { ulCa: new SuperCellAddress(minCol, minRow), lrCa: new SuperCellAddress(maxCol, maxRow) };
     }
+
 
     offset(offset: SuperCellAddress): SuperCellAddress {
         return new SuperCellAddress(this.col + offset.col, this.row + offset.row);
@@ -380,6 +410,7 @@ export class SuperCellAddress {
     }
 }
 
+// TODO: WORK FROM HERE FOR DOCUMENTATION
 export class RARefCellAddress extends SuperCellAddress {
     constructor(cr: SuperRARef, col: number, row: number) {
         const caCol: number = cr.colAbs ? cr.colRef : cr.colRef + col;

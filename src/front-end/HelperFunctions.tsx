@@ -1,5 +1,7 @@
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {Cell as BackendCell} from "../back-end/Cells.ts";
+import {SuperRARef} from "../back-end/CellAddressing.ts";
+import {Workbook} from "../back-end/Workbook.ts";
 
 export function getCell(cellID:string):HTMLElement|null{
     return document.getElementById(cellID);
@@ -188,6 +190,7 @@ export function exportAsXML() {
  */
 export function adjustFormula(formula: string, rowDiff: number, colDiff: number): string {
     return formula.replace(/(\$?)([A-Z]+)(\$?)(\d+)/g, (match, colAbs, column, rowAbs, row) => {
+
         const newRow = rowAbs ? row : parseInt(row, 10) + rowDiff;
 
         let newColumn = column;
@@ -201,6 +204,7 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
             }
             console.log(`Values inside adjustFormula: ${colNum}, ${newColNum}, ${newColumn}`)
         }
+
         return colAbs + newColumn + rowAbs + newRow;
     });
 }

@@ -3,7 +3,7 @@ import { VariableSizeGrid as Grid } from "react-window";
 import {XMLReader} from "../API-Layer/WorkbookIO.ts";
 import {ArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
-import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
+import {A1RefCellAddress, SuperCellAddress, SuperRARef} from "../back-end/CellAddressing.ts";
 
 import {ArrayExplicit} from "../back-end/Values.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
@@ -125,6 +125,8 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                     targetRow - row,
                     targetCol - col
                 );
+
+                console.log(nextFormula);
                 let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
                 handleInput(targetRow, targetCol, nextFormula!);
 

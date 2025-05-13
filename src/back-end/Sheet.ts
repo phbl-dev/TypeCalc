@@ -253,7 +253,7 @@ export class Sheet {
 
                     if(c == 0 && r == 0) {
 
-                        f.setOgText(caf.formula.GetText()!)
+                        f.setTextField(caf.formula.GetText()!)
                     }
                     this.SetCell(f, ulCa.col + c, ulCa.row + r);
                 }

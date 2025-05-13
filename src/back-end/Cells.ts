@@ -7,6 +7,10 @@ import { Formats } from "./Types";
 import {SpreadsheetVisitor} from "./Parser.ts";
 import type { Workbook } from "./Workbook"; // This should be imported when it's done
 
+/**
+ * TypeScript does not allow inner enum classes and to reduce potential confusion in formula evaluation, we created this enum class.
+ * The purpose of it is simply to denote the state of a cell.
+ */
 export enum CellState {
     Dirty = 0,
     Enqueued = 1,
@@ -14,23 +18,40 @@ export enum CellState {
     Uptodate = 3,
 }
 
-// The Cell class and its subclasses represent the possible contents
-// of a spreadsheet cell.
+
+/**
+ * An abstract class, with methods defined for subclasses.
+ * Each Cell contains a col, row, text, and supportSet.
+ */
 export abstract class Cell {
     protected supportSet: SupportSet | null = null;
-    private ogText: string | null = null;
+    private textField: string | null = null;
     private col : number | null = null;
     private row: number | null = null;
 
+    /**
+     * Sets the location of the cell and converts it from being 0-indexed to 1-indexed.
+     * @param col
+     * @param row
+     * @constructor
+     */
     public SetColAndRow(col: number, row: number): void {
         this.col = col + 1;
         this.row = row + 1;
     }
 
+    /**
+     * Retrieve Column from cell
+     * @constructor
+     */
     public GetCol(): number | null {
         return this.col;
     }
 
+    /**
+     * Retrieve Row from cell
+     * @constructor
+     */
     public GetRow(): number | null {
         return this.row;
     }
@@ -74,11 +95,11 @@ export abstract class Cell {
     public abstract MoveContents(deltaCol: number, deltaRow: number): Cell;
 
     /*
-    The abstract method InsertRowCols() handles the case where a row or column is inserted and this affects
+    The abstract method InsertRowCols() handles the case where a row or column is inserted, and this affects
     the references of one or more cells. This method is only important to override in the FormulaClass
     because formulas may depend on cell references. When a formula depends on the references of other cells,
     then it is important that we update the formula to contain the correct references after the insertion of
-    a new row/column. In other types of cells (e.g. ConstCell, NumberCell, QuoteCell) that don't contain a
+    a new row/column. In other types of cells (e.g., ConstCell, NumberCell, QuoteCell) that don't contain a
     formula, we don't need to apply InsertRowCols().
      */
     public abstract InsertRowCols(
@@ -98,23 +119,44 @@ export abstract class Cell {
      */
     public abstract Reset(): void;
 
-    // Mark the cell dirty, for later evaluation
+    /** Mark the cell dirty, for later evaluation
+    @note refrain from using this method, instead use Cell.MarkCellDirty
+     */
     public abstract MarkDirty(): void;
 
+    /**
+     * Cells can be marked dirty, as a way of showing they need to be re-evaluated.
+     * @param sheet
+     * @param col
+     * @param row
+     * @constructor
+     */
     public static MarkCellDirty(sheet: Sheet, col: number, row: number): void {
-        const cell: Cell | null = sheet.Get(col, row); // get doesn't exist yet in Sheet class
+        const cell: Cell | null = sheet.Get(col, row);
         if (cell != null) {
             cell.MarkDirty();
         }
     }
 
-    public setOgText(text: string):void {
-        this.ogText = text
+    /**
+     * Method is used to store ArrayFormula text.
+     * @param text
+     */
+    public setTextField(text: string):void {
+        this.textField = text
     }
 
     // Enqueue this cell for evaluation
     public abstract EnqueueForEvaluation(sheet: Sheet, col: number, row: number): void;
 
+    /**
+     * Checks if cell exists in sheet, and Enqueues it for evaluation.
+     * @param sheet
+     * @param sheet
+     * @param col
+     * @param row
+     * @constructor
+     */
     public static EnqueueCellForEvaluation(sheet: Sheet, col: number, row: number): void {
         const cell: Cell | null = sheet.Get(col, row); // get doesn't exist yet in Sheet class
         if (cell != null) {
@@ -138,7 +180,7 @@ export abstract class Cell {
         } else return "";
     }
 
-    /*
+    /**
     The purpose of the abstract Show() method is to return the formula of a cell as a string.
     For example if we have a cell with the formula SUM(A1, B1) then "SUM(A1, B1)" would be
     returned by Show(). The method has three parameters:
@@ -150,7 +192,7 @@ export abstract class Cell {
      */
     public abstract Show(col: number, row: number, fo: Formats): string;
 
-    /*
+    /**
     The Parse() method takes four parameters:
     - text: string - The text that will be parsed into a Cell
     - workbook: Workbook - We likely give this because parseCell() needs it. Maybe for retrieving references of cells in other sheets of that workbook.
@@ -168,20 +210,24 @@ export abstract class Cell {
             }
             if (cellToBeAdded == undefined) {
                 const err = new TextCell(ErrorValue.valueError.message)
-                err.ogText = text
+                err.textField = text
                 return err
             }
 
-            cellToBeAdded.ogText = text;
+            cellToBeAdded.textField = text;
             return cellToBeAdded; // We call the parseCell() method to return a readable Cell.
         } else return null;
     }
 
+    /**
+     * Retrieves textField for cell.
+     * @constructor
+     */
     public GetText():string|null {
-        return this.ogText;
+        return this.textField;
     }
 
-    // Add the support range to the cell, avoiding direct self-support at sheet[col,row]
+    // Add the support range to the cell, avoiding direct self-support at sheet[col, row]
     public AddSupport(sheet: Sheet, col: number, row: number, suppSheet: Sheet, suppCols: Interval, suppRows: Interval): void {
         if (this.supportSet === null) {
             this.supportSet = new SupportSet();
@@ -190,10 +236,10 @@ export abstract class Cell {
 
     }
 
-    // Remove sheet[col,row] from the support sets of cells that this cell refers to
+    // Remove sheet[col, row] from the support sets of cells that this cell refers to
     public abstract RemoveFromSupportSets(sheet: Sheet, col: number, row: number): void;
 
-    // Remove sheet[col,row] from this cell's support set
+    // Remove the sheet[col, row] from this cell's support set
     public RemoveSupportFor(sheet: Sheet, col: number, row: number): void {
         if (this.supportSet !== null) {
             this.supportSet.removeCell(sheet, col, row);
@@ -201,8 +247,7 @@ export abstract class Cell {
     }
 
     /*
-     Old comment: Overridden in ArrayFormula?
-     The ForEachSupported() method applies the given function (act) to each element in supportSet.
+     The ForEachSupported() method applies the given function (act) to each element in a given supportSet.
      */
     public ForEachSupported(act: (sheet: Sheet, col: number, row: number) => void): void {
         if (this.supportSet !== null) {
@@ -210,28 +255,25 @@ export abstract class Cell {
         }
     }
 
-    /*
-    Old comment: Use at manual cell update, and only if the oldCell is never used again
-    IMPORTANT: Note that the old method in C# held a reference to the newCell such that it was automatically
-    updated when changed. Since TypeScript doesn't allow that we instead return the newCell and leave it
-    up to the method caller to manually updated their newCell argument.
+    /**
+     * Moves the supportSet from one cell to another cell
+     * If newCell is null, it is moved to a blankCell to retain the supportSet.
+     * @param newCell
+     * @constructor
      */
     public TransferSupportTo(newCell: Cell | null): Cell {
         if (this.supportSet !== null) {
-            // ?? returns the right-hand value (new BlankCell()) only if the left-hand value (newCell) is null or undefined.
-            // Otherwise, it returns the left-hand value. Therefore, newCell cannot be null after this operation.
             newCell = newCell ?? new BlankCell();
-            newCell!.supportSet = this.supportSet; // We use ! to guarantee TypeScript that newCell is not null.
+            newCell.supportSet = this.supportSet;
             this.supportSet = null;
 
         }
-        // We can't just return newCell because Typescript thinks it can still be null. Therefore, we check again that
-        // it's not null before returning it. If it's null we return a new BlankCell.
         return newCell ?? new BlankCell();
     }
 
     // Add to support sets of all cells referred to from this cell, when
     // the cell appears in the block supported[col..col+cols-1, row..row+rows-1]
+    // TODO: Does this do anything, maybe it should be abstract?
     public AddToSupportSets(supported: Sheet, col: number, row: number, cols: number, rows: number): void {}
 
     // Clear the cell's support set; in ArrayFormula also clear the supportSetUpdated flag
@@ -239,6 +281,15 @@ export abstract class Cell {
         this.supportSet = null;
     }
 
+    /**
+     * Performs an action on all the referenced cells of a given cell.
+     * Example of this in the Cell Highlight method in HelperFunctions.tsx
+     * @param sheet
+     * @param col
+     * @param row
+     * @param act
+     * @constructor
+     */
     public abstract ForEachReferred(sheet: Sheet, col: number, row: number, act: (addr: FullCellAddress) => void): void;
 
     // True if the expression in the cell is volatile
@@ -383,7 +434,7 @@ export class QuoteCell extends ConstCell {
     }
 
 }
-// A BooleanCell is a cell, that contains a boolean value
+// A BooleanCell is a cell that contains a boolean value
 export class BooleanCell extends ConstCell {
     public readonly value: BooleanValue
 
@@ -473,7 +524,7 @@ export class Formula extends Cell {
     /**
      * Moves a single cell containing a formula
      * The values that are used in this method is the delta values,
-     * as such we need have the offset between the original formula and it new location.
+     * as such we need to have the offset between the original formula and it new location.
      *
      */
     public override MoveContents(deltaCol: number, deltaRow: number): Cell {
@@ -482,6 +533,9 @@ export class Formula extends Cell {
 
     /**
      * Evaluates the cell's expression and caches it value.
+     * Detects Cycles and reports these as errors.
+     * It uses the current state of the Cell to determine the need for evaluation.
+     *
      * @param sheet - sheet the cell is on
      * @param col - its X col
      * @param row - its Y row
@@ -675,7 +729,7 @@ export class ArrayFormula extends Cell {
         }
     }
 
-// In ArrayFormula.Eval method
+
     public override Eval(sheet: Sheet, col: number, row: number): Value | null {
         const v: Value = this.caf.Eval();
         if (v instanceof ArrayValue) {
@@ -694,6 +748,12 @@ export class ArrayFormula extends Cell {
         }
     }
 
+    /**
+     * Checks if a cell is contained within an ArrayFormula
+     * @param col
+     * @param row
+     * @constructor
+     */
     public Contains(col: number, row: number): boolean {
         return this.caf.ulCa.col <= col && col <= this.caf.lrCa.col && this.caf.ulCa.row <= row && row <= this.caf.lrCa.row;
     }
@@ -859,6 +919,10 @@ export class CachedArrayFormula {
         return this.formula.Cached;
     }
 
+    /**
+     * Sets the supportSet to false
+     * @constructor
+     */
     public ResetSupportSet(): void {
         this.supportAdded = false;
     }
