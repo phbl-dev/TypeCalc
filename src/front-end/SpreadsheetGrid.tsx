@@ -578,8 +578,20 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
     let [scrollOffset] = useState({left: 0, top: 0});
     let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
-
+    const [windowDimensions, setWindowDimensions] = useState({
+        width: window.innerWidth,
+        height: window.innerHeight
+    });
     useEffect(() => {
+
+        addEventListener('resize', () => {
+            console.log("Change in window size detected. Updating UI...")
+            setWindowDimensions({
+                width: window.innerWidth,
+                height: window.innerHeight * 0.92
+            });
+        })
+
         // Handle file drop events entirely in React
         function handleDrop(event: DragEvent) {
             event.preventDefault();
