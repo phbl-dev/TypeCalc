@@ -222,7 +222,6 @@ export class Sheet {
     /**
      * Inserts the cell array formula onto the sheet.
      * It throws an error if the input given is invalid.
-     *
      * @param cell
      * @param col
      * @param row

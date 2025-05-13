@@ -3,13 +3,6 @@ import type {Sheet} from "./Sheet.ts";
 import type {Cell} from "./Cells.ts";
 import {ValueCache} from "./Types.ts";
 
-export function hashCode(str: string): number {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) {
-        h = 31 * h + str.charCodeAt(i);
-    }
-    return h & 0xffffffff;
-}
 
 export abstract class Value {
     public abstract Equals(v: Value): boolean;
@@ -334,22 +327,8 @@ export class TextValue extends Value {
     }
 
     /*
-    The GetHashCode() method returns the hash code for the TextValue's value.
-    If the value is not null and not undefined it hashes it.
-    Otherwise, it hashes "undefined".
-     */
-    public GetHashCode(): number {
-        if (this.value != null) {
-            // Test that value is neither null nor undefined because "!=" is not strict.
-            return hashCode(this.value);
-        } else {
-            return hashCode("undefined");
-        }
-    }
-
-    /*
-    The ToObject() method returns the value of the TextValue as an unknown type.
-     */
+        The ToObject() method returns the value of the TextValue as an unknown type.
+         */
     public override ToObject(): unknown {
         return this.value;
     }
@@ -468,16 +447,19 @@ export class NumberValue extends Value {
     private static readonly basedate: number = new Date(1899, 12, 30).getTime();
     private static readonly daysPerTick = 1000 * 60 * 60 * 24;
 
-    // Cannot be tested. Uses the current date.
+    /**
+     * Shows the number of ticks since Jan 1 1970
+     * @param ticks
+     * @constructor
+     */
     public static DoubleFromDateTimeTicks(ticks: number | bigint): number {
         return (ticks as number - this.basedate) / this.daysPerTick;
     }
 
-    // tested internally.
     public ToString(): string {
         return this.value.toString();
     }
-
+    // TODO: Only used in testing, perhaps not relevant?
     public static FromBoolean(o: object): Value | null {
         if (o instanceof Boolean) {
             return o.valueOf() ? this.ONE : this.ZERO;
@@ -523,7 +505,14 @@ export abstract class ArrayValue extends Value {
 
     public abstract Slice(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value;
 
-    // TS doesn't allow for methods to be over
+    /**
+     * Performs a slice on an ArrayValue area
+     * @param r1
+     * @param c1
+     * @param r2
+     * @param c2
+     * @constructor
+     */
     public SliceMethod(r1: number, c1: number, r2: number, c2: number): Value {
         const ir1: number = r1 - 1;
         const ic1: number = c1 - 1;
@@ -536,80 +525,6 @@ export abstract class ArrayValue extends Value {
             return ErrorValue.refError;
         }
     }
-
-    public static ToDoubleArray1D(v: Value): number[] | null {
-        const arr = v as unknown as ArrayValue;
-        if (arr != null && arr.Rows == 1) {
-            const res: number[] = new Array(arr.Cols);
-            for (let i = 0; i < arr.Cols; i++) {
-                if (arr.Get(i, 0) instanceof NumberValue) {
-                    res[i] = (arr.Get(i, 0) as NumberValue).value as number;
-                } else {
-                    return null;
-                }
-            }
-            return res;
-        } else {
-            return null;
-        }
-    }
-
-    public static ToDoubleArray2D(v: Value): number[][] | undefined {
-        const arr: ArrayValue = v as unknown as ArrayValue;
-        if (arr != null) {
-            return arr.ToDoubleArray2DFast();
-        } else {
-            return [];
-        }
-    }
-
-    public static ToStringArray1D(v: Value): string[] | null {
-        const arr: ArrayValue = v as unknown as ArrayValue;
-        if (arr != null && arr.Rows == 1) {
-            const res: string[] = new Array(arr.Cols);
-            for (let i = 0; i < arr.Cols; i++) {
-                if (arr.Get(i, 0) instanceof TextValue) {
-                    res[i] = (arr.Get(i, 0) as TextValue).value as string;
-                } else {
-                    return null;
-                }
-            }
-            return res;
-        } else {
-            return null;
-        }
-    }
-
-    public static FromStringArray1D(o: object): Value {
-        const ss: string[] = o as string[];
-        if (ss != null) {
-            const vs: Value[][] = Array.from({length: ss.length}, () => []);
-            for (let i = 0; i < ss.length; i++) {
-                vs[i][0] = TextValue.FromString(ss[i]);
-            }
-            return new ArrayExplicit(vs) as unknown as Value;
-        } else {
-            return ErrorValue.argTypeError;
-        }
-    }
-
-    public ToDoubleArray2DFast(): number[][] {
-        const res: number[][] = Array.from({length: this.Cols}, (): number[] => new Array(this.Rows).fill(0));
-
-        for (let c = 0; c < this.Cols; c++) {
-            for (let r = 0; r < this.Rows; r++) {
-                const value = this.Get(c, r);
-                if (value instanceof NumberValue && value.value !== undefined) {
-                    res[c][r] = value.value;
-                } else {
-                    return [];
-                }
-            }
-        }
-        return res;
-    }
-
-
     private ToDoubleOrNaN(value: Value): number {
         return Number(value) || Number.NaN;
     }
@@ -665,15 +580,6 @@ export abstract class ArrayValue extends Value {
         }
         return true;
     }
-
-    public GetHashCode() {
-        let result: number = this.Rows * 37 + this.Cols;
-        for (let i = 0; i < this.Rows && i < this.Cols; i++) {
-            result = result * 37 + hashCode(this.Get(i, i) as unknown as string);
-        }
-        return result;
-    }
-
     public ToString(): string {
         const sb: string[] = [];
         for (let i = 0; i < this.Rows; i++) {
@@ -759,7 +665,7 @@ export class ArrayView extends ArrayValue {
         for (let c = 0; c < this.cols; c++) {
             for (let r = 0; r < this.rows; r++) {
                 const value: Value = new FullCellAddress(this.sheet, null, col0 + c, row0 + r) as unknown as Value;
-
+                // TODO: This does not make sense?
                 if (typeof value === "number") {
                     (act as (val: number) => void)(value);
                 } else {

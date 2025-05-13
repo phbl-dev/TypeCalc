@@ -349,6 +349,12 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+    /**
+     * Processes input into a specific cell location using its content, row, and column
+     * @param rowIndex
+     * @param columnIndex
+     * @param content
+     */
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
 
 
@@ -381,6 +387,11 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         }
     }
 
+    /**
+     * Updates the header FormulaBox with the values from within the active cell
+     * @param cellID
+     * @param content
+     */
     const updateFormulaBox = (cellID:string, content:string|null):void => {
         const formulaBox = document.getElementById("formulaBox");
         if (!formulaBox) {
@@ -390,6 +401,13 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
+    /**
+     * Highlights an area. If saveHighlight = true, it is saved as session storage
+     * @param endCell
+     * @param saveHighlight
+     * @param arrowOptCol
+     * @param arrowOptRow
+     */
     function setHighlight(endCell:string, saveHighlight:boolean = false,  arrowOptCol?:number, arrowOptRow?:number): void {
         const endCellRef = new A1RefCellAddress(endCell);
         let currentActiveCellRef;
@@ -519,6 +537,15 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
     );
 };
 
+/**
+ * Used to differentiate between multiple sheets.
+ * @param sheetNames
+ * @param activeSheet
+ * @param setActiveSheet
+ * @param setSheetNames
+ * @param scrollOffset
+ * @constructor
+ */
 // @ts-ignore
 const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
     return (
@@ -557,7 +584,7 @@ const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames,
 };
 
 /** Creates the sheet itself with headers and body. It extends the GridInterface so that
- * we can create a sheet with a self-defined amount of rows and columns.
+ * we can create a sheet with a self-defined number of rows and columns.
  * The sheet itself consists of a top row flexbox with a corner cell and a row of column
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
  * additional grids; one for the row headers and one for the regular cells.
