@@ -28,23 +28,30 @@ export class NotImplementedException extends Error {
     }
 }
 
-export class Formats {
-    //TypeScript does not support enums inside classes, so we will use a static class instead
-    static Reftype = class {
-        static readonly A1: string = "A1";
-        static readonly C0R0: string = "C0R0";
-        static readonly R1C1: string = "R1C1";
-    };
+export enum Reftype {
+    A1 = "A1",
+    C0R0 = "C0R0",
+    R1C1 = "R1C1"
+}
 
+/**
+ * Class for storing formats in the spreadsheet.
+ * @constructor
+ * @param showFormulas
+ * @param refFmt
+ * @param argDelim
+ * @param rangeDelim
+ */
+export class Formats {
     private showFormulas = false;
-    private refFmt: keyof typeof Formats.Reftype = "A1";
+    private refFmt: Reftype = Reftype.A1;
     private argDelim = ",";
     private rangeDelim = ":";
 
-    public getRefFmt(): keyof typeof Formats.Reftype {
+    public getRefFmt(): Reftype {
         return this.refFmt;
     }
-    public setRefFmt(value: keyof typeof Formats.Reftype): void {
+    public setRefFmt(value: Reftype): void {
         this.refFmt = value;
     }
 
