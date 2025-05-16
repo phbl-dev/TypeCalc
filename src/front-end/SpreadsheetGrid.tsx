@@ -1,14 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VariableSizeGrid as Grid } from "react-window";
 import {XMLWriter, XMLReader} from "../API-Layer/WorkbookIO.ts";
-import {ArrayFormula, Cell as BackendCell, Formula} from "../back-end/Cells";
+import {Formula} from "../back-end/Cells";
 import {Sheet} from "../back-end/Sheet.ts";
-import {A1RefCellAddress, SuperCellAddress, SuperRARef} from "../back-end/CellAddressing.ts";
+import {A1RefCellAddress} from "../back-end/CellAddressing.ts";
 
-import {ArrayExplicit} from "../back-end/Values.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {
-    EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
+    EvalCellsInViewport,
+    GetRawCellContent,
+    GetSupportsInViewPort,
+    HandleArrayFormula,
+    HandleArrayResult,
+    ParseCellToBackend,
     ParseToActiveCell
 } from "../API-Layer/Back-endEndpoints.ts";
 import {
@@ -356,35 +360,9 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
      * @param content
      */
     const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
-
-
-        const checkCell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
-        if (checkCell instanceof ArrayFormula) {return}
-        const cellToBeAdded:BackendCell|null = BackendCell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
-        console.log(cellToBeAdded);
-        if (!cellToBeAdded) {return}
-        WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
-
-        //Handle Array Results for different cells.
-        WorkbookManager.getWorkbook().Recalculate();
-
-        //Handle Array Results for different cells.
-        const cell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
-        if (!cell) return; // Check that cell is not null
-        const result = cell.Eval(WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
-
-
-
-        if (cell instanceof Formula && result instanceof ArrayExplicit) {
-            console.log("This is an array formula:")
-            WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
-                cell, // cell
-                columnIndex,
-                rowIndex,
-                new SuperCellAddress(columnIndex, rowIndex),
-                new SuperCellAddress(columnIndex, rowIndex + result!.values[0].length - 1)
-            )
-        }
+        if (!HandleArrayFormula(columnIndex,rowIndex)) {return}
+        if (!ParseCellToBackend(content,columnIndex,rowIndex)) {return}
+        if (!HandleArrayResult(columnIndex,rowIndex)) {return}
     }
 
     /**
