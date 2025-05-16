@@ -1,9 +1,9 @@
 import {WorkbookManager} from "./WorkbookManager.ts";
 import {Sheet} from "../back-end/Sheet.ts";
 import {numberToLetters} from "../front-end/HelperFunctions.tsx";
-import {ErrorValue} from "../back-end/Values.ts";
-import {A1RefCellAddress, FullCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
-import {Cell, Formula} from "../back-end/Cells.ts";
+import {ArrayExplicit, ErrorValue} from "../back-end/Values.ts";
+import {A1RefCellAddress, FullCellAddress, SuperCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
+import {ArrayFormula, Cell, Formula} from "../back-end/Cells.ts";
 import {Workbook} from "../back-end/Workbook.ts";
 
 /**
@@ -154,4 +154,36 @@ export function GetSupportsInViewPort(col: number, row:number): string[] {
 
     return supports;
 
+}
+
+export function ParseCellToBackend(content:string,columnIndex:number,rowIndex:number):boolean{
+    const cellToBeAdded:Cell|null = Cell.Parse(content,WorkbookManager.getWorkbook(),columnIndex,rowIndex);
+    if (!cellToBeAdded) {return false}
+    WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.SetCell(cellToBeAdded, columnIndex, rowIndex);
+    WorkbookManager.getWorkbook().Recalculate();
+    return true
+}
+
+export function HandleArrayResult(columnIndex:number,rowIndex:number):boolean{
+    //Handle Array Results for different cells.
+    const cell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
+    if (!cell) return false; // Check that cell is not null
+    const result = cell.Eval(WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
+
+    if (cell instanceof Formula && result instanceof ArrayExplicit) {
+        console.log("This is an array formula:")
+        WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.SetArrayFormula(
+            cell, // cell
+            columnIndex,
+            rowIndex,
+            new SuperCellAddress(columnIndex, rowIndex),
+            new SuperCellAddress(columnIndex, rowIndex + result!.values[0].length - 1)
+        )
+    }
+    return true;
+}
+
+export  function HandleArrayFormula(columnIndex:number,rowIndex:number):boolean{
+    const checkCell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
+    return !(checkCell instanceof ArrayFormula);
 }
