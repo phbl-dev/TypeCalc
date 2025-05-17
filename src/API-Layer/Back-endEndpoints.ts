@@ -74,12 +74,13 @@ export function GetRawCellContent(cellID: string): string | null {
     }
 
     const cellContent: string | null | undefined = activeSheet.Get(cellCol, cellRow)?.GetText();
+    console.log("This is the cell content", cellContent)
     if (!cellContent && cellContent != "0") {
         console.debug("[GetRawCellContent] No cell found!");
         return null;
     }
-    const colChar: string = numberToLetters(cellCol);
-    const cellHTML = document.getElementById(colChar + cellRow);
+    const colChar: string = numberToLetters(cellCol + 1);
+    const cellHTML = document.getElementById(colChar +(cellRow+1) as string);
     if (!cellHTML) {
         console.debug("[GetRawCellContent] No cell found in frontend!");
         return null;

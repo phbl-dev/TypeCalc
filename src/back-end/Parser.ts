@@ -267,11 +267,11 @@ export class SpreadsheetParser extends CstParser {
                         $.CONSUME(SpreadsheetLexer.LBracket);
 
                         $.OPTION2(() => {
-                            $.SUBRULE2($.factor, { LABEL: "ArrayElement" });
+                            $.SUBRULE2($.expression, { LABEL: "ArrayElement" });
 
                             $.MANY(() => {
                                 $.CONSUME(SpreadsheetLexer.Comma);
-                                $.SUBRULE3($.factor,  { LABEL: "ArrayElement" });
+                                $.SUBRULE3($.expression,  { LABEL: "ArrayElement" });
                             });
                         });
 
