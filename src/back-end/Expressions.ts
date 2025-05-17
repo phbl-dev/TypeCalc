@@ -509,7 +509,7 @@ export class FunCall extends Expr {
         // Special case for lazy evaluation functions like IF and CHOOSE
         if (this.nonStrict) {
             if (!this.isChoose) {
-                if (this.FindBoolValue(sheet, col, row)) {
+                if (Value.ToBoolean(this.es[0].Eval(sheet, col, row))) {
                     return this.es[1].Eval(sheet, col, row);
                 } else {
                     return this.es[2].Eval(sheet, col, row);

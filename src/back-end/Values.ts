@@ -25,7 +25,7 @@ export abstract class Value {
             return (value as NumberValue).value !== 0;        }
         else if (value instanceof TextValue) {
             const text = TextValue.ToString(value);
-            return text !== null && (text!.toLowerCase() === "true" || text === "1");
+            return text !== null && (text!.toLowerCase() === "true");
         }
         return false;
     }
@@ -140,6 +140,10 @@ export class BooleanValue extends Value {
     }
 
     Equals(v: Value): boolean {
+        if (v instanceof BooleanValue) {
+            return this.value === v.value ;
+
+        }
         return false;
     }
 
