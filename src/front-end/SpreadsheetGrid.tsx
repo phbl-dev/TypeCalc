@@ -398,6 +398,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
             console.debug("[SpreadsheetGrid.tsx Cell] FormulaBox not found");
             return;
         }
+        console.log("this is the content for the formulabox:", content as string);
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
@@ -480,7 +481,7 @@ const Cell = ({ columnIndex, rowIndex, style }:{columnIndex:number, rowIndex: nu
                  valueHolder = (e.target as HTMLElement).innerText.trim();
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
-
+                console.log("this is the rawCellContent", rawCellContent)
                  updateFormulaBox(ID, rawCellContent);
 
 
