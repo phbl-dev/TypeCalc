@@ -640,7 +640,7 @@ export class Sheet {
 /**
  * This class maintains the sheet using the QT4-structure as defined by Sestoft (2014)
  */
-export class SheetRep {
+class SheetRep {
     private LOGW = 4;
     W = 1 << this.LOGW;
     MW = this.W - 1;

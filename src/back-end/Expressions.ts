@@ -596,12 +596,6 @@ export class FunCall extends Expr {
 
         return ErrorValue.nameError; // If the function is not implemented we return an ErrorValue.
     }
-
-    private FindBoolValue(sheet: Sheet, col: number, row: number): boolean {
-        const args_0: Value = this.es[0].Eval(sheet, col, row);
-        return Value.ToBoolean(args_0);
-    }
-
     /**
      * getExprValues() is a helper method we made for Eval(). Its purpose is to return an array of the
      * expression values (in their primitive form). We use map() to call the Eval() function on all
