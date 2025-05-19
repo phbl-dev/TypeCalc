@@ -216,7 +216,8 @@ export abstract class Cell {
 
             cellToBeAdded.textField = text;
             return cellToBeAdded; // We call the parseCell() method to return a readable Cell.
-        } else return null;
+        }
+        return null;
     }
 
     /**

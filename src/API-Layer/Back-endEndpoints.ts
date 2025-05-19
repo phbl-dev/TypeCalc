@@ -120,21 +120,16 @@ export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: numbe
                     const cell = sheet.Get(col - 1, row - 1);
 
                     if (cell != null) {
-
-                        if (cell instanceof Formula) {
-                            console.log("CellState",cell.getState() )
-
-                        }
                         // No recalculation needed if the cell is up to date
                         let cellEval = cell.Eval(sheet, 0, 0);
 
+                        if (cell instanceof Formula) {
+                            cellHTML.innerText = cell.GetText()!;
+                        }
 
                         if (cellEval instanceof ErrorValue) {
                             cellHTML.innerText = cellEval.message;
                         } else if (cellEval != undefined) {
-                            if(cell instanceof Formula) {
-                                cellHTML.innerText = cell.Cached as unknown as string;
-                            }
                             cellHTML.innerText = cellEval.ToObject() as string;
                         } else {
                             cellHTML.innerText = cell.GetText()!;
@@ -177,7 +172,7 @@ export function ParseCellToBackend(content:string,columnIndex:number,rowIndex:nu
 export function HandleArrayResult(columnIndex:number,rowIndex:number):boolean{
     //Handle Array Results for different cells.
     const cell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
-    if (!cell) return false; // Check that cell is not null
+    if (!cell) return false; // Check that the cell is not null
     const result = cell.Eval(WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())!, columnIndex, rowIndex);
 
     if (cell instanceof Formula && result instanceof ArrayExplicit) {
