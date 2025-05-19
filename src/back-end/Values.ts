@@ -433,17 +433,6 @@ export abstract class ArrayValue extends Value {
     public override ToObject(): object {
         return this;
     }
-
-    public Index(deltaRow: number, deltaCol: number): Value {
-        const col: number = deltaCol - 1;
-        const row: number = deltaRow - 1;
-        if (0 <= col && col < this.Cols && 0 <= row && row < this.Rows) {
-            return [col, row] as unknown as Value;
-        } else {
-            return ErrorValue.refError;
-        }
-    }
-
     public abstract View(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value;
 
     public abstract Slice(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value;
@@ -582,21 +571,17 @@ export class ArrayView extends ArrayValue {
             for (let r = 0; r < this.rows; r++) {
                 const value: Value = new FullCellAddress(this.sheet, null, col0 + c, row0 + r) as unknown as Value;
                 // TODO: This does not make sense?
-                if (typeof value === "number") {
-                    (act as (val: number) => void)(value);
-                } else {
-                    (act as (val: Value) => void)(value);
-                }
+                (act as (val: Value) => void)(value);
             }
         }
     }
 
     Slice(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
-        return new ArrayView(ulCa.offset(this.ulCa), lrCa.offset(this.lrCa), this.sheet) as unknown as Value;
+        return new ArrayView(ulCa.offset(this.ulCa), lrCa.offset(this.lrCa), this.sheet) as Value;
     }
 
     View(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
-        return ArrayView.Make(ulCa.offset(this.ulCa), lrCa.offset(this.lrCa), this.sheet) as unknown as Value;
+        return ArrayView.Make(ulCa.offset(this.ulCa), lrCa.offset(this.lrCa), this.sheet) as Value;
     }
 }
 
@@ -637,7 +622,7 @@ export class ArrayExplicit extends ArrayValue {
     }
 
     Equals(v: Value): boolean {
-        return ArrayValue.EqualsElements(this, v as unknown as ArrayValue);
+        return ArrayValue.EqualsElements(this, v as ArrayValue);
     }
 
     override Get(col: number, row: number): Value {
@@ -657,6 +642,6 @@ export class ArrayExplicit extends ArrayValue {
     }
 
     View(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
-        return new ArrayExplicit(ulCa.offset(this.ulCellAddress), lrCa.offset(this.lrCellAddress), this.values) as unknown as Value;
+        return new ArrayExplicit(ulCa.offset(this.ulCellAddress), lrCa.offset(this.lrCellAddress), this.values) as Value;
     }
 }

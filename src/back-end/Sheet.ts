@@ -165,6 +165,7 @@ export class Sheet {
         this.cells.Forall((col: number, row: number, cell: Cell) => cell.Eval(this, col, row));
     }
 
+
     /**
      * Shows the content of all non-null cells.
      * @param show

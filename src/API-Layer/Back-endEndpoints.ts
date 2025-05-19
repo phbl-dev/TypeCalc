@@ -3,7 +3,7 @@ import {Sheet} from "../back-end/Sheet.ts";
 import {numberToLetters} from "../front-end/HelperFunctions.tsx";
 import {ErrorValue} from "../back-end/Values.ts";
 import {A1RefCellAddress, FullCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
-import {Cell, Formula} from "../back-end/Cells.ts";
+import {Cell as BackendCell, Cell, Formula} from "../back-end/Cells.ts";
 import {Workbook} from "../back-end/Workbook.ts";
 
 /**
@@ -155,4 +155,54 @@ export function GetSupportsInViewPort(col: number, row:number): string[] {
 
     return supports;
 
+}
+
+/**
+ * The CellInfo type is used to store information about a cell.
+ * It is used to store the cell's row, column, content, relative row and relative column.
+ */
+
+type CellAreaInfo =
+    {
+        row: number,
+        col: number,
+        cell: BackendCell,
+        content: string,
+        relRow: number,
+        relCol: number
+    }[]
+
+    ;
+
+
+/**
+ * Read area finds alls cells in the area and returns an array of CellInfo objects.
+ * @constructor
+ * @param StartCol
+ * @param EndCol
+ * @param StartRow
+ * @param EndRow
+ */
+
+
+
+export function SheetArea(StartCol:number, EndCol:number, StartRow:number, EndRow:number) {
+    let AreaArray: CellAreaInfo = [];
+    let sheet: Sheet = WorkbookManager.getActiveSheet()!;
+    for (let i = StartCol; i < EndCol; i++) {
+        for (let j = StartRow; j < EndRow; j++) {
+            let cell = sheet.Get(i,j)
+            if(cell) {
+                AreaArray.push({
+                    row: i,
+                    col: j,
+                    cell: cell,
+                    content: cell.GetText()!,
+                    relRow: i - StartCol,
+                    relCol: j - StartRow
+                });
+            }
+        }
+
+    }
 }
