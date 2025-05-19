@@ -278,10 +278,10 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                 {/* Column headers as a grid */}
                 <Grid
                     columnCount={columnCount}
-                    columnWidth={() => columnWidth}
+                    columnWidth={(): number  => columnWidth}
                     height={colHeaderHeight}
                     rowCount={1}
-                    rowHeight={() => colHeaderHeight}
+                    rowHeight={(): number => colHeaderHeight}
                     width={width - rowHeaderWidth}
                     overscanColumnCount={10}
                     ref={colHeaderRef}
@@ -295,10 +295,10 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                 {/* Row headers */}
                 <Grid
                     columnCount={1}
-                    columnWidth={() => rowHeaderWidth}
+                    columnWidth={(): number => rowHeaderWidth}
                     height={height - colHeaderHeight}
                     rowCount={rowCount}
-                    rowHeight={() => rowHeight}
+                    rowHeight={(): number => rowHeight}
                     width={rowHeaderWidth}
                     overscanRowCount={10}
                     ref={rowHeaderRef}
@@ -310,21 +310,21 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                 <div id="gridBody">
                     <Grid
                         columnCount={columnCount}
-                        columnWidth={() => columnWidth}
+                        columnWidth={(): number => columnWidth}
                         height={height - colHeaderHeight}
                         rowCount={rowCount}
-                        rowHeight={() => rowHeight}
+                        rowHeight={(): number => rowHeight}
                         width={width - rowHeaderWidth}
                         overscanColumnCount={10}
                         overscanRowCount={10}
                         ref={bodyRef}
                         onScroll={syncScroll}
                         onItemsRendered={({
-                                              visibleRowStartIndex,
-                                              visibleRowStopIndex,
-                                              visibleColumnStartIndex,
-                                              visibleColumnStopIndex,
-                                          }) => {
+                                          visibleRowStartIndex,
+                                          visibleRowStopIndex,
+                                          visibleColumnStartIndex,
+                                          visibleColumnStopIndex,
+                                        }) => {
                             EvalCellsInViewport(
                                 visibleColumnStartIndex,
                                 visibleColumnStopIndex + 1, // +1 because the stop index is inclusive
