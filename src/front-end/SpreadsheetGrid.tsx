@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import {VariableSizeGrid as Grid } from "react-window";
 import {XMLWriter, XMLReader} from "../API-Layer/WorkbookIO.ts";
-import {Sheet} from "../back-end/Sheet.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {EvalCellsInViewport, ParseToActiveCell} from "../API-Layer/Back-endEndpoints.ts";
 import {
@@ -12,7 +11,7 @@ import {GridCell} from "./GridCell.tsx";
 import {SheetSelector} from "./SheetSelector.tsx";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
-interface GridInterface {
+interface GridProps {
     columnCount: number;
     rowCount: number;
     columnWidth?: number;
@@ -62,7 +61,7 @@ const RowHeader = ({ rowIndex, style }: {rowIndex:number, style:any}) => (
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
  * additional grids; one for the row headers and one for the regular cells.
  */
-export const VirtualizedGrid: React.FC<GridInterface> = (({
+export const VirtualizedGrid: React.FC<GridProps> = (({
      columnCount,
      rowCount,
      columnWidth = 80,
@@ -71,7 +70,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
      rowHeaderWidth = 40,
      width = window.innerWidth,
      height = window.innerHeight * 0.92,
- }) => {
+ }: GridProps) => {
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
@@ -83,9 +82,18 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         height: window.innerHeight
     });
     useEffect(() => {
+        const formulaBox = document.getElementById("formulaBox") as HTMLInputElement;
+        const input = document.getElementById("cellIdInput") as HTMLInputElement;
+        const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
+        const xmlExport = document.getElementById("xmlExport") as HTMLElement;
+        const csvExport = document.getElementById("csvExport") as HTMLElement;
+        const boldButton = document.getElementById("bold") as HTMLButtonElement;
+        const italicButton = document.getElementById("italic") as HTMLButtonElement;
+        const underlineButton = document.getElementById("underline") as HTMLButtonElement;
+        const cellColor = document.getElementById("cellColorPicker") as HTMLInputElement;
+        const textColor = document.getElementById("textColorPicker") as HTMLInputElement;
 
         addEventListener('resize', () => {
-            console.log("Change in window size detected. Updating UI...")
             setWindowDimensions({
                 width: window.innerWidth,
                 height: window.innerHeight * 0.92
@@ -93,9 +101,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         })
 
         // Handles formulaBox input
-        const formulaBox = document.getElementById("formulaBox") as HTMLInputElement;
         if (!formulaBox) return;
-
         let value: string;
         let valueChanged: boolean = false;
 
@@ -106,7 +112,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
             if (activeCell) {
                 activeCell.innerHTML = value;
             }
-            //console.log("Formula changed:", value);
         };
 
         // Updates cells when changing the value of a cell
@@ -145,8 +150,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
                     try {
                         await xmlReader.readFile(content); // Assumes it modifies the current workbook
-
-                        console.debug("[React Drop Handler] File loaded. Updating UI...");
                         sheetNames = WorkbookManager.getSheetNames();
                         setSheetNames(sheetNames);
                         setActiveSheet(sheetNames[0]);
@@ -163,10 +166,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
         function handleDragOver(event: DragEvent) {
             event.preventDefault();
         }
-
-        const input = document.getElementById("cellIdInput") as HTMLInputElement;
-        const jumpButton = document.getElementById("jumpToCell") as HTMLButtonElement;
-        if (!jumpButton || !input) return; // In case either element doesn't exist/is null
 
         // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
         // and must trigger twice to do so.
@@ -187,8 +186,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
                             rowIndex: row
                         });
 
-
-                        // Delay in case the item needs to be rendered first
+                        // Delay to ensure the cell renders first
                         setTimeout(() => {
                             const targetCell = getCell(cellID);
                             if (targetCell) {
@@ -202,14 +200,6 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
         // Event listener management
         //--------------------------------------
-        const xmlExport = document.getElementById("xmlExport") as HTMLElement;
-        const csvExport = document.getElementById("csvExport") as HTMLElement;
-        const boldButton = document.getElementById("bold") as HTMLButtonElement;
-        const italicButton = document.getElementById("italic") as HTMLButtonElement;
-        const underlineButton = document.getElementById("underline") as HTMLButtonElement;
-        const cellColor = document.getElementById("cellColorPicker") as HTMLInputElement;
-        const textColor = document.getElementById("textColorPicker") as HTMLInputElement;
-
         window.addEventListener("drop", handleDrop); // Drag and drop
         window.addEventListener("dragover", handleDragOver); // Drag and drop
 
@@ -219,8 +209,7 @@ export const VirtualizedGrid: React.FC<GridInterface> = (({
 
         jumpButton.addEventListener("click", handleJump); // Jump to cell
         input.addEventListener("keydown", (e) => { // Jump to cell
-            if (e.key === "Enter") handleJump();
-        })
+            if (e.key === "Enter") handleJump();})
         xmlExport.addEventListener("click", new XMLWriter().exportAsXML)
         csvExport.addEventListener("click", new XMLWriter().exportAsCSV)
         boldButton.addEventListener("click", makeBold)

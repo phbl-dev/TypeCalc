@@ -1,6 +1,15 @@
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {EvalCellsInViewport} from "../API-Layer/Back-endEndpoints.ts";
 import {Sheet} from "../back-end/Sheet.ts";
+import React from "react";
+
+interface SheetSelectorProps {
+    sheetNames: string[];
+    activeSheet: string;
+    setActiveSheet: (sheetName: string) => void;
+    setSheetNames: (sheetNames: string[]) => void;
+    scrollOffset: {left: number, top: number};
+}
 
 /**
  * Used to differentiate between multiple sheets.
@@ -12,7 +21,7 @@ import {Sheet} from "../back-end/Sheet.ts";
  * @constructor
  */
 // @ts-ignore
-export const SheetSelector = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
+export const SheetSelector: React.FC<SheetSelectorProps> = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
     return (
         <footer style={{ display: 'flex', gap: '1px'}}>
             {sheetNames.map((name:any) => (
