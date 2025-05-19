@@ -1,9 +1,6 @@
 import { test, expect } from '@playwright/test';
 import * as fs from "node:fs";
 
-
-
-
 test("Insert C2 = 10 * 10, A2 = C2 + 1", async ({ page }) => {
   // Navigate to your page
   await page.goto('http://localhost:5173/');

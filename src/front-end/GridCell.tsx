@@ -13,26 +13,28 @@ interface GridCellProps {
     style: React.CSSProperties;
 }
 
+let selectionStartCell: string | null = null
+let isShiftKeyDown = false
+let AreaMarked = false
+
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
  * @param style - Lets the cell inherit the style from a css style sheet
+ * @param data - Used to synchronize the AreaMarkedRef between multiple cells
  * @constructor
  */
 export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style }: GridCellProps) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
     let initialValueRef = useRef<string>("");
-    let shiftRef = useRef(false);
-    let markedAreaRef = useRef(false);
-    let selectionStartCellRef = useRef<string | null>(null);
     let valueHolder:string = "";
     let mySupports:string[];
 
     useEffect(() => {
         document.addEventListener('keyup', (e) => {
             if (e.key === 'Shift') {
-                shiftRef.current = false;
-                console.log('Shift released', shiftRef.current);
+                isShiftKeyDown = false;
+                console.log('Shift released', isShiftKeyDown);
             }
         });
     }, []);
@@ -94,7 +96,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
 
         }
 
-        markedAreaRef.current = false;
+        AreaMarked = false;
     }
 
     /**
@@ -135,7 +137,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         }
         clearVisualHighlight();
 
-        markedAreaRef.current = false;
+        AreaMarked = false;
     }
 
     /**
@@ -162,14 +164,14 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         let areaRef
 
         /** Special case for Backspace and Delete keys. Required because the backspace key is used to delete cell contents and needs to be overwritten differently*/
-        if (markedAreaRef.current && (event.key === "Backspace" || event.key === "Delete")) {
-            setHighlight(selectionStartCellRef.current!, true);
+        if (AreaMarked && (event.key === "Backspace" || event.key === "Delete")) {
+            setHighlight(selectionStartCell!, true);
             areaRef = sessionStorage.getItem('selectionRange')!;
 
             DeleteArea(areaRef);
 
             clearVisualHighlight()
-            markedAreaRef.current = false
+            AreaMarked = false
         }
 
         if(event.ctrlKey) {
@@ -194,9 +196,9 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
 
                 case "c":
                     event.preventDefault();
-                    if (markedAreaRef.current) {
+                    if (AreaMarked) {
                         sessionStorage.removeItem("tmpCellRef");
-                        setHighlight(selectionStartCellRef.current!, true);
+                        setHighlight(selectionStartCell!, true);
                     } else {
                         setHighlight(ID, true);
                     }
@@ -232,47 +234,47 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         switch (event.key) {
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1);
-                if (shiftRef.current) {
-                    setHighlight(selectionStartCellRef.current!, false, nextCol, nextRow);
-                    markedAreaRef.current = true;
+                if (isShiftKeyDown) {
+                    setHighlight(selectionStartCell!, false, nextCol, nextRow);
+                    AreaMarked = true;
                 } else {
                     clearVisualHighlight();
-                    markedAreaRef.current = false
+                    AreaMarked = false
                 }
                 break;
 
             case "ArrowDown":
                 nextRow = rowIndex + 1;
-                if (shiftRef.current) {
-                    setHighlight(selectionStartCellRef.current!, false, nextCol, nextRow);
-                    markedAreaRef.current = true;
+                if (isShiftKeyDown) {
+                    setHighlight(selectionStartCell!, false, nextCol, nextRow);
+                    AreaMarked = true;
                 } else {
                     clearVisualHighlight();
-                    markedAreaRef.current = false
+                    AreaMarked = false
 
                 }
                 break;
 
             case "ArrowLeft":
                 nextCol = Math.max(0, columnIndex - 1);
-                if (shiftRef.current) {
-                    setHighlight(selectionStartCellRef.current!, false, nextCol, nextRow);
-                    markedAreaRef.current = true;
+                if (isShiftKeyDown) {
+                    setHighlight(selectionStartCell!, false, nextCol, nextRow);
+                    AreaMarked = true;
                 } else {
                     clearVisualHighlight();
-                    markedAreaRef.current = false
+                    AreaMarked = false
 
                 }
                 break;
 
             case "ArrowRight":
                 nextCol = columnIndex + 1;
-                if (shiftRef.current) {
-                    setHighlight(selectionStartCellRef.current!, false, nextCol, nextRow);
-                    markedAreaRef.current = true;
+                if (isShiftKeyDown) {
+                    setHighlight(selectionStartCell!, false, nextCol, nextRow);
+                    AreaMarked = true;
                 } else {
                     clearVisualHighlight();
-                    markedAreaRef.current = false
+                    AreaMarked = false
 
                 }
                 break;
@@ -281,8 +283,8 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 nextRow = rowIndex + 1;
                 break;
             case "Shift":
-                selectionStartCellRef.current = WorkbookManager.getActiveCell();
-                shiftRef.current = true;
+                selectionStartCell = WorkbookManager.getActiveCell();
+                isShiftKeyDown = true;
                 break;
             default:
                 return;
@@ -375,9 +377,9 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
              }}
 
              onClick={(e) => {
-                 if(e.shiftKey && selectionStartCellRef.current) {
-                     setHighlight(selectionStartCellRef.current);
-                     markedAreaRef.current = true
+                 if(e.shiftKey && selectionStartCell) {
+                     setHighlight(selectionStartCell);
+                     AreaMarked = true
 
                  } else {
                      clearVisualHighlight()
