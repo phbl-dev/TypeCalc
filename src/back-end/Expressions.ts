@@ -509,7 +509,7 @@ export class FunCall extends Expr {
         // Special case for lazy evaluation functions like IF and CHOOSE
         if (this.nonStrict) {
             if (!this.isChoose) {
-                if (this.FindBoolValue(sheet, col, row)) {
+                if (Value.ToBoolean(this.es[0].Eval(sheet, col, row))) {
                     return this.es[1].Eval(sheet, col, row);
                 } else {
                     return this.es[2].Eval(sheet, col, row);
@@ -596,12 +596,6 @@ export class FunCall extends Expr {
 
         return ErrorValue.nameError; // If the function is not implemented we return an ErrorValue.
     }
-
-    private FindBoolValue(sheet: Sheet, col: number, row: number): boolean {
-        const args_0: Value = this.es[0].Eval(sheet, col, row);
-        return Value.ToBoolean(args_0);
-    }
-
     /**
      * getExprValues() is a helper method we made for Eval(). Its purpose is to return an array of the
      * expression values (in their primitive form). We use map() to call the Eval() function on all
