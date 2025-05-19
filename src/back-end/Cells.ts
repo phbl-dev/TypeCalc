@@ -521,6 +521,10 @@ export class Formula extends Cell {
         }
     }
 
+    public getState(): CellState {
+        return this.state;
+    }
+
     /**
      * Moves a single cell containing a formula
      * The values that are used in this method is the delta values,

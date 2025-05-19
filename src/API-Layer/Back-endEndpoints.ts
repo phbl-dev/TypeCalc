@@ -121,11 +121,20 @@ export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: numbe
 
                     if (cell != null) {
 
+                        if (cell instanceof Formula) {
+                            console.log("CellState",cell.getState() )
+
+                        }
                         // No recalculation needed if the cell is up to date
                         let cellEval = cell.Eval(sheet, 0, 0);
+
+
                         if (cellEval instanceof ErrorValue) {
                             cellHTML.innerText = cellEval.message;
                         } else if (cellEval != undefined) {
+                            if(cell instanceof Formula) {
+                                cellHTML.innerText = cell.Cached as unknown as string;
+                            }
                             cellHTML.innerText = cellEval.ToObject() as string;
                         } else {
                             cellHTML.innerText = cell.GetText()!;

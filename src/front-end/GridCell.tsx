@@ -83,19 +83,20 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
 
                 let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
                 handleInput(targetRow, targetCol, nextFormula!);
-
                 if (newCell!.classList.contains("active-cell")){
                     (newCell as HTMLInputElement).innerText = nextFormula as string;
                 }
             }
             else {
                 handleInput(targetRow, targetCol, content!);
+
             }
-            EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+
 
         }
 
         AreaMarked = false;
+
     }
 
     /**
@@ -124,14 +125,17 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
                 handleInput(targetRow, targetCol, nextFormula!);
                 WorkbookManager.getActiveSheet()?.RemoveCell(col, row);
+                EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+
                 if (newCell!.classList.contains("active-cell")){
                     (newCell as HTMLInputElement).innerText = nextFormula as string;
                 }
             }
             else {
                 WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
+                EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+
             }
-            EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
         }
         clearVisualHighlight();
