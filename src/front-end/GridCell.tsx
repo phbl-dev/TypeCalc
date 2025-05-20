@@ -5,7 +5,7 @@ import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {adjustFormula, makeBold, makeItalic,
         makeUnderlined, numberToLetters, ReadArea} from "./HelperFunctions.tsx";
 import {
-    EvalCellsInViewport, EvalCellsInViewportIncludingActiveCell, GetRawCellContent, GetSupportsInViewPort,
+    EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
     HandleArrayFormula, HandleArrayResult, ParseCellToBackend
 } from "../API-Layer/Back-endEndpoints.ts";
 
