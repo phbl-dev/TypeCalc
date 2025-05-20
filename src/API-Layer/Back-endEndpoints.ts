@@ -117,8 +117,10 @@ export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: numbe
                 const colChar: string = numberToLetters(col);
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
+                    if (colChar + row == WorkbookManager.getActiveCell()){
+                        continue;
+                    }
                     const cell = sheet.Get(col - 1, row - 1);
-
                     if (cell != null) {
 
                         // No recalculation needed if the cell is up to date
