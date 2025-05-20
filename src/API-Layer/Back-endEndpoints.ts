@@ -1,8 +1,8 @@
 import {WorkbookManager} from "./WorkbookManager.ts";
 import {Sheet} from "../back-end/Sheet.ts";
 import {lettersToNumber, numberToLetters} from "../front-end/HelperFunctions.tsx";
-import {ArrayExplicit, ArrayValue, ErrorValue} from "../back-end/Values.ts";
-import {A1RefCellAddress, FullCellAddress, SuperCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
+import {ArrayExplicit, ErrorValue} from "../back-end/Values.ts";
+import {A1RefCellAddress, FullCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayFormula, Cell, Formula} from "../back-end/Cells.ts";
 import {Workbook} from "../back-end/Workbook.ts";
 
