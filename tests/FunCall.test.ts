@@ -1,13 +1,22 @@
 import {beforeEach, describe, expect, should, test} from "vitest";
 import * as formulajs from '@formulajs/formulajs'
-import {BooleanConst, CellRef, Expr, ExprArray, FunCall, NumberConst, TextConst} from "../src/back-end/Expressions";
+import {
+    BooleanConst,
+    CellArea,
+    CellRef,
+    Expr,
+    ExprArray,
+    FunCall,
+    NumberConst,
+    TextConst
+} from "../src/back-end/Expressions";
 import { Sheet } from "../src/back-end/Sheet";
 import { Workbook } from "../src/back-end/Workbook";
-import {SuperRARef} from "../src/back-end/CellAddressing";
+import {SuperCellAddress, SuperRARef} from "../src/back-end/CellAddressing";
 import { BlankCell, Cell, Formula, NumberCell } from "../src/back-end/Cells";
 import {CyclicException} from "../src/back-end/Types";
 
-import {ErrorValue, NumberValue, TextValue} from "../src/back-end/Values"; // Importing formulajs
+import {ArrayExplicit, ArrayValue, ErrorValue, NumberValue, TextValue} from "../src/back-end/Values"; // Importing formulajs
 
 
 describe("Formula.js", () => {
@@ -661,4 +670,50 @@ describe("Formula.js", () => {
         //expect(() => sheet.Get(0,0).Eval(sheet,0,0)).toThrowError(CyclicException);
     })
 
+    test("check array nesting", () => {
+        const myNum1: NumberConst = new NumberConst(1);
+        const myNum2: NumberConst = new NumberConst(2);
+        const myNum3: NumberConst = new NumberConst(3);
+
+        const myExprArray1 = ExprArray.MakeExprArray([myNum3]);
+        const myExprArray2 = ExprArray.MakeExprArray([myNum2, myExprArray1]);
+        const myExprArray3 = ExprArray.MakeExprArray([myNum1, myExprArray2]);
+
+        expect(myExprArray3 instanceof ExprArray).toBe(true);
+        const myArgs: Expr[] = [myExprArray3]; // Would correspond to writing =SomeFunction([1,[2,[3]]]) in GUI.
+        // getExprValues() should handle this properly without making double nesting.
+
+        const result = FunCall.getExprValues(sheet,0,0,myArgs)
+        console.log(JSON.stringify(result));
+
+        const myArgs2: Expr[] = [myNum1, myExprArray2]; // Would correspond to writing =SomeFunction(1,[2,[3]]) in GUI.
+        const result2 = FunCall.getExprValues(sheet,0,0,myArgs2)
+        console.log(JSON.stringify(result2));
+    })
+
+    test("TRANSPOSE", () => {
+        const TransposeResult = formulajs.TRANSPOSE([1,2,3,4,5,6])
+        console.log(TransposeResult); // [ [ 1 ], [ 2 ], [ 3 ], [ 4 ], [ 5 ], [ 6 ] ]
+
+        const myNum1: NumberCell = new NumberCell(1);
+        const myNum2: NumberCell = new NumberCell(2);
+        const myNum3: NumberCell = new NumberCell(3);
+        const myNum4: NumberCell = new NumberCell(4);
+        const myNum5: NumberCell = new NumberCell(5);
+        const myNum6: NumberCell = new NumberCell(6);
+        sheet.SetCell(myNum1, 0, 0)
+        sheet.SetCell(myNum2, 0, 1)
+        sheet.SetCell(myNum3, 0, 2)
+        sheet.SetCell(myNum4, 1, 0)
+        sheet.SetCell(myNum5, 1, 1)
+        sheet.SetCell(myNum6, 1, 2)
+
+        sheet.SetCell(Cell.Parse("=TRANSPOSE(A1:B3)", workbook, 3,0),3,0)
+
+        workbook.Recalculate();
+
+        const result = sheet.Get(3,0).Eval(sheet,3,0);
+
+        console.log(result); // Args before error check: [ [ 1, 4, 2, 5, 3, 6 ] ]
+    })
 });
