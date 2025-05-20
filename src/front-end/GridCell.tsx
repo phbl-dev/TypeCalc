@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from "react";
-import {A1RefCellAddress} from "../back-end/CellAddressing.ts";
+import {A1RefCellAddress, RARefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {Formula} from "../back-end/Cells.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {
@@ -79,6 +79,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             currCell.focus();
             cellIdInput.value = currCellID;
         }
+
     }
 
     /**
@@ -365,7 +366,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         } else {
             currentActiveCellRef = new A1RefCellAddress(ID);
         }
-        let {ulCa,lrCa} = A1RefCellAddress.normalizeArea(currentActiveCellRef,endCellRef)
+        let {ulCa,lrCa} = SuperCellAddress.normalizeArea(currentActiveCellRef,endCellRef)
 
         clearVisualHighlight()
 
