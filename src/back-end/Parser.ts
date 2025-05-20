@@ -1,5 +1,20 @@
 import {createToken, type CstNode, CstParser, Lexer, type TokenType} from "chevrotain";
 import type {Workbook} from "./Workbook.ts";
+import {
+    AddOpCstChildren,
+    ApplicationCstChildren,
+    CellContentsCstChildren,
+    ExpressionCstChildren,
+    Exprs1CstChildren,
+    FactorCstChildren,
+    ICstNodeVisitor,
+    LogicalOpCstChildren,
+    LogicalTermCstChildren,
+    MulOpCstChildren,
+    NumberCstChildren,
+    PowFactorCstChildren,
+    TermCstChildren,
+} from "./Types.ts"
 import {BooleanCell, Cell, Formula, NumberCell, QuoteCell, TextCell} from "./Cells.ts";
 import {
     BooleanConst,
@@ -24,7 +39,7 @@ import {A1RARef, R1C1RARef, SuperRARef} from "./CellAddressing.ts";
  * If you are looking for documentation, please refer to
  * [Chevrotain Lexing Documentation ](https://chevrotain.io/docs/tutorial/step1_lexing.html)
  */
-export class SpreadsheetLexer {
+class SpreadsheetLexer {
     static WhiteSpace: TokenType = createToken({name: "WhiteSpace", pattern: /\s+/, group: Lexer.SKIPPED});
     static Datetime: TokenType = createToken({
         name: "Datetime",
@@ -140,13 +155,16 @@ export class SpreadsheetLexer {
  * If you are looking for documentation, please refer to
  * [Chevrotain Parser Documentation ](https://chevrotain.io/docs/tutorial/step2_parsing.html#first-rule)
  */
-export class SpreadsheetParser extends CstParser {
-    // @ts-ignore
-    [x: string]: any
+
+
+
+class SpreadsheetParser extends CstParser{
+    //ts-ignore
+    [x: string]:any
     constructor() {
         super(SpreadsheetLexer.AllTokens);
 
-        const $:this = this;
+        const $:this= this
 
         $.RULE("addOp", addOp);
         $.RULE("logicalOp", logicalOp);
@@ -162,7 +180,7 @@ export class SpreadsheetParser extends CstParser {
         $.RULE("cellContents", cellContents);
         $.RULE("number", NUMBER);
 
-        function addOp() {
+        function addOp() :void {
             $.OR([
                 {
                     ALT: (): void => {
@@ -477,7 +495,6 @@ export class SpreadsheetParser extends CstParser {
         $.performSelfAnalysis();
     }
 }
-
 /**
  * @class
  * @desc <b>Visitor Class </b>.This class relies on the implementation of the SpreadSheetParser class to generate a CST (Concrete Syntax Tree),
@@ -485,7 +502,7 @@ export class SpreadsheetParser extends CstParser {
  * @example new SpreadsheetVisitor().ParseCell("= 10 + 10)", new Workbook(), 1, 1); // Can be used to parse the input "= 10 + 10".
  * Please note that while this will parse and set the cells up for evaluation, this method doesn't evaluate the cells. This process goes on in the Expressions class.
  */
-export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisitorConstructor() {
+export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisitorConstructor() implements ICstNodeVisitor<string, any> {
 
     private readonly workbook: Workbook;
     private cell: Cell | undefined;
@@ -515,7 +532,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         const parser = new SpreadsheetParser();
         const _ = new Lexer(SpreadsheetLexer.AllTokens);
         parser.input = _.tokenize(parseString).tokens;
-        const cst: CstNode = parser.cellContents();
+        const cst:CstNode = parser.cellContents();
         this.visit(cst); // This is the cellContents root being visited by the parser.
 
         return this.cell;
@@ -528,15 +545,20 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @param ctx - the current node in the CST
      * @protected
      */
-    protected powFactor(ctx:any): any {
-        let e2: Expr;
+    public powFactor(ctx:PowFactorCstChildren): Expr {
+        // Get the first factor
+        console.log(ctx.factor);
+        let e: Expr = this.visit(ctx.factor[0]);
 
-        let e = this.visit(ctx["factor"][0]);
+        if (ctx.Power && ctx.Power.length > 0) {
+            for (let i = 0; i < ctx.Power.length; i++) {
+                const e2: Expr = this.visit(ctx.factor[i + 1]);
 
-        if (ctx["factor"].image === "^") {
-            e2 = this.visit(ctx["factor"][1]);
-            e = FunCall.Make("POWER", [e, e2]);
+                // Create a power function call
+                e = FunCall.Make("POWER", [e, e2]);
+            }
         }
+
         return e;
     }
 
@@ -549,14 +571,14 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @param ctx - the current node in the CST
      * @protected
      */
-    protected logicalTerm(ctx: any): any {
+    public logicalTerm(ctx: LogicalTermCstChildren): any {
         let e: Expr;
 
-        e = this.visit(ctx["term"][0]);
+        e = this.visit(ctx.term[0]);
 
-        if (ctx["addOp"] && ctx["addOp"].length > 0) {
-            for (let i = 0; i < ctx["addOp"].length; i++) {
-                let op = this.visit(ctx["addOp"][i]);
+        if (ctx.addOp && ctx.addOp.length > 0) {
+            for (let i = 0; i < ctx.addOp.length; i++) {
+                let op = this.visit(ctx.addOp[i]);
 
                 if (op === "+") {
                     op = "ADD";
@@ -567,7 +589,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
                 }
                 // It will not parse correctly in the parser class if there is not a term on the right-hand side,
                 // Therefore, we never have to account for this in logicalTerm.
-                const e2 = this.visit(ctx["term"][i + 1]);
+                const e2 = this.visit(ctx.term[i + 1]);
 
                 e = FunCall.Make(op, [e, e2]);
             }
@@ -583,9 +605,9 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @param ctx - the current node in the CST
      * @protected
      */
-    protected number(ctx: any): number {
+    public number(ctx: NumberCstChildren): number {
 
-        return Number.parseFloat(ctx["Number"][0].image);
+        return Number.parseFloat(ctx.Number[0].image);
     }
 
     /**
@@ -594,16 +616,16 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * @param ctx - the current node in the CST
      * @protected
      */
-    protected application(ctx: any): Expr {
+    public application(ctx: ApplicationCstChildren): Expr {
 
         let s: string;
         let es: Expr[];
         let e: Expr;
 
-        s = ctx["Identifier"][0].image;
+        s = ctx.Identifier[0].image;
 
-        if (ctx["exprs1"]) {
-            es = this.visit(ctx["exprs1"]);
+        if (ctx.exprs1) {
+            es = this.visit(ctx.exprs1);
             e = FunCall.Make(s.toUpperCase(), es); // es is an array of Expr[], which is returned by following exprs1.
         } else {
             e = FunCall.Make(s.toUpperCase(), []);
@@ -617,23 +639,23 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
      * It returns an array of expressions, which are evaluated left to right.
      * @param ctx
      */
-    exprs1(ctx: any): Expr[] {
+    public exprs1(ctx: Exprs1CstChildren): Expr[] {
 
         const elist: Expr[] = [];
 
-        const e1 = this.visit(ctx["expression"][0]);
+        const e1 = this.visit(ctx.expression[0]);
         elist.push(e1);
 
-        if (ctx["expression"].length > 1) {
-            for (let i:number = 1; i < ctx["expression"].length; i++) {
-                const e2:Expr = this.visit(ctx["expression"][i]);
+        if (ctx.expression.length > 1) {
+            for (let i:number = 1; i < ctx.expression.length; i++) {
+                const e2:Expr = this.visit(ctx.expression[i]);
                 elist.push(e2);
             }
         }
         return elist;
     }
 
-    protected addOp(ctx: any): string {
+    public addOp(ctx: AddOpCstChildren): string {
 
         let op:string = "";
 
@@ -647,7 +669,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return op;
     }
 
-    protected logicalOp(ctx: any): string {
+    public logicalOp(ctx: LogicalOpCstChildren): string {
         if (ctx.Equals) return "EQUALS";
         if (ctx.NotEqual) return "NOTEQUALS";
         if (ctx.LessThan) return "LEQ";
@@ -658,18 +680,18 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return ""
     }
 
-    protected mulOp(ctx: any): string {
+    public mulOp(ctx: MulOpCstChildren): string {
         return ctx.Multiply ? "PRODUCT" : "DIVIDE"
     }
 
-    protected term(ctx: any): Expr {
-        let e:Expr = this.visit(ctx["powFactor"][0]);
+    public term(ctx: TermCstChildren): Expr {
+        let e:Expr = this.visit(ctx.powFactor[0]);
 
-        if (ctx["mulOp"] && ctx["mulOp"].length > 0) {
-            for (let i:number = 0; i < ctx["mulOp"].length; i++) {
-                const op:string = this.visit(ctx["mulOp"][i]);
+        if (ctx.mulOp && ctx.mulOp.length > 0) {
+            for (let i:number = 0; i < ctx.mulOp.length; i++) {
+                const op:string = this.visit(ctx.mulOp[i]);
 
-                const e2:Expr = this.visit(ctx["powFactor"][i + 1]);
+                const e2:Expr = this.visit(ctx.powFactor[i + 1]);
 
                 e = FunCall.Make(op, [e, e2]);
             }
@@ -678,16 +700,16 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         return e;
     }
 
-    protected expression(ctx: any): Expr {
+    public expression(ctx: ExpressionCstChildren): Expr {
         let e: Expr;
 
-        e = this.visit(ctx["logicalTerm"][0]);
+        e = this.visit(ctx.logicalTerm[0]);
 
-        if (ctx["Operator"] && ctx["logicalTerm"].length > 1) {
-            for (let i:number = 0; i < ctx["Operator"].length; i++) {
-                const op:string = this.visit(ctx["Operator"][i]);
+        if (ctx.Operator && ctx.logicalTerm.length > 1) {
+            for (let i:number = 0; i < ctx.Operator.length; i++) {
+                const op:string = this.visit(ctx.Operator[i]);
 
-                const nextTerm:Expr = this.visit(ctx["logicalTerm"][i + 1]);
+                const nextTerm:Expr = this.visit(ctx.logicalTerm[i + 1]);
 
                 e = FunCall.Make(op, [e, nextTerm]);
             }
@@ -697,7 +719,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
     }
 
 
-    protected factor(ctx: any): Expr {
+    public factor(ctx: FactorCstChildren): Expr {
 
 
         let r1:SuperRARef, r2:SuperRARef;
@@ -706,77 +728,77 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         let sheetError = false;
         let e = null;
 
-        if (ctx["application"]) {
-            e = this.visit(ctx["application"]);
+        if (ctx.application) {
+            e = this.visit(ctx.application);
         }
 
-        if (ctx["SheetRef"]) {
-            const sheetName:string = ctx["SheetRef"][0].image;
+        if (ctx.SheetRef) {
+            const sheetName:string = ctx.SheetRef[0].image;
             
             s1 = this.workbook.getSheet(sheetName.substring(0, sheetName.length - 1));
             if (s1 === null) {
                 sheetError = true;
             }
         }
-        if (ctx["raref"]) {
-            r1 = this.visit(ctx["raref"][0]);
+        if (ctx.raref) {
+            r1 = this.visit(ctx.raref[0]);
 
 
             e = sheetError ? new Error(ErrorValue.refError) : new CellRef(s1 as Sheet, r1);
 
-            if (ctx["raref"][1]) {
-                r2 = this.visit(ctx["raref"][1]);
+            if (ctx.raref[1]) {
+                r2 = this.visit(ctx.raref[1]);
 
                 e = sheetError ? new Error(ErrorValue.refError) : new CellArea(s1 as Sheet, r1, r2 );
             }
         }
 
-        if(ctx["TRUE"]) {
+        if(ctx.TRUE) {
             e = new BooleanConst(true)
         }
 
-        if(ctx["FALSE"]) {
+        if(ctx.FALSE) {
             e = new BooleanConst(false)
         }
 
 
-        if (ctx["NEGATIVE"]) {
+        if (ctx.NEGATIVE) {
 
-            const innerExpr = this.visit(ctx["NEGATIVE"]);
+            const innerExpr = this.visit(ctx.NEGATIVE);
 
             e = typeof innerExpr === "number" ? new NumberConst(-innerExpr) : FunCall.Make("NEG", [innerExpr]);
 
 
         }
 
-        if (ctx["number"]) {
+        if (ctx.number) {
 
-            d = Number.parseFloat(ctx["number"][0].children["Number"][0].image);
+            d = Number.parseFloat(ctx.number[0].children.Number[0].image);
 
             e = new NumberConst(d);
         }
 
 
-        if (ctx["StringLiteral"]) {
-            const textValue = ctx["StringLiteral"][0].image;
+        if (ctx.StringLiteral) {
+            const textValue = ctx.StringLiteral[0].image;
             e = new TextConst(textValue.substring(1, textValue.length - 1));
         }
 
 
-        if (ctx["LParen"]) {
-            e = this.visit(ctx["expression"][0]);
+        if (ctx.LParen) {
+            e = this.visit(ctx.expression![0]);
         }
 
 
         /**
          * Custom case where we want arrays to be inserted.
          */
-        if (ctx["LBracket"]) {
+        if (ctx.LBracket) {
             const elements: Expr[] = [];
 
-            if (ctx["ArrayElement"]) {
-                for (let i = 0; i < ctx["ArrayElement"].length; i++) {
-                    const element = this.visit(ctx["ArrayElement"][i]);
+            if (ctx.ArrayElement) {
+                for (let i = 0; i < ctx.ArrayElement.length; i++) {
+                    const element = this.visit(ctx.ArrayElement[i]);
                     elements.push(element);
                 }
             }
@@ -788,7 +810,7 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     }
 
-    protected raref(ctx: any) {
+    public raref(ctx: any) {
         if (ctx["A1Ref"]) {
             return new A1RARef(ctx["A1Ref"][0].image, this.col, this.row);
         }
@@ -801,13 +823,12 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
 
     }
 
-    protected cellContents(ctx: any): Cell {
-        const e: any = this.visit(ctx.expression);
+    public cellContents(ctx: CellContentsCstChildren): Cell {
+        const e: Expr = this.visit(ctx.expression!);
         if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
         } else if (ctx.QuoteCell) {
-            const helperConst = ctx["QuoteCell"][0].image
-            this.cell = new QuoteCell(helperConst.substring(1, helperConst.length - 1));
+            this.cell = new QuoteCell(ctx.QuoteCell[0].image.substring(1, ctx.QuoteCell[0].image.length - 1));
         } else if (ctx.TRUE) {
             this.cell = new BooleanCell(true);
         } else if (ctx.FALSE) {
@@ -815,18 +836,15 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         }
 
         else if (ctx.StringLiteral) {
-            const helperConst = ctx["StringLiteral"][0].image
-            this.cell = new TextCell(helperConst.substring(1, helperConst.length - 1));
+            this.cell = new TextCell(ctx.StringLiteral[0].image.substring(1, ctx.StringLiteral[0].image.length - 1));
         } else if (ctx.Minus) {
-            this.cell = new NumberCell(Number.parseFloat("-" + ctx["number"][0].children["Number"][0].image));
-
+            this.cell = new NumberCell(Number.parseFloat("-" + ctx.number![0].children.Number[0].image));
         } else if (ctx.number) {
-            this.cell = new NumberCell(Number.parseFloat(ctx["number"][0].children["Number"][0].image));
+            this.cell = new NumberCell(Number.parseFloat(ctx.number[0].children.Number[0].image));
         } else if (ctx.Datetime) {
-            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(ctx["Datetime"][0].image));
+            this.cell = new NumberCell(NumberValue.DoubleFromDateTimeTicks(ctx.Datetime[0].image as unknown as number));
         }
-
-
         return this.cell as Cell;
     }
 }
+

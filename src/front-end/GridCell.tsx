@@ -80,7 +80,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                     targetCol - col
                 );
 
-                console.log(nextFormula);
                 let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
                 handleInput(targetRow, targetCol, nextFormula!);
 
@@ -89,7 +88,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 }
             }
             else {
-                WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
+                handleInput(targetRow, targetCol, content!);
             }
             EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
