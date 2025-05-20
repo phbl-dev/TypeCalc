@@ -1,7 +1,7 @@
 import {WorkbookManager} from "./WorkbookManager.ts";
 import {Sheet} from "../back-end/Sheet.ts";
 import {numberToLetters} from "../front-end/HelperFunctions.tsx";
-import {ArrayExplicit, ErrorValue} from "../back-end/Values.ts";
+import {ArrayExplicit, ArrayValue, ErrorValue} from "../back-end/Values.ts";
 import {A1RefCellAddress, FullCellAddress, SuperCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
 import {ArrayFormula, Cell, Formula} from "../back-end/Cells.ts";
 import {Workbook} from "../back-end/Workbook.ts";
@@ -118,9 +118,10 @@ export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: numbe
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
                     const cell = sheet.Get(col - 1, row - 1);
-
+                    if (colChar + row == WorkbookManager.getActiveCell() && !(cell instanceof ArrayFormula)){
+                        continue;
+                    }
                     if (cell != null) {
-
                         // No recalculation needed if the cell is up to date
                         let cellEval = cell.Eval(sheet, 0, 0);
                         if (cellEval instanceof ErrorValue) {
@@ -187,4 +188,45 @@ export function HandleArrayResult(columnIndex:number,rowIndex:number):boolean{
 export  function HandleArrayFormula(columnIndex:number,rowIndex:number):boolean{
     const checkCell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
     return !(checkCell instanceof ArrayFormula);
+}
+
+export function EvalCellsInViewportIncludingActiveCell(leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number): void {
+    const wb = WorkbookManager.getWorkbook();
+    if (!wb) {
+        console.debug("[ShowWindowInGUI] No workbook found!");
+        return;
+    }
+    wb.Recalculate();
+
+    const startCol: number = leftCornerCol;
+    const endCol: number = rightCornerCol;
+    const startRow: number = topCornerRow;
+    const endRow: number = bottomCornerRow;
+    const sheet: Sheet = WorkbookManager.getActiveSheet()!; //This needs to be updated
+    if (sheet) {
+        for (let col: number = startCol; col <= endCol; col++) {
+            for (let row: number = startRow; row <= endRow; row++) {
+                const colChar: string = numberToLetters(col);
+                const cellHTML = document.getElementById(colChar + row);
+                if (cellHTML != null) {
+                    const cell = sheet.Get(col - 1, row - 1);
+                    if (cell != null) {
+
+                        // No recalculation needed if the cell is up to date
+                        let cellEval = cell.Eval(sheet, 0, 0);
+                        if (cellEval instanceof ErrorValue) {
+                            cellHTML.innerText = cellEval.message;
+                        } else if (cellEval != undefined) {
+                            cellHTML.innerText = cellEval.ToObject() as string;
+                        } else {
+                            cellHTML.innerText = cell.GetText()!;
+                        }
+                    } else {
+                        // Important: Clear the cell content when the cell is null
+                        cellHTML.innerText = "";
+                    }
+                }
+            }
+        }
+    }
 }
