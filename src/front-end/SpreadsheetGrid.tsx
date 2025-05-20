@@ -81,6 +81,7 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
         width: window.innerWidth,
         height: window.innerHeight
     });
+
     useEffect(() => {
         const formulaBox = document.getElementById("formulaBox") as HTMLInputElement;
         const input = document.getElementById("cellIdInput") as HTMLInputElement;
@@ -101,10 +102,8 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
         })
 
         // Handles formulaBox input
-        if (!formulaBox) return;
         let value: string;
         let valueChanged: boolean = false;
-
         const handleFormulaChange = (e: Event) => {
             value = (e.target as HTMLInputElement).value;
             valueChanged = true;
@@ -137,36 +136,6 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
             EvalCellsInViewport(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
         }
 
-        // Handle file drop events entirely in React
-        function handleDrop(event: DragEvent) {
-            event.preventDefault();
-            const file = event.dataTransfer?.files?.[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const content = e.target?.result as string;
-                    WorkbookManager.createNewWorkbook(); // or call createNewWorkbook()
-                    const xmlReader = new XMLReader();
-
-                    try {
-                        await xmlReader.readFile(content); // Assumes it modifies the current workbook
-                        sheetNames = WorkbookManager.getSheetNames();
-                        setSheetNames(sheetNames);
-                        setActiveSheet(sheetNames[0]);
-                        WorkbookManager.setActiveSheet(sheetNames[0]);
-                        EvalCellsInViewport(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
-                    } catch (error) {
-                        console.error("Error during load:", error);
-                    }
-                };
-                reader.readAsText(file);
-            }
-        }
-
-        function handleDragOver(event: DragEvent) {
-            event.preventDefault();
-        }
-
         // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
         // and must trigger twice to do so.
         const handleJump = () => {
@@ -196,6 +165,36 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                     }
                 }
             }
+        }
+
+        // Handle file drop events entirely in React
+        function handleDrop(event: DragEvent) {
+            event.preventDefault();
+            const file = event.dataTransfer?.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const content = e.target?.result as string;
+                    WorkbookManager.createNewWorkbook(); // or call createNewWorkbook()
+                    const xmlReader = new XMLReader();
+
+                    try {
+                        await xmlReader.readFile(content); // Assumes it modifies the current workbook
+                        sheetNames = WorkbookManager.getSheetNames();
+                        setSheetNames(sheetNames);
+                        setActiveSheet(sheetNames[0]);
+                        WorkbookManager.setActiveSheet(sheetNames[0]);
+                        EvalCellsInViewport(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
+                    } catch (error) {
+                        console.error("Error during load:", error);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function handleDragOver(event: DragEvent) {
+            event.preventDefault();
         }
 
         // Event listener management

@@ -23,14 +23,13 @@ let AreaMarked = false
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
  * @param style - Lets the cell inherit the style from a css style sheet
- * @param data - Used to synchronize the AreaMarkedRef between multiple cells
  * @constructor
  */
 export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style }: GridCellProps) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
+    const [valueHolder, setValueHolder] = React.useState<string>("");
+    const [mySupports, setMySupports] = React.useState<string[]>([])
     let initialValueRef = useRef<string>("");
-    let valueHolder:string = "";
-    let mySupports:string[];
 
     useEffect(() => {
         document.addEventListener('keyup', (e) => {
@@ -154,10 +153,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         }
         EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
     }
-
-
-
-
+    
 // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
@@ -409,16 +405,13 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                      return;
                  }
                  rawCellContent = rawCellContent.trim();
-                 valueHolder = (e.target as HTMLElement).innerText.trim();
+                 setValueHolder((e.target as HTMLElement).innerText.trim());
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
                  console.log("this is the rawCellContent", rawCellContent)
                  updateFormulaBox(ID, rawCellContent);
 
-
-
-                 mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
-
+                 setMySupports(GetSupportsInViewPort(columnIndex,rowIndex)!)
 
                  if (!mySupports) {
                      return;
