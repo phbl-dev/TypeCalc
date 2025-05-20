@@ -195,9 +195,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 // Redo functionality:
                 case "y":
                     event.preventDefault()
-
                     WorkbookManager.getActiveSheet()?.redo()
-
                     EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
                     break
 
@@ -237,7 +235,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             }
         }
 
-
         switch (event.key) {
             case "ArrowUp":
                 nextRow = Math.max(0, rowIndex - 1);
@@ -249,7 +246,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                     AreaMarked = false
                 }
                 break;
-
             case "ArrowDown":
                 nextRow = rowIndex + 1;
                 if (shiftKeyDown) {
@@ -258,10 +254,8 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 } else {
                     clearVisualHighlight();
                     AreaMarked = false
-
                 }
                 break;
-
             case "ArrowLeft":
                 nextCol = Math.max(0, columnIndex - 1);
                 if (shiftKeyDown) {
@@ -272,7 +266,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                     AreaMarked = false
                 }
                 break;
-
             case "ArrowRight":
                 nextCol = columnIndex + 1;
                 if (shiftKeyDown) {
@@ -283,9 +276,11 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                     AreaMarked = false
                 }
                 break;
-
             case "Enter":
                 nextRow = rowIndex + 1;
+                break;
+            case "Tab":
+                nextCol = columnIndex + 1;
                 break;
             case "Shift":
                 selectionStartCell = WorkbookManager.getActiveCell();
@@ -421,7 +416,9 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                      }
                  }
              }}
+
              onKeyDown={(e) => {keyNav(e);}}
+
              onMouseDown={() => {
                  displayCellId();
                  if(!shiftKeyDown){
@@ -435,6 +432,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                      console.log('Shift released', shiftKeyDown);
                  }
              }}
+
              onBlur={(e) => {
 
                  console.debug("Values not found:" ,WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex,rowIndex))
@@ -444,7 +442,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
-                     //EvalCellsInViewport(columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3);
                      console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
@@ -456,11 +453,10 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                          }
                      }
                  }
-                 //EvalCellsInViewport(columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
              }}
 
+            //Update formula box alongside cell input, also show caret (text cursor) once writing starts
              onInput={(e) => {
-                 //Update formula box alongside cell input, also show caret (text cursor) once writing starts
                  updateFormulaBox(ID, (e.target as HTMLElement).innerText);
                  e.currentTarget.classList.remove("hide-caret");
                  e.currentTarget.classList.add("show-caret");
