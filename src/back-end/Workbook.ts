@@ -136,34 +136,51 @@ export class Workbook {
      * @constructor
      */
     public Recalculate(): number {
+        // Now Cyclic != null or for all formulas f, f.state==Uptodate
+        if (this.Cyclic != null) {
+            return this.FullRecalculation();
+        } else {
+            return this.TimeRecalculation(() => {
+                this.UseSupportSets = true;
+                // Requires for all formulas f, f.state==Uptodate
+                // Stage (1): Mark formulas reachable from roots, f.state=Dirty
+                SupportArea.idempotentForeach = true;
+                this.volatileCells.forEach(fca => {
+                    Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row); // When marking cells as "dirty" we mark them for recalculation.
+                });
+                this.editedCells.forEach(fca => {
+                    Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
+                })
 
+                // Stage (2): Evaluate Dirty formulas (and Dirty cells they depend on)
+                this.Clear("awaitsEvaluation");
+                SupportArea.idempotentForeach = true;
+                this.volatileCells.forEach(fca => {
+                    Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
+                });
+
+                this.editedCells.forEach(fca => {
+                    Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
+                });
+
+                while (this.awaitsEvaluation.length > 0) {
+                    this.awaitsEvaluation.shift()?.Eval() // because the value returned by shift() could possibly be undefined we use optional chaining (?.) to safely return undefined instead of throwing an error.
+                }
+            });
+        }
+    }
+
+    /**
+     */
+    public FullRecalculation() {
         return this.TimeRecalculation(() => {
-            this.UseSupportSets = true;
-            // Requires for all formulas f, f.state==Uptodate
-            // Stage (1): Mark formulas reachable from roots, f.state=Dirty
-            SupportArea.idempotentForeach = true;
-            this.volatileCells.forEach(fca => {
-                Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row); // When marking cells as "dirty" we mark them for recalculation.
-            });
-            this.editedCells.forEach(fca => {
-                Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
+            this.UseSupportSets = false;
+            this.ResetCellState();
+            // For all formulas f, f.state==Dirty
+            this.sheets.forEach(sheet => {
+                console.log("Full recalculation on sheet!");
+                sheet.RecalculateFull();
             })
-
-            // Stage (2): Evaluate Dirty formulas (and Dirty cells they depend on)
-            this.Clear("awaitsEvaluation");
-            SupportArea.idempotentForeach = true;
-            this.volatileCells.forEach(fca => {
-                Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
-            });
-
-            this.editedCells.forEach(fca => {
-                Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
-            });
-
-            while (this.awaitsEvaluation.length > 0) {
-                this.awaitsEvaluation.shift()?.Eval() // because the value returned by shift() could possibly be undefined we use optional chaining (?.) to safely return undefined instead of throwing an error.
-                // We know for a fact that the error isn't empty since we have checked if length > 0 but typescript isn't satisfied with this because the array might be modified between checking .length > 0 and calling shift().
-            }
         });
     }
 

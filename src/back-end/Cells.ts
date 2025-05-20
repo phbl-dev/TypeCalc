@@ -2,8 +2,8 @@
 import  { Sheet } from "./Sheet";
 import {ArrayValue, BooleanValue, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
 import { Adjusted,  FullCellAddress, type Interval, SupportSet, SuperCellAddress } from "./CellAddressing";
-import {Error, type Expr} from "./Expressions"; // This should be imported when it's done
-import { Formats } from "./Types";
+import {ErrorConst, type Expr} from "./Expressions"; // This should be imported when it's done
+import {CyclicException, Formats} from "./Types";
 import {SpreadsheetVisitor} from "./Parser.ts";
 import type { Workbook } from "./Workbook"; // This should be imported when it's done
 
@@ -61,7 +61,7 @@ export abstract class Cell {
         return this.supportSet;
     }
 
-    /*
+    /**
     The abstract Eval() method is used for evaluating the contents of a cell and returning the value. It has
     three parameters which specify which cell should be evaluated:
     - sheet: Sheet
@@ -76,7 +76,7 @@ export abstract class Cell {
      */
     public abstract Eval(sheet: Sheet, col: number, row: number): Value | null;
 
-    /*
+    /**
     The overall purpose of the abstract MoveContents() method is to move a cell or a gathering of cells
     (an array formula) by the number of rows and columns given as arguments. The functionality depends on
     how it is being overwritten for the specific type of cell (e.g. a single cell, a formula, or an array formula)
@@ -94,7 +94,7 @@ export abstract class Cell {
      */
     public abstract MoveContents(deltaCol: number, deltaRow: number): Cell;
 
-    /*
+    /**
     The abstract method InsertRowCols() handles the case where a row or column is inserted, and this affects
     the references of one or more cells. This method is only important to override in the FormulaClass
     because formulas may depend on cell references. When a formula depends on the references of other cells,
@@ -112,7 +112,7 @@ export abstract class Cell {
         doRows: boolean,
     ): void;
 
-    /*
+    /**
     The abstract method Reset() is used to clear flags, cached values and formula dependencies (references to other cells)
     when the contents of a cell are modified or deleted. It is primarily implemented in Formula, ArrayFormula,
     and CachedArrayFormula to ensure that outdated computations and references are removed.
@@ -385,7 +385,7 @@ export class NumberCell extends ConstCell {
         if (typeof d === "number") {
             if (Number.isNaN(d) || !isFinite(d)) {
                 // Check if d is "not a number" or is infinite.
-                throw new Error(`${d} is not a valid number`);
+                throw new ErrorConst(`${d} is not a valid number`);
             }
             this.value = NumberValue.Make(d) as NumberValue; // Because NumberValue.Make(d) returns a Values we cast it as a NumberValue.
         } else {
@@ -532,14 +532,14 @@ export class Formula extends Cell {
     }
 
     /**
-     * Evaluates the cell's expression and caches it value.
+     * Evaluates the cell's expression and caches its value.
      * Detects Cycles and reports these as errors.
      * It uses the current state of the Cell to determine the need for evaluation.
      *
-     * @param sheet - sheet the cell is on
-     * @param col - its X col
-     * @param row - its Y row
-     * @constructor
+     * @param {Sheet} sheet - The sheet where the cell exists
+     * @param {number} col - The column of the cell
+     * @param {number} row - The row of the cell
+     * @returns {Value} The result of the formula evaluation. Returns ErrorValue.cycleError if a cyclic dependency is detected.
      */
     public override Eval(sheet: Sheet, col: number, row: number): Value {
         switch (this.state) {
@@ -552,6 +552,7 @@ export class Formula extends Cell {
                 const err = ErrorValue.cycleError;
                 this.v = err;
                 console.error(msg);
+                this.workbook.Cyclic = new CyclicException("#CYCLE!", new FullCellAddress(sheet, null, col, row)); // new
                 return this.v;
             case CellState.Dirty:
             case CellState.Enqueued:
@@ -700,8 +701,6 @@ export class Formula extends Cell {
     public get Visited(): boolean {
         return this.state == CellState.Uptodate;
     }
-
-
 }
 
 /**
@@ -837,7 +836,7 @@ export class ArrayFormula extends Cell {
      * @constructor
      */
     public override CloneCell(col: number, row: number): Cell {
-        throw new Error("NotImplementedException");
+        throw new ErrorConst("NotImplementedException");
     }
 
     public override IsVolatile(): boolean {

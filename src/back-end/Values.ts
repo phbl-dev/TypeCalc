@@ -163,7 +163,7 @@ values are stored only once (interning). So if two different cells store the sam
 the cells in the ValueCache hold a reference to the TextValue containing that string.
  */
 export class TextValue extends Value {
-    public readonly value: string | undefined;
+    public readonly value: string;
 
     /*
     The "type" property sets the type of TextValue to be TextValue.
@@ -256,7 +256,7 @@ export class TextValue extends Value {
     - If "tv" is not null its value is returned.
     - Otherwise, null is returned.
      */
-    public static ToString(v: Value): string | undefined | null {
+    public static ToString(v: Value): string | null {
         const tv = v as TextValue;
         if (tv !== null) {
             return tv.value;

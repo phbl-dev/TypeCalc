@@ -5,7 +5,7 @@ import {
     BooleanConst,
     CellArea,
     CellRef,
-    Error,
+    ErrorConst,
     Expr,
     ExprArray,
     FunCall,
@@ -722,12 +722,12 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
             r1 = this.visit(ctx["raref"][0]);
 
 
-            e = sheetError ? new Error(ErrorValue.refError) : new CellRef(s1 as Sheet, r1);
+            e = sheetError ? new ErrorConst(ErrorValue.refError) : new CellRef(s1 as Sheet, r1);
 
             if (ctx["raref"][1]) {
                 r2 = this.visit(ctx["raref"][1]);
 
-                e = sheetError ? new Error(ErrorValue.refError) : new CellArea(s1 as Sheet, r1, r2 );
+                e = sheetError ? new ErrorConst(ErrorValue.refError) : new CellArea(s1 as Sheet, r1, r2 );
             }
         }
 
