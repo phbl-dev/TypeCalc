@@ -13,22 +13,19 @@ interface GridCellProps {
     columnIndex:number,
     rowIndex: number,
     style: React.CSSProperties;
-    shiftKeyDown: boolean;
-    setShiftKeyDown: (shiftKeyDown: boolean) => void;
 }
 
 let selectionStartCell: string | null = null
 let AreaMarked = false
+let shiftKeyDown = false
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
  * @param rowIndex - Current row index, used to define cell ID and determine cell background color
  * @param style - Lets the cell inherit the style from a css style sheet
- * @param shiftKeyDown - Used to determine if the shift key is pressed
- * @param setShiftKeyDown - Used to set the shift key to pressed or not
  * @constructor
  */
-export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style, shiftKeyDown, setShiftKeyDown }: GridCellProps) => {
+export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style }: GridCellProps) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
     const [valueHolder, setValueHolder] = React.useState<string>("");
     const [mySupports, setMySupports] = React.useState<string[]>([])
@@ -147,7 +144,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         }
         EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
     }
-    
+
 // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
@@ -265,7 +262,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 } else {
                     clearVisualHighlight();
                     AreaMarked = false
-
                 }
                 break;
 
@@ -274,7 +270,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 break;
             case "Shift":
                 selectionStartCell = WorkbookManager.getActiveCell();
-                setShiftKeyDown(true);
+                shiftKeyDown = true;
                 break;
             default:
                 return;
@@ -317,7 +313,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             console.debug("[SpreadsheetGrid.tsx Cell] FormulaBox not found");
             return;
         }
-        console.log("this is the content for the formulabox:", content as string);
+        console.log("this is the content for the formula box:", content as string);
         (formulaBox as HTMLInputElement).value = content as string;
     }
 
@@ -406,21 +402,17 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                      }
                  }
              }}
-             onMouseDown={displayCellId} // Gets the cellID when moving the mouse
-             onKeyDown={(e) => {
-                 keyNav(e);
-             }}
-             onClick={(e) => {
-                 if(e.shiftKey && selectionStartCell) {
-                     setHighlight(selectionStartCell);
-                     AreaMarked = true
-                 } else {
-                     clearVisualHighlight()
+             onKeyDown={(e) => {keyNav(e);}}
+             onMouseDown={() => {
+                 displayCellId();
+                 if(!shiftKeyDown){
+                     clearVisualHighlight();
                  }
              }}
+
              onKeyUp={(e) => {
                  if (e.key === 'Shift') {
-                     setShiftKeyDown(false);
+                     shiftKeyDown = false;
                      console.log('Shift released', shiftKeyDown);
                  }
              }}

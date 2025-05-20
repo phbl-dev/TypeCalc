@@ -77,7 +77,6 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
     const [scrollOffset, setScrollOffset] = useState({left: 0, top: 0});
     const [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
     const [activeSheet, setActiveSheet] = useState(sheetNames[0]);
-    const [shiftKeyDown, setShiftKeyDown] = useState(false);
     const [windowDimensions, setWindowDimensions] = useState({
         width: window.innerWidth,
         height: window.innerHeight
@@ -332,15 +331,7 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                             );
                         }}
                     >
-                        {({ columnIndex, rowIndex, style }) => (
-                            <GridCell
-                                columnIndex={columnIndex}
-                                rowIndex={rowIndex}
-                                style={style}
-                                shiftKeyDown={shiftKeyDown}
-                                setShiftKeyDown={setShiftKeyDown}
-                            />
-                        )}
+                        {GridCell}
                     </Grid>
                 </div>
             </div>
