@@ -77,7 +77,7 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
     let [scrollOffset] = useState({left: 0, top: 0});
     let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
     let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
-    const [windowDimensions, setWindowDimensions] = useState({
+    const [, setWindowDimensions] = useState({
         width: window.innerWidth,
         height: window.innerHeight
     });

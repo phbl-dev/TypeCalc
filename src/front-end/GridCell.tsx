@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from "react";
-import {A1RefCellAddress} from "../back-end/CellAddressing.ts";
+import {A1RefCellAddress, RARefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {Formula} from "../back-end/Cells.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {adjustFormula, makeBold, makeItalic,
@@ -59,6 +59,28 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         });
     }
 
+    const forceRefresh = (col:number,row:number) => {
+        const currCellID = WorkbookManager.getActiveCell()!
+        const currCell = document.getElementById(currCellID);
+
+
+        const nextCellID = numberToLetters(col + 1) + (row + 1);
+        const nextCell = document.getElementById(nextCellID);
+        const cellIdInput = document.getElementById("cellIdInput") as HTMLInputElement;
+
+
+        if (nextCell && cellIdInput) {
+            nextCell.focus();
+            cellIdInput.value = nextCellID;
+        }
+
+        if (currCell && cellIdInput) {
+            currCell.focus();
+            cellIdInput.value = currCellID;
+        }
+
+    }
+
     /**
      * Paste functionality. Based on the areaRef, it will paste the contents of the area into the current cell.
      * If multiple cells are part of the copied area, it will paste onto multiple cells.
@@ -75,28 +97,27 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             const targetRow = targetCellRef.row + relRow;
             const targetCol = targetCellRef.col + relCol;
 
-            if (cellInfo.cell instanceof Formula) {
+            if (cell instanceof Formula) {
                 const nextFormula = adjustFormula(
                     content!,
                     targetRow - row,
                     targetCol - col
                 );
 
-                let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
                 handleInput(targetRow, targetCol, nextFormula!);
-
-                if (newCell!.classList.contains("active-cell")){
-                    (newCell as HTMLInputElement).innerText = nextFormula as string;
-                }
             }
             else {
                 handleInput(targetRow, targetCol, content!);
+
             }
-            EvalCellsInViewportIncludingActiveCell(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+
 
         }
+        forceRefresh(range.startCol,range.startRow);
+
 
         AreaMarked = false;
+
     }
 
     /**
@@ -116,26 +137,24 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             const targetCol = targetCellRef.col + relCol;
 
             // If cell is a formula
-            if (cellInfo.cell instanceof Formula) {
+            if (cell instanceof Formula) {
                 const nextFormula = adjustFormula(
                     content!,
                     targetRow - row,
                     targetCol - col
                 );
-                let newCell:HTMLElement = document.getElementById(numberToLetters(targetCol + 1) + (targetRow + 1).toString())!;
                 handleInput(targetRow, targetCol, nextFormula!);
                 WorkbookManager.getActiveSheet()?.RemoveCell(col, row);
-                if (newCell!.classList.contains("active-cell")){
-                    (newCell as HTMLInputElement).innerText = nextFormula as string;
-                }
             }
             else {
                 WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
+
             }
-            EvalCellsInViewportIncludingActiveCell(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
         }
+
         clearVisualHighlight();
+        forceRefresh(range.startCol,range.startRow);
 
         AreaMarked = false;
     }
@@ -153,7 +172,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         }
         EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
     }
-    
+
 // Allows us to navigate the cells using the arrow and Enter keys
     const keyNav = (event:any): void => {
         let nextRow = rowIndex;
@@ -307,7 +326,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
      * @param columnIndex
      * @param content
      */
-    const handleInput = (rowIndex:number, columnIndex:number, content:string) => {
+    const handleInput: (rowIndex: number, columnIndex: number, content: string) => void = (rowIndex:number, columnIndex:number, content:string):void => {
         if (!HandleArrayFormula(columnIndex,rowIndex)) {return}
         if (!ParseCellToBackend(content,columnIndex,rowIndex)) {return}
         if (!HandleArrayResult(columnIndex,rowIndex)) {return}
@@ -343,7 +362,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         } else {
             currentActiveCellRef = new A1RefCellAddress(ID);
         }
-        let {ulCa,lrCa} = A1RefCellAddress.normalizeArea(currentActiveCellRef,endCellRef)
+        let {ulCa,lrCa} = SuperCellAddress.normalizeArea(currentActiveCellRef,endCellRef)
 
         clearVisualHighlight()
 

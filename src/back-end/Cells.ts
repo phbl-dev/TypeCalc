@@ -216,7 +216,8 @@ export abstract class Cell {
 
             cellToBeAdded.textField = text;
             return cellToBeAdded; // We call the parseCell() method to return a readable Cell.
-        } else return null;
+        }
+        return null;
     }
 
     /**
@@ -519,6 +520,10 @@ export class Formula extends Cell {
         } else {
             return new Formula(workbook, e);
         }
+    }
+
+    public getState(): CellState {
+        return this.state;
     }
 
     /**
