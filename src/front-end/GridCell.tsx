@@ -4,8 +4,10 @@ import {Formula} from "../back-end/Cells.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {adjustFormula, makeBold, makeItalic,
         makeUnderlined, numberToLetters, ReadArea} from "./HelperFunctions.tsx";
-import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
-        HandleArrayFormula, HandleArrayResult, ParseCellToBackend} from "../API-Layer/Back-endEndpoints.ts";
+import {
+    EvalCellsInViewport, EvalCellsInViewportIncludingActiveCell, GetRawCellContent, GetSupportsInViewPort,
+    HandleArrayFormula, HandleArrayResult, ParseCellToBackend
+} from "../API-Layer/Back-endEndpoints.ts";
 
 interface GridCellProps {
     columnIndex:number,
@@ -91,7 +93,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             else {
                 handleInput(targetRow, targetCol, content!);
             }
-            EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+            EvalCellsInViewportIncludingActiveCell(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
         }
 
@@ -131,7 +133,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             else {
                 WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
             }
-            EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+            EvalCellsInViewportIncludingActiveCell(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
 
         }
         clearVisualHighlight();
@@ -400,6 +402,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  // Save the initial value on focus and display it
                  let rawCellContent:string | null = GetRawCellContent(ID);
                  WorkbookManager.setActiveCell(ID);
+                 EvalCellsInViewport(columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
                  if (!rawCellContent) {
                      console.debug("[SpreadsheetGrid.tsx Cell] Cell Content not updated");
                      updateFormulaBox(ID, rawCellContent);
@@ -440,7 +443,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  const newValue = (e.target as HTMLElement).innerText;
                  if (newValue !== initialValueRef.current) {
                      handleInput(rowIndex, columnIndex, newValue);
-                     EvalCellsInViewport(columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3);
+                     //EvalCellsInViewport(columnIndex+1,columnIndex+3,rowIndex+1,rowIndex+3);
                      console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
@@ -452,7 +455,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                          }
                      }
                  }
-                 EvalCellsInViewport(columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
+                 //EvalCellsInViewport(columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
              }}
 
              onInput={(e) => {
