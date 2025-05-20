@@ -74,9 +74,10 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
     const colHeaderRef = useRef<Grid>(null);
     const rowHeaderRef = useRef<Grid>(null);
     const bodyRef = useRef<Grid>(null);
-    let [scrollOffset] = useState({left: 0, top: 0});
-    let [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
-    let [activeSheet, setActiveSheet] = useState(sheetNames[0]);
+    const [scrollOffset, setScrollOffset] = useState({left: 0, top: 0});
+    const [sheetNames, setSheetNames] = useState<string[]>(["Sheet1"]);
+    const [activeSheet, setActiveSheet] = useState(sheetNames[0]);
+    const [shiftKeyDown, setShiftKeyDown] = useState(false);
     const [windowDimensions, setWindowDimensions] = useState({
         width: window.innerWidth,
         height: window.innerHeight
@@ -180,8 +181,7 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
 
                     try {
                         await xmlReader.readFile(content); // Assumes it modifies the current workbook
-                        sheetNames = WorkbookManager.getSheetNames();
-                        setSheetNames(sheetNames);
+                        setSheetNames(WorkbookManager.getSheetNames());
                         setActiveSheet(sheetNames[0]);
                         WorkbookManager.setActiveSheet(sheetNames[0]);
                         EvalCellsInViewport(scrollOffset.left, scrollOffset.left + 30, scrollOffset.top, scrollOffset.top + 30);
@@ -250,7 +250,7 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                 rowHeaderRef.current.scrollTo({scrollTop});
             }
         }
-        scrollOffset = { left: scrollLeft, top: scrollTop };
+        setScrollOffset({ left: scrollLeft, top: scrollTop });
     }
 
     return (
@@ -332,7 +332,15 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                             );
                         }}
                     >
-                        {GridCell}
+                        {({ columnIndex, rowIndex, style }) => (
+                            <GridCell
+                                columnIndex={columnIndex}
+                                rowIndex={rowIndex}
+                                style={style}
+                                shiftKeyDown={shiftKeyDown}
+                                setShiftKeyDown={setShiftKeyDown}
+                            />
+                        )}
                     </Grid>
                 </div>
             </div>
