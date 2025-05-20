@@ -8,7 +8,7 @@ export abstract class Value {
     public abstract Equals(v: Value): boolean;
 
     public static ToObject(v: Value): unknown {
-        // OBS: "object" type is not the same in TypeScript as it is in C#!! Therefore, I changed it to "unknown"
+        // OBS: "object" type is different in TypeScript as it is in C#!! Therefore, I changed it to "unknown"
         return Value.ToObject(v);
     }
 
@@ -25,7 +25,7 @@ export abstract class Value {
             return (value as NumberValue).value !== 0;        }
         else if (value instanceof TextValue) {
             const text = TextValue.ToString(value);
-            return text !== null && (text!.toLowerCase() === "true" || text === "1");
+            return text !== null && (text!.toLowerCase() === "true");
         }
         return false;
     }
@@ -140,6 +140,10 @@ export class BooleanValue extends Value {
     }
 
     Equals(v: Value): boolean {
+        if (v instanceof BooleanValue) {
+            return this.value === v.value ;
+
+        }
         return false;
     }
 
@@ -191,6 +195,9 @@ export class TextValue extends Value {
     still ensure that all cells with an empty string would refer to the same TextValue.
      */
     public static readonly EMPTY: TextValue = TextValue.MakeInterned("");
+
+
+    public static readonly NULL: TextValue = TextValue.MakeInterned("NULL");
 
     /*
 
@@ -266,56 +273,6 @@ export class TextValue extends Value {
     }
 
     /*
-    The FromNakedChar() method takes "c" as argument of type number.
-    - It returns a TextValue based on "c" which is converted to a string.
-     */
-    public static FromNakedChar(c: number): Value {
-        return TextValue.Make(c.toString());
-    }
-
-    /*
-    The ToNakedChar() method takes "v" as argument of type TextValue.
-    - Then, if the value of "v" is not null or undefined, and the length of the value is at least 1,
-    it returns the first character of the TextValue "v" as a string.
-    - Otherwise, it returns the string '\0'.
-     */
-    public static ToNakedChar(v: TextValue): string {
-        if (v.value && v.value.length >= 1) {
-            return v.value[0];
-        } else {
-            return "\0";
-        }
-    }
-
-    /*
-    The FromChar() method takes an argument "o" of type unknown.
-    - If it "o" has the same characteristics as a character then we return a TextValue made from "o"
-    - Otherwise, an error is returned.
-     */
-    public static FromChar(o: unknown): Value {
-        if (typeof o === "string" && o.length === 1) {
-            return TextValue.Make(o);
-        } else {
-            return ErrorValue.argTypeError;
-        }
-    }
-
-    /*
-    The ToChar() method takes "v" as argument of type Values.
-    It then attempts to cast "v" as a TextValue and calls it "tv".
-    - If tv is not null and its values is not undefined and it has a length of at least 1 then it returns the first character of the value.
-    - Otherwise it returns null.
-     */
-    public static ToChar(v: Value): string | null {
-        const tv = v as TextValue;
-        if (tv !== null && tv.value !== undefined && tv.value.length >= 1) {
-            return tv.value[0];
-        } else {
-            return null;
-        }
-    }
-
-    /*
     The Equals() method is used to determine if two TextValue objects represent the same value.
     For example, if both have the same string stored in their value property, they would be considered equal.
      */
@@ -331,20 +288,6 @@ export class TextValue extends Value {
          */
     public override ToObject(): unknown {
         return this.value;
-    }
-
-    /*
-    The ToString() method string of the TextValue's value.
-    If the value is not null and not undefined it returns the string.
-    Otherwise, it returns "undefined".
-     */
-    public ToString(): string {
-        if (this.value != null) {
-            // Test that value is neither null nor undefined because "!=" is not strict.
-            return this.value;
-        } else {
-            return "undefined";
-        }
     }
 }
 
@@ -414,7 +357,7 @@ export class NumberValue extends Value {
      */
 
     public override ToObject(): object {
-        return this.value as unknown as object;
+        return this.value as Object;
     }
 
     /**
@@ -426,7 +369,7 @@ export class NumberValue extends Value {
      */
     public static ToNumber(v: Value): number | null {
         const nv = v as NumberValue;
-        return nv != null ? (nv.value as unknown as number) : null;
+        return nv != null ? nv.value : null;
     }
 
     /**
@@ -438,7 +381,7 @@ export class NumberValue extends Value {
 
     public static FromNumber(o: object): Value | null {
         if (o instanceof Number) {
-            return this.Make(o as unknown as number);
+            return this.Make(o as number);
         } else {
             return ErrorValue.numError;
         }
@@ -490,17 +433,6 @@ export abstract class ArrayValue extends Value {
     public override ToObject(): object {
         return this;
     }
-
-    public Index(deltaRow: number, deltaCol: number): Value {
-        const col: number = deltaCol - 1;
-        const row: number = deltaRow - 1;
-        if (0 <= col && col < this.Cols && 0 <= row && row < this.Rows) {
-            return [col, row] as unknown as Value;
-        } else {
-            return ErrorValue.refError;
-        }
-    }
-
     public abstract View(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value;
 
     public abstract Slice(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value;
@@ -528,33 +460,6 @@ export abstract class ArrayValue extends Value {
     private ToDoubleOrNaN(value: Value): number {
         return Number(value) || Number.NaN;
     }
-
-    public Apply(act: (val: Value) => void): void;
-
-    public Apply(act: (val: number) => void): void;
-
-    public Apply(act: ((val: number) => void) | ((val: Value) => void)): void {
-        for (let c = 0; c < this.Cols; c++) {
-            for (let r = 0; r < this.Rows; r++) {
-                const v: Value = this.Get(c, r);
-                if (v != null) {
-                    if (v instanceof ArrayValue) {
-                        v.Apply(act as (val: Value) => void);
-                    } else if (typeof act === "function") {
-                        if (act.length === 1) {
-                            const num = this.ToDoubleOrNaN(v);
-                            if (!isNaN(num)) {
-                                (act as (val: number) => void)(num);
-                            } else {
-                                (act as (val: Value) => void)(v);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     public static EqualsElements(arr1: ArrayValue, arr2: ArrayValue): boolean {
         if (arr1 == arr2) {
             return true;
@@ -635,7 +540,7 @@ export class ArrayView extends ArrayValue {
             if (cell != null) {
                 return cell.Eval(this.sheet, c, r)!;
             } else {
-                return null as unknown as Value;
+                return TextValue.VOID;
             }
         } else {
             return ErrorValue.naError;
@@ -666,21 +571,17 @@ export class ArrayView extends ArrayValue {
             for (let r = 0; r < this.rows; r++) {
                 const value: Value = new FullCellAddress(this.sheet, null, col0 + c, row0 + r) as unknown as Value;
                 // TODO: This does not make sense?
-                if (typeof value === "number") {
-                    (act as (val: number) => void)(value);
-                } else {
-                    (act as (val: Value) => void)(value);
-                }
+                (act as (val: Value) => void)(value);
             }
         }
     }
 
     Slice(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
-        return new ArrayView(ulCa.offset(this.ulCa), lrCa.offset(this.lrCa), this.sheet) as unknown as Value;
+        return new ArrayView(ulCa.offset(this.ulCa), lrCa.offset(this.lrCa), this.sheet) as Value;
     }
 
     View(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
-        return ArrayView.Make(ulCa.offset(this.ulCa), lrCa.offset(this.lrCa), this.sheet) as unknown as Value;
+        return ArrayView.Make(ulCa.offset(this.ulCa), lrCa.offset(this.lrCa), this.sheet) as Value;
     }
 }
 
@@ -721,7 +622,7 @@ export class ArrayExplicit extends ArrayValue {
     }
 
     Equals(v: Value): boolean {
-        return ArrayValue.EqualsElements(this, v as unknown as ArrayValue);
+        return ArrayValue.EqualsElements(this, v as ArrayValue);
     }
 
     override Get(col: number, row: number): Value {
@@ -741,6 +642,6 @@ export class ArrayExplicit extends ArrayValue {
     }
 
     View(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
-        return new ArrayExplicit(ulCa.offset(this.ulCellAddress), lrCa.offset(this.lrCellAddress), this.values) as unknown as Value;
+        return new ArrayExplicit(ulCa.offset(this.ulCellAddress), lrCa.offset(this.lrCellAddress), this.values) as Value;
     }
 }

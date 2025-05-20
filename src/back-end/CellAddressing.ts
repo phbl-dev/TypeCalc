@@ -508,7 +508,6 @@ export class SupportSet {
         this.ranges.push(range);
     }
 
-    //NOT SURE THIS WORKS, THE FOR-EACH LOOP IS NOT TRADITIONALLY DONE LIKE THIS
     forEachSupported(act: (sheet: Sheet, col: number, row: number) => void): void {
         for (const range of this.ranges) {
             range.forEachSupported(act);

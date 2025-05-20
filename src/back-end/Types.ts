@@ -1,4 +1,5 @@
 import type {FullCellAddress} from "./CellAddressing";
+import {CstNode, ICstVisitor, IToken} from "chevrotain";
 
 
 // Signals that a cyclic dependency is discovered during evaluation.
@@ -110,3 +111,189 @@ export class ValueCache<T, U> {
         return this.array[index];
     }
 }
+
+/**
+ * Interface representing a Concrete Syntax Tree (CST) node visitor.
+ * This interface is used to traverse and process various nodes within
+ * a CST by implementing methods corresponding to each type of node.
+ *
+ * @template IN - The input type passed to the visitor methods.
+ * @template OUT - The output type returned by the visitor methods.
+ */
+export interface ICstNodeVisitor<IN, OUT> extends ICstVisitor<IN, OUT> {
+    addOp(children: AddOpCstChildren, param?: IN): OUT;
+    logicalOp(children: LogicalOpCstChildren, param?: IN): OUT;
+    expression(children: ExpressionCstChildren, param?: IN): OUT;
+    logicalTerm(children: LogicalTermCstChildren, param?: IN): OUT;
+    factor(children: FactorCstChildren, param?: IN): OUT;
+    term(children: TermCstChildren, param?: IN): OUT;
+    mulOp(children: MulOpCstChildren, param?: IN): OUT;
+    powFactor(children: PowFactorCstChildren, param?: IN): OUT;
+    application(children: ApplicationCstChildren, param?: IN): OUT;
+    raref(children: RarefCstChildren, param?: IN): OUT;
+    exprs1(children: Exprs1CstChildren, param?: IN): OUT;
+    cellContents(children: CellContentsCstChildren, param?: IN): OUT;
+    number(children: NumberCstChildren, param?: IN): OUT;
+}
+
+
+export interface AddOpCstNode extends CstNode {
+    name: "addOp";
+    children: AddOpCstChildren;
+}
+
+export type AddOpCstChildren = {
+    Plus?: IToken[];
+    Minus?: IToken[];
+    Ampersand?: IToken[];
+};
+
+export interface LogicalOpCstNode extends CstNode {
+    name: "logicalOp";
+    children: LogicalOpCstChildren;
+}
+
+export type LogicalOpCstChildren = {
+    Equals?: IToken[];
+    NotEqual?: IToken[];
+    LessThan?: IToken[];
+    GreaterThan?: IToken[];
+    LessThanOrEqual?: IToken[];
+    GreaterThanOrEqual?: IToken[];
+};
+
+export interface ExpressionCstNode extends CstNode {
+    name: "expression";
+    children: ExpressionCstChildren;
+}
+
+export type ExpressionCstChildren = {
+    logicalTerm: (LogicalTermCstNode)[];
+    Operator?: LogicalOpCstNode[];
+};
+
+export interface LogicalTermCstNode extends CstNode {
+    name: "logicalTerm";
+    children: LogicalTermCstChildren;
+}
+
+export type LogicalTermCstChildren = {
+    term: (TermCstNode)[];
+    addOp?: AddOpCstNode[];
+};
+
+export interface FactorCstNode extends CstNode {
+    name: "factor";
+    children: FactorCstChildren;
+}
+
+export type FactorCstChildren = {
+    application?: ApplicationCstNode[];
+    Minus?: IToken[];
+    NEGATIVE?: NumberCstNode[];
+    SheetRef?: IToken[];
+    raref?: (RarefCstNode)[];
+    Colon?: IToken[];
+    LBracket?: IToken[];
+    ArrayElement?: (ExpressionCstNode)[];
+    Comma?: IToken[];
+    RBracket?: IToken[];
+    number?: NumberCstNode[];
+    TRUE?: IToken[];
+    FALSE?: IToken[];
+    StringLiteral?: IToken[];
+    LParen?: IToken[];
+    expression?: ExpressionCstNode[];
+    RParen?: IToken[];
+};
+
+export interface TermCstNode extends CstNode {
+    name: "term";
+    children: TermCstChildren;
+}
+
+export type TermCstChildren = {
+    powFactor: (PowFactorCstNode)[];
+    mulOp?: MulOpCstNode[];
+};
+
+export interface MulOpCstNode extends CstNode {
+    name: "mulOp";
+    children: MulOpCstChildren;
+}
+
+export type MulOpCstChildren = {
+    Multiply?: IToken[];
+    Divide?: IToken[];
+};
+
+export interface PowFactorCstNode extends CstNode {
+    name: "powFactor";
+    children: PowFactorCstChildren;
+}
+
+export type PowFactorCstChildren = {
+    factor: (FactorCstNode)[];
+    Power?: IToken[];
+};
+
+export interface ApplicationCstNode extends CstNode {
+    name: "application";
+    children: ApplicationCstChildren;
+}
+
+export type ApplicationCstChildren = {
+    Identifier: IToken[];
+    LParen: IToken[];
+    exprs1?: Exprs1CstNode[];
+    RParen: IToken[];
+};
+
+export interface RarefCstNode extends CstNode {
+    name: "raref";
+    children: RarefCstChildren;
+}
+
+export type RarefCstChildren = {
+    A1Ref?: IToken[];
+    XMLSSRARef11?: IToken[];
+    XMLSSRARef12?: IToken[];
+    XMLSSRARef13?: IToken[];
+    XMLSSRARef21?: IToken[];
+    XMLSSRARef22?: IToken[];
+    XMLSSRARef23?: IToken[];
+    XMLSSRARef31?: IToken[];
+    XMLSSRARef32?: IToken[];
+    XMLSSRARef33?: IToken[];
+};
+
+export interface Exprs1CstNode extends CstNode {
+    name: "exprs1";
+    children: Exprs1CstChildren;
+}
+
+export type Exprs1CstChildren = {
+    expression: (ExpressionCstNode)[];
+    Comma?: IToken[];
+    Semicolon?: IToken[];
+};
+export type CellContentsCstChildren = {
+    Equals?: IToken[];
+    expression?: ExpressionCstNode[];
+    QuoteCell?: IToken[];
+    Datetime?: IToken[];
+    StringLiteral?: IToken[];
+    number?: (NumberCstNode)[];
+    Minus?: IToken[];
+    TRUE?: IToken[];
+    FALSE?: IToken[];
+};
+
+export interface NumberCstNode extends CstNode {
+    name: "number";
+    children: NumberCstChildren;
+}
+
+export type NumberCstChildren = {
+    Number: IToken[];
+};
