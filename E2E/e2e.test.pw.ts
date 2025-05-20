@@ -308,6 +308,8 @@ test("Copy and cut multiple cells", async ({ page }) => {
 
   await page.keyboard.up("Control")
 
+  await page.keyboard.press("Enter")
+
 
   await expect(E8).toContainText('610');
 
@@ -367,6 +369,8 @@ test("Copy and paste multiple cells", async ({ page }) => {
 
   await page.keyboard.up("Control")
 
+
+  await page.keyboard.press("Enter")
 
   await expect(E8).toContainText('610');
 
