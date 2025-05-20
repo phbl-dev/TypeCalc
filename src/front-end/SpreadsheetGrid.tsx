@@ -82,6 +82,8 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
         height: window.innerHeight
     });
 
+
+
     useEffect(() => {
         const formulaBox = document.getElementById("formulaBox") as HTMLInputElement;
         const input = document.getElementById("cellIdInput") as HTMLInputElement;
