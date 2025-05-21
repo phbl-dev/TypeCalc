@@ -145,21 +145,21 @@ export class Workbook {
                 // Requires for all formulas f, f.state==Uptodate
                 // Stage (1): Mark formulas reachable from roots, f.state=Dirty
                 SupportArea.idempotentForeach = true;
-                this.volatileCells.forEach(fca => {
+                this.volatileCells.forEach((fca: FullCellAddress) => {
                     Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row); // When marking cells as "dirty" we mark them for recalculation.
                 });
-                this.editedCells.forEach(fca => {
+                this.editedCells.forEach((fca: FullCellAddress) => {
                     Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
                 })
 
                 // Stage (2): Evaluate Dirty formulas (and Dirty cells they depend on)
                 this.Clear("awaitsEvaluation");
                 SupportArea.idempotentForeach = true;
-                this.volatileCells.forEach(fca => {
+                this.volatileCells.forEach((fca: FullCellAddress) => {
                     Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
                 });
 
-                this.editedCells.forEach(fca => {
+                this.editedCells.forEach((fca: FullCellAddress) => {
                     Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
                 });
 
@@ -172,15 +172,15 @@ export class Workbook {
 
     /**
      */
-    public FullRecalculation() {
+    public FullRecalculation(): number {
         return this.TimeRecalculation(() => {
             this.UseSupportSets = false;
             this.ResetCellState();
             // For all formulas f, f.state==Dirty
             this.sheets.forEach(sheet => {
-                console.log("Full recalculation on sheet!");
                 sheet.RecalculateFull();
             })
+            this.Cyclic = null; // After one Full Recalculation have been made, set Cyclic back to null, so we don't do a full recalculation on all standard minimal recalculations.
         });
     }
 
