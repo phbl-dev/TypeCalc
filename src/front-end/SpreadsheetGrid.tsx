@@ -156,9 +156,7 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                             columnIndex: col,
                             rowIndex: row
                         });
-
-                        // Delay to ensure the cell renders first
-                        setTimeout(() => {
+                        setTimeout(() => { // Delay to ensure the cell renders first
                             const targetCell = getCell(cellID);
                             if (targetCell) {
                                 targetCell.focus();
@@ -283,7 +281,7 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                     rowCount={1}
                     rowHeight={(): number => colHeaderHeight}
                     width={width - rowHeaderWidth}
-                    overscanColumnCount={10}
+                    overscanColumnCount={5}
                     ref={colHeaderRef}
                 >
                     {ColumnHeader}
@@ -300,7 +298,7 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                     rowCount={rowCount}
                     rowHeight={(): number => rowHeight}
                     width={rowHeaderWidth}
-                    overscanRowCount={10}
+                    overscanRowCount={5}
                     ref={rowHeaderRef}
                 >
                     {RowHeader}
@@ -315,8 +313,8 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                         rowCount={rowCount}
                         rowHeight={(): number => rowHeight}
                         width={width - rowHeaderWidth}
-                        overscanColumnCount={10}
-                        overscanRowCount={10}
+                        overscanColumnCount={5}
+                        overscanRowCount={5}
                         ref={bodyRef}
                         onScroll={syncScroll}
                         onItemsRendered={({
