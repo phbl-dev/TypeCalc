@@ -154,9 +154,7 @@ export const VirtualizedGrid: React.FC<GridProps> = (({
                             columnIndex: col,
                             rowIndex: row
                         });
-
-                        // Delay to ensure the cell renders first
-                        setTimeout(() => {
+                        setTimeout(() => { // Delay to ensure the cell renders first
                             const targetCell = getCell(cellID);
                             if (targetCell) {
                                 targetCell.focus();

@@ -28,7 +28,7 @@ let shiftKeyDown = false
 export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style }: GridCellProps) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
     const [valueHolder, setValueHolder] = React.useState<string>("");
-    const [mySupports, setMySupports] = React.useState<string[]>([])
+    let mySupports: string[] = [];
     let initialValueRef = useRef<string>("");
 
     // Passes the cell ID to the 'Go to cell' input box as its value of the
@@ -94,21 +94,14 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                     targetRow - row,
                     targetCol - col
                 );
-
                 handleInput(targetRow, targetCol, nextFormula!);
             }
             else {
                 handleInput(targetRow, targetCol, content!);
-
             }
-
-
         }
         forceRefresh(range.startCol,range.startRow);
-
-
         AreaMarked = false;
-
     }
 
     /**
@@ -404,7 +397,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  console.log("this is the rawCellContent", rawCellContent)
                  updateFormulaBox(ID, rawCellContent);
 
-                 setMySupports(GetSupportsInViewPort(columnIndex,rowIndex)!)
+                 mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
 
                  if (!mySupports) {
                      return;
