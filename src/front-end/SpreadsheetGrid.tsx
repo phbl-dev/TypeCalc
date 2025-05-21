@@ -351,14 +351,12 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
             rowCount={rowCount}
             rowHeight={(): number => rowHeight}
             width={width - rowHeaderWidth}
+            onItemsRendered={ () => EvalCellsInViewport()}
             overscanColumnCount={5}
             overscanRowCount={5}
             ref={bodyRef}
-            onScroll={(): void => {
-              syncScroll;
-              EvalCellsInViewport();
-            }}
-          >
+              onScroll={syncScroll}
+              >
             {GridCell}
           </Grid>
         </div>

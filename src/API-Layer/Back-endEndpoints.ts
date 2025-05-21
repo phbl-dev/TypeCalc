@@ -113,23 +113,16 @@ export function EvalCellsInViewport(): void {
         let cells = Array.from(document.getElementById("gridBody")!.querySelectorAll('div.Cell[contenteditable="true"]:not(.hide)'));
         for (let col: number = 0; col <= cells.length; col++) {
             if(cells[col]) {               
-                let CellIDSplit = cells[col].id!.match(/([a-zA-Z]+)([0-9]+)/)
-            if (!CellIDSplit) {
-                 continue;
-                }
                 const cellHTML = cells[col];
                 if (cellHTML != null) {
                     
-                    const cell = sheet.Get(lettersToNumber(CellIDSplit[1]) - 1, parseInt(CellIDSplit[2]) -1);
+                    const cell = sheet.Get(new A1RefCellAddress(cells[col].id));
                     if (cells[col].id == WorkbookManager.getActiveCell() && !(cell instanceof ArrayFormula)) {
                         continue;
                     }
                     if (cell != null) {
                         // No recalculation needed if the cell is up to date
                         let cellEval = cell.Eval(sheet, 0, 0);
-
-                        
-
                         if (cell instanceof Formula) {
                             cellHTML.innerHTML = cell.GetText()!;
                         }
