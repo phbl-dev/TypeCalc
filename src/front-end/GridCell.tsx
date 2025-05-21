@@ -161,7 +161,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
             WorkbookManager.getActiveSheet()?.RemoveCell(cellInfo.col, cellInfo.row);
         }
-        EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+        EvalCellsInViewport();
     }
 
 // Allows us to navigate the cells using the arrow and Enter keys
@@ -189,14 +189,14 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
 
                     WorkbookManager.getActiveSheet()?.undo()
 
-                    EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    EvalCellsInViewport();
                     break
 
                 // Redo functionality:
                 case "y":
                     event.preventDefault()
                     WorkbookManager.getActiveSheet()?.redo()
-                    EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    EvalCellsInViewport();
                     break
 
                 case "c":
@@ -391,7 +391,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  // Save the initial value on focus and display it
                  let rawCellContent:string | null = GetRawCellContent(ID);
                  WorkbookManager.setActiveCell(ID);
-                 EvalCellsInViewport(columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
+                 EvalCellsInViewport();
                  if (!rawCellContent) {
                      console.debug("[SpreadsheetGrid.tsx Cell] Cell Content not updated");
                      updateFormulaBox(ID, rawCellContent);
