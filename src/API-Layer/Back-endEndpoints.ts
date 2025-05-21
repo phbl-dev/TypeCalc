@@ -1,8 +1,8 @@
 import {WorkbookManager} from "./WorkbookManager.ts";
 import {Sheet} from "../back-end/Sheet.ts";
-import {numberToLetters} from "../front-end/HelperFunctions.tsx";
-import {ArrayExplicit, ArrayValue, ErrorValue} from "../back-end/Values.ts";
-import {A1RefCellAddress, FullCellAddress, SuperCellAddress, SupportCell} from "../back-end/CellAddressing.ts";
+import {lettersToNumber, numberToLetters} from "../front-end/HelperFunctions.tsx";
+import {ArrayExplicit, ErrorValue} from "../back-end/Values.ts";
+import {A1RefCellAddress, FullCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayFormula, Cell, Formula} from "../back-end/Cells.ts";
 import {Workbook} from "../back-end/Workbook.ts";
 
@@ -12,6 +12,7 @@ import {Workbook} from "../back-end/Workbook.ts";
  * @param content
  * @constructor
  */
+
 export function ParseToActiveCell(content: string): void {
     const a1Address: string | null = WorkbookManager.getActiveCell();
     if (!a1Address) {
@@ -100,17 +101,38 @@ export function GetRawCellContent(cellID: string): string | null {
  */
 export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number): void {
     const wb = WorkbookManager.getWorkbook();
+    const sheet: Sheet = WorkbookManager.getActiveSheet()!; //This needs to be updated
+
     if (!wb) {
         console.debug("[ShowWindowInGUI] No workbook found!");
         return;
     }
     wb.Recalculate();
 
-    const startCol: number = leftCornerCol;
-    const endCol: number = rightCornerCol;
-    const startRow: number = topCornerRow;
-    const endRow: number = bottomCornerRow;
-    const sheet: Sheet = WorkbookManager.getActiveSheet()!; //This needs to be updated
+    let x = document.elementsFromPoint((window.innerWidth) / 2, (window.innerHeight) / 2)[0];
+    let z = x.id.match(/([a-zA-Z]+)([0-9]+)/)!
+    let j = document.getElementById("gridBody")?.querySelector('div.Cell[contenteditable="true"]:nth-child(1)')?.id
+    let m = j!.match(/([a-zA-Z]+)([0-9]+)/)!
+
+
+
+    let startCol
+    let endCol
+    let startRow
+    let endRow
+    if (z && m) {
+            startCol = lettersToNumber(z[1]) - (lettersToNumber(z[1]) - lettersToNumber(m[1]))
+            endCol = lettersToNumber(z[1]) + (lettersToNumber(z[1]) - lettersToNumber(m[1]));
+            startRow = parseInt(z[2]) - (parseInt(z[2]) - parseInt(m[2]));
+            endRow = parseInt(z[2]) + (parseInt(z[2]) - parseInt(m[2]));
+
+    } else {
+        // The use of HTML tags are not 100% reliable, so we need to also introduce this else case.
+        startCol = leftCornerCol;
+        endCol = rightCornerCol;
+        startRow = topCornerRow;
+        endRow = bottomCornerRow;
+    }
     if (sheet) {
         for (let col: number = startCol; col <= endCol; col++) {
             for (let row: number = startRow; row <= endRow; row++) {
@@ -118,7 +140,7 @@ export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: numbe
                 const cellHTML = document.getElementById(colChar + row);
                 if (cellHTML != null) {
                     const cell = sheet.Get(col - 1, row - 1);
-                    if (colChar + row == WorkbookManager.getActiveCell() && !(cell instanceof ArrayFormula)){
+                    if (colChar + row == WorkbookManager.getActiveCell() && !(cell instanceof ArrayFormula)) {
                         continue;
                     }
                     if (cell != null) {
@@ -144,8 +166,8 @@ export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: numbe
             }
         }
     }
-}
 
+}
 /**
  * Returns the supports in the viewport
  * Uses the ForEachReferred method to iterate through the support set of the cell.
@@ -193,45 +215,4 @@ export function HandleArrayResult(columnIndex:number,rowIndex:number):boolean{
 export  function HandleArrayFormula(columnIndex:number,rowIndex:number):boolean{
     const checkCell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
     return !(checkCell instanceof ArrayFormula);
-}
-
-export function EvalCellsInViewportIncludingActiveCell(leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number): void {
-    const wb = WorkbookManager.getWorkbook();
-    if (!wb) {
-        console.debug("[ShowWindowInGUI] No workbook found!");
-        return;
-    }
-    wb.Recalculate();
-
-    const startCol: number = leftCornerCol;
-    const endCol: number = rightCornerCol;
-    const startRow: number = topCornerRow;
-    const endRow: number = bottomCornerRow;
-    const sheet: Sheet = WorkbookManager.getActiveSheet()!; //This needs to be updated
-    if (sheet) {
-        for (let col: number = startCol; col <= endCol; col++) {
-            for (let row: number = startRow; row <= endRow; row++) {
-                const colChar: string = numberToLetters(col);
-                const cellHTML = document.getElementById(colChar + row);
-                if (cellHTML != null) {
-                    const cell = sheet.Get(col - 1, row - 1);
-                    if (cell != null) {
-
-                        // No recalculation needed if the cell is up to date
-                        let cellEval = cell.Eval(sheet, 0, 0);
-                        if (cellEval instanceof ErrorValue) {
-                            cellHTML.innerText = cellEval.message;
-                        } else if (cellEval != undefined) {
-                            cellHTML.innerText = cellEval.ToObject() as string;
-                        } else {
-                            cellHTML.innerText = cell.GetText()!;
-                        }
-                    } else {
-                        // Important: Clear the cell content when the cell is null
-                        cellHTML.innerText = "";
-                    }
-                }
-            }
-        }
-    }
 }
