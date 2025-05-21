@@ -28,7 +28,6 @@ let shiftKeyDown = false
 export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style }: GridCellProps) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
     const [valueHolder, setValueHolder] = React.useState<string>("");
-    let mySupports: string[] = [];
     let initialValueRef = useRef<string>("");
 
     // Passes the cell ID to the 'Go to cell' input box as its value of the
@@ -38,6 +37,14 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             cellIdDisplay.value = ID;
         }
     }
+
+    const clearAllSupportCells = () => {
+        const allSupportCells = document.querySelectorAll('.support-cell');
+        console.log(allSupportCells)
+        allSupportCells.forEach(cell => {
+            cell.classList.remove('support-cell');
+        });
+    };
 
     /**
      * Clears the visual highlight of all cells in the range.
@@ -397,7 +404,11 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  console.log("this is the rawCellContent", rawCellContent)
                  updateFormulaBox(ID, rawCellContent);
 
-                 mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
+
+                 clearAllSupportCells()
+
+
+                let mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
 
                  if (!mySupports) {
                      return;
@@ -438,14 +449,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                      console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
-                 if (mySupports) {
-                     for (let i = 0; i < mySupports.length; i++){
-                         let supportingCell = document.getElementById(mySupports[i]);
-                         if (supportingCell) {
-                             supportingCell.classList.remove("support-cell");
-                         }
-                     }
-                 }
+                 clearAllSupportCells()
              }}
 
             //Update formula box alongside cell input, also show caret (text cursor) once writing starts
