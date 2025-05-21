@@ -1,8 +1,8 @@
-import  { Sheet } from "./Sheet";
+import {Sheet} from "./Sheet";
 import {ArrayExplicit, ArrayView, BooleanValue, ErrorValue, NumberValue, TextValue, Value} from "./Values.ts";
-import { Adjusted, FullCellAddress, Interval, SuperCellAddress, SuperRARef } from "./CellAddressing";
+import {Adjusted, FullCellAddress, Interval, SuperCellAddress, SuperRARef} from "./CellAddressing";
 import {Cell} from "./Cells";
-import { type Formats, ImpossibleException } from "./Types";
+import {type Formats, ImpossibleException} from "./Types";
 import * as formulajs from '@formulajs/formulajs'
 // Importing formulajs
 
@@ -184,10 +184,10 @@ class ValueConst extends Const {
     }
 }
 
-export class Error extends Const {
+export class ErrorConst extends Const {
     public readonly value: ErrorValue;
     private readonly error: string;
-    public static readonly refError: Error = new Error(ErrorValue.refError);
+    public static readonly refError: ErrorConst = new ErrorConst(ErrorValue.refError);
 
     constructor(msg: string | ErrorValue) {
         super();
@@ -235,7 +235,7 @@ export class ExprArray extends Expr {
 
     Eval(sheet: Sheet, col: number, row: number): Value {
         console.log("this is where things go wrong")
-        throw new Error("Not implemented"); // this is most likely a problem
+        throw new ErrorConst("Not implemented"); // this is most likely a problem
     }
 
     Show(col: number, row: number, ctxpre: number, fo: Formats): string {
@@ -244,18 +244,18 @@ export class ExprArray extends Expr {
 
 
     CopyTo(col: number, row: number): Expr {
-        throw new Error("CopyTo Not implemented");
+        throw new ErrorConst("CopyTo Not implemented");
     }
 
     DependsOn(here: FullCellAddress, dependsOn: (fca: FullCellAddress) => void): void {
     }
 
     InsertRowCols(modSheet: Sheet, thisSheet: boolean, R: number, N: number, r: number, doRows: boolean): Adjusted<Expr> {
-        throw new Error("InsertRowCols Not implemented");
+        throw new ErrorConst("InsertRowCols Not implemented");
     }
 
     Move(deltaCol: number, deltaRow: number): Expr {
-        throw new Error("Move Not implemented");
+        throw new ErrorConst("Move Not implemented");
     }
 
     VisitRefs(refSet: RefSet, refAct: (cellRef: CellRef) => void, areaAct: (cellArea: CellArea) => void): void {
@@ -272,8 +272,12 @@ export class ExprArray extends Expr {
 /**
  *
  */
-type functionType = (...args: (string | number | ErrorValue | number[] | string[])[])
+
+type functionType = (...args: (string | number | boolean | ErrorValue | null | nestedArgs)[])
     => string | number | boolean | ErrorValue | Date | number[];
+
+type nestedArgs = (string | number | boolean | ErrorValue | null | nestedArgs)[]
+
 
 /**
  * A FunCall expression is an operator application such as 1+$A$4 or a function
@@ -370,12 +374,12 @@ export class FunCall extends Expr {
 
         const func: functionType | null = FunCall.getFunctionByName(name);
         if (func === null) {
-            return new Error(ErrorValue.nameError); // MakeUnknown was called here previously.
+            return new ErrorConst(ErrorValue.nameError); // MakeUnknown was called here previously.
         }
 
         for (let i = 0; i < es.length; i++) {
             if (es[i] === null || es[i] === undefined) {
-                es[i] = new Error(ErrorValue.valueError);
+                es[i] = new ErrorConst(ErrorValue.valueError);
             }
         }
         return new FunCall(func, es);
@@ -541,21 +545,9 @@ export class FunCall extends Expr {
         }
 
 
-        // Flatten nested arrays consistently before passing to function.
-        // We need to do this because the recursive call in getExprValues()
-        // creates nested array arguments which cannot be handled by some
-        // Formula.js functions such as WORKDAY which takes string array
-        // arguments.
-        const flattenedArgs = args.map(arg => {
-            if (Array.isArray(arg) && arg.length === 1 && Array.isArray(arg[0])) {
-                return arg[0]; // Flatten exactly one level if needed
-            }
-            return arg;
-        });
-
         // Then we call the function (tied to this instance of FunCall) on each element in the args array
         // and store the result in a variable called 'result':
-        const result = this.function(...flattenedArgs as (string | number | ErrorValue | number[] | string[])[]);
+        const result = this.function(...args);
 
         // If the return type is Date:
         if (result instanceof Date) {
@@ -616,14 +608,14 @@ export class FunCall extends Expr {
      * @public
      */
     public static getExprValues(sheet: Sheet, col: number, row: number, es: Expr[]):
-        (string | number | ErrorValue | number[] | string[])[] {
+        (string | number | boolean | ErrorValue | null | nestedArgs)[] {
 
-        const args = es.map(expr => {
+        return es.map(expr => {
 
-            if (expr instanceof ExprArray) { // E.g. [2,4] in GUI
+            if (expr instanceof ExprArray) { // E.g. [2,4] in formula cell in GUI
                 return FunCall.getExprValues(sheet, col, row, expr.GetExprArray());
             }
-            const value = expr.Eval(sheet, col, row);
+            const value: Value = expr.Eval(sheet, col, row);
 
             if (value instanceof ErrorValue) {
                 return value;
@@ -638,18 +630,17 @@ export class FunCall extends Expr {
             if (value instanceof TextValue) {
                 return TextValue.ToString(value)
             }
-            if (value instanceof ArrayView) { // E.g. A1:C3 in GUI
-                const result = [];
+            if (value instanceof ArrayView) { // E.g. A1:C3 in formula cell in GUI
+                const result: (number | null | ErrorValue)[] = [];
 
-                for (let r = 0; r < value.Rows; r++) {
+                for (let r: number = 0; r < value.Rows; r++) {
 
-                    for (let c = 0; c < value.Cols; c++) {
+                    for (let c: number = 0; c < value.Cols; c++) {
 
-                        const cellValue = value.Get(c, r);
+                        const cellValue: Value = value.Get(c, r);
                         if (cellValue instanceof NumberValue) {
                             result.push(NumberValue.ToNumber(cellValue));
-                        }
-                        else if (cellValue instanceof ErrorValue) {
+                        } else if (cellValue instanceof ErrorValue) {
                             result.push(cellValue);
                         }
                     }
@@ -658,7 +649,6 @@ export class FunCall extends Expr {
             }
             return null;
         });
-        return args as (string | number | ErrorValue | number[] | string[])[];
     }
 
     public override Move(deltaCol: number, deltaRow: number): Expr {
@@ -829,7 +819,7 @@ export class CellRef extends Expr {
         if (this.raref.validAt(col, row)) {
             return this;
         }
-        return Error.refError;
+        return ErrorConst.refError;
     }
 
     public override InsertRowCols(modSheet: Sheet, thisSheet: boolean, R: number, N: number, r: number, doRows: boolean): Adjusted<Expr> {
@@ -978,7 +968,7 @@ export class CellArea extends Expr {
         if(this.ul.validAt(col,row) && this.lr.validAt(col,row)) {
             return this
         } else {
-            return Error.refError
+            return ErrorConst.refError
         }
     }
 
