@@ -103,20 +103,36 @@ export function EvalCellsInViewport(): void {
         console.debug("[ShowWindowInGUI] No workbook found!");
         return;
     }
-    wb.Recalculate();
+    //wb.Recalculate();
     if (sheet) {
 
         let cells = Array.from(document.getElementById("gridBody")!.querySelectorAll('div.Cell[contenteditable="true"]:not(.hide)'));
+        //console.log(cells.length)
         for (let col: number = 0; col <= cells.length; col++) {
             if(cells[col]) {               
                 const cellHTML = cells[col];
                 if (cellHTML != null) {
-                    
+
                     const cell = sheet.Get(new A1RefCellAddress(cells[col].id));
                     if (cells[col].id == WorkbookManager.getActiveCell() && !(cell instanceof ArrayFormula)) {
                         continue;
                     }
                     if (cell != null) {
+                        // No recalculation needed if the cell is up to date
+                        if (cell instanceof Formula) {
+                            const cellVal = cell.getValue();
+                            if (cellVal instanceof ErrorValue) {
+                                cellHTML.innerHTML = cellVal.message;
+                                continue;
+                            }
+                            else if (cellVal == undefined){
+                                cellHTML.innerHTML = cell.GetText()!;
+                                continue;
+                            }
+                            cellHTML.innerHTML = cell.getValue()?.ToObject() as string;
+                            continue;
+                            //cellHTML.innerText = cell.GetText()!;
+                        }
                         // No recalculation needed if the cell is up to date
                         let cellEval = cell.Eval(sheet, 0, 0);
                         if (cell instanceof Formula) {
@@ -129,12 +145,9 @@ export function EvalCellsInViewport(): void {
                         } else {
                             cellHTML.innerHTML = cell.GetText()!;
                         }
-                    } else {
-                        // Important: Clear the cell content when the cell is null
-                        cellHTML.innerHTML = "";
                     }
                 }
-            
+
         }
     }
     }
