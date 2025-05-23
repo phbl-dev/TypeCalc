@@ -121,15 +121,12 @@ export class Sheet {
                     this.history[i].col === this.history[this.history.length - this.undoCount].col ) {
 
                     // Then set the cell to that previous state
-
-
-
-                    this.SetCell(this.history[i].cell,this.history[i].col, this.history[i].row)
+                    this.cells.Set(this.history[i].col, this.history[i].row, this.history[i].cell)
                     return
                 }
             }
             // Else, set the cell to null because then it should just be blank
-            this.SetCell(new BlankCell(), this.history[this.historyPointer].col, this.history[this.historyPointer].row)
+            this.cells.Set(this.history[this.historyPointer].col, this.history[this.historyPointer].row, null)
         }
     }
 
@@ -145,7 +142,7 @@ export class Sheet {
             // We get index that undoCount is at in relation to the history length because we
             // want to redo and get update the cell in that spot.
             let i = this.history.length - this.undoCount;
-            this.SetCell(this.history[i].cell,this.history[i].col, this.history[i].row)
+            this.cells.Set(this.history[i].col, this.history[i].row, this.history[i].cell)
 
             // We have moved one step forward in the history array so we increase the history pointer by 1:
             this.historyPointer++;
