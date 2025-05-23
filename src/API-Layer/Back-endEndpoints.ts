@@ -139,6 +139,11 @@ export function EvalCellsInViewport(): void {
     }
     }
 
+    if (document.getElementById(WorkbookManager.getActiveCell()!)) {
+        document.getElementById(WorkbookManager.getActiveCell()!)!.focus();
+
+    }
+
 }
 /**
  * Returns the supports in the viewport

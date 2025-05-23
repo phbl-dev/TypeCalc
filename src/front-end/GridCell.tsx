@@ -401,11 +401,10 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  setValueHolder((e.target as HTMLElement).innerText.trim());
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
-                 console.log("this is the rawCellContent", rawCellContent)
                  updateFormulaBox(ID, rawCellContent);
 
 
-                 clearAllSupportCells()
+                 //clearAllSupportCells()
 
 
                 let mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
@@ -415,7 +414,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  }
                  for (let i = 0; i < mySupports.length; i++){
                      let supportingCell = document.getElementById(mySupports[i]);
-                     if (supportingCell) {
+                     if (supportingCell && !supportingCell.classList.contains("support-cell") ) {
                          supportingCell.classList.add("support-cell");
                      }
                  }
