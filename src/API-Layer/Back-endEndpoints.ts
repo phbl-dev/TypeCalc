@@ -93,10 +93,6 @@ export function GetRawCellContent(cellID: string): string | null {
 /**
  * Evaluates all cells in the viewport and updates the front-end.
  * This method is called every time the user scrolls the viewport.
- * @param leftCornerCol
- * @param rightCornerCol
- * @param topCornerRow
- * @param bottomCornerRow
  * @constructor
  */
 export function EvalCellsInViewport(): void {
