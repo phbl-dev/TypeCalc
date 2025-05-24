@@ -93,13 +93,9 @@ export function GetRawCellContent(cellID: string): string | null {
 /**
  * Evaluates all cells in the viewport and updates the front-end.
  * This method is called every time the user scrolls the viewport.
- * @param leftCornerCol
- * @param rightCornerCol
- * @param topCornerRow
- * @param bottomCornerRow
  * @constructor
  */
-export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: number, topCornerRow: number, bottomCornerRow: number): void {
+export function EvalCellsInViewport(): void {
     const wb = WorkbookManager.getWorkbook();
     const sheet: Sheet = WorkbookManager.getActiveSheet()!; //This needs to be updated
 
@@ -107,64 +103,58 @@ export function EvalCellsInViewport(leftCornerCol: number, rightCornerCol: numbe
         console.debug("[ShowWindowInGUI] No workbook found!");
         return;
     }
-    wb.Recalculate();
-
-    let x = document.elementsFromPoint((window.innerWidth) / 2, (window.innerHeight) / 2)[0];
-    let z = x.id.match(/([a-zA-Z]+)([0-9]+)/)!
-    let j = document.getElementById("gridBody")?.querySelector('div.Cell[contenteditable="true"]:nth-child(1)')?.id
-    let m = j!.match(/([a-zA-Z]+)([0-9]+)/)!
-
-
-
-    let startCol
-    let endCol
-    let startRow
-    let endRow
-    if (z && m) {
-            startCol = lettersToNumber(z[1]) - (lettersToNumber(z[1]) - lettersToNumber(m[1]))
-            endCol = lettersToNumber(z[1]) + (lettersToNumber(z[1]) - lettersToNumber(m[1]));
-            startRow = parseInt(z[2]) - (parseInt(z[2]) - parseInt(m[2]));
-            endRow = parseInt(z[2]) + (parseInt(z[2]) - parseInt(m[2]));
-
-    } else {
-        // The use of HTML tags are not 100% reliable, so we need to also introduce this else case.
-        startCol = leftCornerCol;
-        endCol = rightCornerCol;
-        startRow = topCornerRow;
-        endRow = bottomCornerRow;
-    }
+    //wb.Recalculate();
     if (sheet) {
-        for (let col: number = startCol; col <= endCol; col++) {
-            for (let row: number = startRow; row <= endRow; row++) {
-                const colChar: string = numberToLetters(col);
-                const cellHTML = document.getElementById(colChar + row);
+
+        let cells = Array.from(document.getElementById("gridBody")!.querySelectorAll('div.Cell[contenteditable="true"]:not(.hide)'));
+        //console.log(cells.length)
+        for (let col: number = 0; col <= cells.length; col++) {
+            if(cells[col]) {               
+                const cellHTML = cells[col];
                 if (cellHTML != null) {
-                    const cell = sheet.Get(col - 1, row - 1);
-                    if (colChar + row == WorkbookManager.getActiveCell() && !(cell instanceof ArrayFormula)) {
+
+                    const cell = sheet.Get(new A1RefCellAddress(cells[col].id));
+                    if (cells[col].id == WorkbookManager.getActiveCell() && !(cell instanceof ArrayFormula)) {
                         continue;
                     }
                     if (cell != null) {
                         // No recalculation needed if the cell is up to date
-                        let cellEval = cell.Eval(sheet, 0, 0);
-
                         if (cell instanceof Formula) {
-                            cellHTML.innerText = cell.GetText()!;
+                            const cellVal = cell.getValue();
+                            if (cellVal instanceof ErrorValue) {
+                                cellHTML.innerHTML = cellVal.message;
+                                continue;
+                            }
+                            else if (cellVal == undefined){
+                                cellHTML.innerHTML = cell.GetText()!;
+                                continue;
+                            }
+                            cellHTML.innerHTML = cell.getValue()?.ToObject() as string;
+                            continue;
+                            //cellHTML.innerText = cell.GetText()!;
                         }
-
+                        // No recalculation needed if the cell is up to date
+                        let cellEval = cell.Eval(sheet, 0, 0);
+                        if (cell instanceof Formula) {
+                            cellHTML.innerHTML = cell.GetText()!;
+                        }
                         if (cellEval instanceof ErrorValue) {
-                            cellHTML.innerText = cellEval.message;
+                            cellHTML.innerHTML = cellEval.message;
                         } else if (cellEval != undefined) {
-                            cellHTML.innerText = cellEval.ToObject() as string;
+                            cellHTML.innerHTML = cellEval.ToObject() as string;
                         } else {
-                            cellHTML.innerText = cell.GetText()!;
+                            cellHTML.innerHTML = cell.GetText()!;
                         }
-                    } else {
-                        // Important: Clear the cell content when the cell is null
-                        cellHTML.innerText = "";
                     }
                 }
-            }
+
         }
+    }
+    }
+
+    if (document.getElementById(WorkbookManager.getActiveCell()!)) {
+        document.getElementById(WorkbookManager.getActiveCell()!)!.focus();
+
     }
 
 }

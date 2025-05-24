@@ -522,6 +522,10 @@ export class Formula extends Cell {
         }
     }
 
+    public getValue(): Value | null {
+        return this.v
+    }
+
     public getState(): CellState {
         return this.state;
     }
