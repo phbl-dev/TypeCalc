@@ -179,7 +179,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 // Undo functionality:
                 case "z":
                     event.preventDefault()
-
+                    console.log("Length of editedCells: ", WorkbookManager.getWorkbook().GetEditedCells().length)
                     WorkbookManager.getActiveSheet()?.undo()
 
                     EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);

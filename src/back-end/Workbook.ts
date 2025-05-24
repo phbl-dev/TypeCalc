@@ -202,12 +202,7 @@ export class Workbook {
         try {
             act(); // This runs Recalculate()
         } catch (exn) {
-            this.ResetCellState(); // This might be throwing an error
-            if (exn instanceof CyclicException) {
-                this.Cyclic = exn;
-            } else {
-                console.log("BAD:", exn);
-            }
+            console.log("BAD:", exn);
         }
 
         const swStop = performance.now();

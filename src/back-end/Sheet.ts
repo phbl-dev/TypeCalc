@@ -533,8 +533,6 @@ export class Sheet {
     }
 
     /**
-     * //TODO: NO CLUE WHAT THIS DOES - CHECK FOR RELEVANCE
-     * @constructor
      */
     public AddToSupportSets(): void {
         const sheetCols = this.Cols,
