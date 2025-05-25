@@ -126,7 +126,7 @@ export class Sheet {
                 }
             }
             // Else, set the cell to null because then it should just be blank
-            this.cells.Set(this.history[this.historyPointer].col, this.history[this.historyPointer].row, null)
+            this.cells.Set(this.history[this.historyPointer].col, this.history[this.historyPointer].row, new BlankCell())
         }
     }
 
@@ -530,8 +530,6 @@ export class Sheet {
     }
 
     /**
-     * //TODO: NO CLUE WHAT THIS DOES - CHECK FOR RELEVANCE
-     * @constructor
      */
     public AddToSupportSets(): void {
         const sheetCols = this.Cols,

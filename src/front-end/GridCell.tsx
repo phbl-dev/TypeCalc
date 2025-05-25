@@ -184,7 +184,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 // Undo functionality:
                 case "z":
                     event.preventDefault()
-
                     WorkbookManager.getActiveSheet()?.undo()
 
                     EvalCellsInViewport();
