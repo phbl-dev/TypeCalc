@@ -53,96 +53,52 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
             if(newColNum <= 0) {
                 return
             }
+            console.log(`Values inside adjustFormula: ${colNum}, ${newColNum}, ${newColumn}`)
         }
 
         return colAbs + newColumn + rowAbs + newRow;
     });
 }
 
+/**
+ * The CellInfo type is used to store information about a cell.
+ * It is used to store the cell's row, column, content, relative row and relative column.
+ */
+type CellInfo = {
+    row: number;
+    col: number;
+    cell: BackendCell;
+    content: string;
+    relRow: number;
+    relCol: number;
+};
 
-// The following 5 functions are for styling the cell and its contents.
-// They are connected to the appropriate buttons in the header.
-export function makeBold() {
-    let cellID = WorkbookManager.getActiveCell();
-    if (!cellID) { return null; }
 
-    let cell = document.getElementById(cellID);
-    let button = document.getElementById("bold");
-    if (!cell || !button) { return null; }
+/**
+ * Read area finds alls cells in the area and returns an array of CellInfo objects.
+ * @param startRow
+ * @param endRow
+ * @param startCol
+ * @param endCol
+ * @constructor
+ */
+export function ReadArea(startRow: number, endRow: number, startCol: number, endCol: number) {
+    let AreaArray: CellInfo[] = [];
 
-    if (cell.style.fontWeight === "bold") {
-        cell.style.fontWeight = "normal";
-        button.style.outline = "none";
+    for (let i = startRow; i <= endRow; i++) {
+        for (let j = startCol; j <= endCol; j++) {
+            const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
+            if (cell) {
+                AreaArray.push({
+                    row: i,
+                    col: j,
+                    cell: cell,
+                    content: cell.GetText()!,
+                    relRow: i - startRow,
+                    relCol: j - startCol
+                });
+            }
+        }
     }
-    else {
-        cell.style.fontWeight = "bold";
-        button.style.outline = "2px solid white";
-    }
-}
-
-// The following 5 functions are for styling the cell and its contents.
-// They are connected to the appropriate buttons in the header.
-export function makeItalic() {
-    let cellID = WorkbookManager.getActiveCell();
-    if (!cellID) { return null; }
-
-    let cell = document.getElementById(cellID);
-    let button = document.getElementById("italic");
-    if (!cell || !button) { return null; }
-
-    if (cell.style.fontStyle === "italic") {
-        cell.style.fontStyle = "normal";
-        button.style.outline = "none";
-    }
-    else {
-        cell.style.fontStyle = "italic";
-        button.style.outline = "2px solid white";
-    }
-}
-// The following 5 functions are for styling the cell and its contents.
-// They are connected to the appropriate buttons in the header.
-export function makeUnderlined() {
-    let cellID = WorkbookManager.getActiveCell();
-    if (!cellID) { return null; }
-
-    let cell = document.getElementById(cellID);
-    let button = document.getElementById("underline");
-    if (!cell || !button) { return null; }
-
-    if (cell.style.textDecoration === "underline") {
-        cell.style.textDecoration = "none";
-        button.style.outline = "none";
-    }
-    else {
-        cell.style.textDecoration = "underline";
-        button.style.outline = "2px solid white";
-    }
-}
-// The following 5 functions are for styling the cell and its contents.
-// They are connected to the appropriate buttons in the header.
-export function setCellColor() {
-    let cellID = WorkbookManager.getActiveCell();
-    if (!cellID) { return null; }
-
-    let cell = document.getElementById(cellID);
-    const colorPicker = document.getElementById("cellColorPicker") as HTMLInputElement;
-    if (!cell || !colorPicker) { return null; }
-
-    if(colorPicker.value) {
-        cell.style.backgroundColor = colorPicker.value;
-    }
-}
-// The following 5 functions are for styling the cell and its contents.
-// They are connected to the appropriate buttons in the header.
-export function setTextColor() {
-    let cellID = WorkbookManager.getActiveCell();
-    if (!cellID) { return null; }
-
-    let cell = document.getElementById(cellID);
-    const colorPicker = document.getElementById("textColorPicker") as HTMLInputElement;
-    if (!cell || !colorPicker) { return null; }
-
-    if(colorPicker.value) {
-        cell.style.color = colorPicker.value;
-    }
+    return AreaArray;
 }

@@ -21,7 +21,7 @@ interface SheetSelectorProps {
  * @constructor
  */
 // @ts-ignore
-export const SheetSelector: React.FC<SheetSelectorProps> = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
+export const SheetFooter: React.FC<SheetSelectorProps> = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
     return (
         <footer style={{ display: 'flex', gap: '1px'}}>
             {sheetNames.map((name:any) => (

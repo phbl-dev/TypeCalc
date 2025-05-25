@@ -402,7 +402,6 @@ export class NumberValue extends Value {
     public ToString(): string {
         return this.value.toString();
     }
-    // TODO: Only used in testing, perhaps not relevant?
     public static FromBoolean(o: object): Value | null {
         if (o instanceof Boolean) {
             return o.valueOf() ? this.ONE : this.ZERO;

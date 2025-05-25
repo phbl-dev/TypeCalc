@@ -9,33 +9,7 @@
   </head>
 
   <body>
-    <header>
-      <button class="menuButton" type = "reset" id = "reset" onclick = "localStorage.clear(); location.reload()">Clear</button> <!-- Clear's the local storage and reloads the page -->
-      <div class="dropdown">
-        <button class="dropbtn">Export</button>
-        <div class="dropdown-content">
-          <button class="dropdownOption" id="xmlExport">XML</button>
-          <button class="dropdownOption" id="csvExport">CSV</button>
-        </div>
-      </div>
-
-      <button class="menuButton" type = "button" id = "jumpToCell">Go to</button>
-      <label for="cellIdInput"></label><input class="menuTextField" type = "text" id = "cellIdInput">
-      <button class="styleButton" type = "button" id = "bold">B</button>
-      <button class="styleButton" type = "button" id = "italic">I</button>
-      <button class="styleButton" type = "button" id = "underline">U</button>
-      <div id="cellColor">
-        <label for="cellColorPicker" class="colorLabel">Cell</label>
-        <input class="color" type="color" id = "cellColorPicker" value="#000000">
-      </div>
-      <div id="textColor">
-        <label for="textColorPicker" class="colorLabel">Text</label>
-        <input class="color" type="color" id = "textColorPicker" value="#000000">
-      </div>
-      <label for="formulaBox"></label><input class="formulaBox" type = "text" id = "formulaBox">
-      <h4 contenteditable="true" id="documentTitle">Sheet1</h4>
-    </header>
     <div id="root"><!--Table goes here--></div>
-    <!-- Footer created separately by SheetSelector in virtualizedGrid -->
+    <!-- Footer created separately by SheetFooter in virtualizedGrid -->
   </body>
 </html>

@@ -1,6 +1,13 @@
+import React, { useRef } from "react";
+import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
+import {Formula} from "../back-end/Cells.ts";
 import React, {useRef} from "react";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
+import {adjustFormula, numberToLetters, ReadArea} from "./HelperFunctions.tsx";
+import { makeBold, makeItalic, makeUnderlined} from "./SheetHeader.tsx"
+import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
+        HandleArrayFormula, HandleArrayResult, ParseCellToBackend} from "../API-Layer/Back-endEndpoints.ts";
 import {makeBold, makeItalic,
         makeUnderlined, numberToLetters} from "./HelperFunctions.tsx";
 import {
@@ -44,7 +51,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             cell.classList.remove('support-cell');
         });
     };
-
 
     /**
      * Clears the visual highlight of all cells in the range.
@@ -107,6 +113,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         forceRefresh(range.startCol, range.startRow);
         AreaMarked = false;
     }
+
     /**
      * Cut functionality. Based on the areaRef, it will cut the contents of the area into the current cell.
      * If multiple cells are part of the copied area, it will cut onto multiple cells.
@@ -277,7 +284,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 }
                 break;
             case "Enter":
-                event.preventDefault();
                 nextRow = rowIndex + 1;
                 break;
             case "Tab":
