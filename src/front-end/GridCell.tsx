@@ -28,7 +28,6 @@ let shiftKeyDown = false
 export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style }: GridCellProps) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
     const [valueHolder, setValueHolder] = React.useState<string>("");
-    let mySupports: string[] = [];
     let initialValueRef = useRef<string>("");
 
     // Passes the cell ID to the 'Go to cell' input box as its value of the
@@ -38,6 +37,14 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             cellIdDisplay.value = ID;
         }
     }
+
+    const clearAllSupportCells = () => {
+        const allSupportCells = document.querySelectorAll('.support-cell');
+        console.log(allSupportCells)
+        allSupportCells.forEach(cell => {
+            cell.classList.remove('support-cell');
+        });
+    };
 
     /**
      * Clears the visual highlight of all cells in the range.
@@ -154,7 +161,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
             WorkbookManager.getActiveSheet()?.RemoveCell(cellInfo.col, cellInfo.row);
         }
-        EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+        EvalCellsInViewport();
     }
 
 // Allows us to navigate the cells using the arrow and Enter keys
@@ -182,14 +189,14 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
 
                     WorkbookManager.getActiveSheet()?.undo()
 
-                    EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    EvalCellsInViewport();
                     break
 
                 // Redo functionality:
                 case "y":
                     event.preventDefault()
                     WorkbookManager.getActiveSheet()?.redo()
-                    EvalCellsInViewport(columnIndex - 20, columnIndex + 20, rowIndex - 20, rowIndex + 20);
+                    EvalCellsInViewport();
                     break
 
                 case "c":
@@ -384,7 +391,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  // Save the initial value on focus and display it
                  let rawCellContent:string | null = GetRawCellContent(ID);
                  WorkbookManager.setActiveCell(ID);
-                 EvalCellsInViewport(columnIndex-20,columnIndex+20,rowIndex-20,rowIndex+20);
+                 EvalCellsInViewport();
                  if (!rawCellContent) {
                      console.debug("[SpreadsheetGrid.tsx Cell] Cell Content not updated");
                      updateFormulaBox(ID, rawCellContent);
@@ -394,17 +401,20 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  setValueHolder((e.target as HTMLElement).innerText.trim());
                  initialValueRef.current = rawCellContent; //should not be innerText, but actual content from backEnd
                  (e.target as HTMLInputElement).innerText = rawCellContent;
-                 console.log("this is the rawCellContent", rawCellContent)
                  updateFormulaBox(ID, rawCellContent);
 
-                 mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
+
+                 //clearAllSupportCells()
+
+
+                let mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
 
                  if (!mySupports) {
                      return;
                  }
                  for (let i = 0; i < mySupports.length; i++){
                      let supportingCell = document.getElementById(mySupports[i]);
-                     if (supportingCell) {
+                     if (supportingCell && !supportingCell.classList.contains("support-cell") ) {
                          supportingCell.classList.add("support-cell");
                      }
                  }
@@ -438,14 +448,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                      console.debug("Cell Updated");
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
-                 if (mySupports) {
-                     for (let i = 0; i < mySupports.length; i++){
-                         let supportingCell = document.getElementById(mySupports[i]);
-                         if (supportingCell) {
-                             supportingCell.classList.remove("support-cell");
-                         }
-                     }
-                 }
+                 clearAllSupportCells()
              }}
 
             //Update formula box alongside cell input, also show caret (text cursor) once writing starts

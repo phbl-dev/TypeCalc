@@ -457,9 +457,6 @@ export abstract class ArrayValue extends Value {
             return ErrorValue.refError;
         }
     }
-    private ToDoubleOrNaN(value: Value): number {
-        return Number(value) || Number.NaN;
-    }
     public static EqualsElements(arr1: ArrayValue, arr2: ArrayValue): boolean {
         if (arr1 == arr2) {
             return true;
@@ -570,7 +567,6 @@ export class ArrayView extends ArrayValue {
         for (let c = 0; c < this.cols; c++) {
             for (let r = 0; r < this.rows; r++) {
                 const value: Value = new FullCellAddress(this.sheet, null, col0 + c, row0 + r) as unknown as Value;
-                // TODO: This does not make sense?
                 (act as (val: Value) => void)(value);
             }
         }
