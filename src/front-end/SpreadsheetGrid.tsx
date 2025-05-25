@@ -10,14 +10,10 @@ import {
   getCell,
   numberToLetters,
   lettersToNumber,
-  makeBold,
-  makeItalic,
-  makeUnderlined,
-  setCellColor,
-  setTextColor,
 } from "./HelperFunctions.tsx";
 import { GridCell } from "./GridCell.tsx";
-import { SheetSelector } from "./SheetSelector.tsx";
+import { SheetFooter } from "./SheetFooter.tsx";
+import { SheetHeader } from "./SheetHeader.tsx";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridProps {
@@ -105,21 +101,8 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
     ) as HTMLInputElement;
     const input = document.getElementById("cellIdInput") as HTMLInputElement;
     const jumpButton = document.getElementById(
-      "jumpToCell"
+        "jumpToCell"
     ) as HTMLButtonElement;
-    const xmlExport = document.getElementById("xmlExport") as HTMLElement;
-    const csvExport = document.getElementById("csvExport") as HTMLElement;
-    const boldButton = document.getElementById("bold") as HTMLButtonElement;
-    const italicButton = document.getElementById("italic") as HTMLButtonElement;
-    const underlineButton = document.getElementById(
-      "underline"
-    ) as HTMLButtonElement;
-    const cellColor = document.getElementById(
-      "cellColorPicker"
-    ) as HTMLInputElement;
-    const textColor = document.getElementById(
-      "textColorPicker"
-    ) as HTMLInputElement;
 
     addEventListener("resize", () => {
       setWindowDimensions({
@@ -127,6 +110,36 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
         height: window.innerHeight * 0.92,
       });
     });
+
+    // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
+    // and must trigger twice to do so.
+    const handleJump = () => {
+      const cellID = input.value.trim();
+
+      if (cellID) {
+        const idSplit = cellID.match(/[A-Za-z]+|\d+/g) || [];
+
+        if (idSplit.length === 2) {
+          const col = lettersToNumber(idSplit[0]);
+          const row = parseInt(idSplit[1], 10);
+
+          if (bodyRef.current) {
+            bodyRef.current.scrollToItem({
+              align: "smart",
+              columnIndex: col,
+              rowIndex: row,
+            });
+            setTimeout(() => {
+              // Delay to ensure the cell renders first
+              const targetCell = getCell(cellID);
+              if (targetCell) {
+                targetCell.focus();
+              }
+            }, 50);
+          }
+        }
+      }
+    };
 
     // Handles formulaBox input
     let value: string;
@@ -165,36 +178,6 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
       EvalCellsInViewport();
     };
 
-    // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
-    // and must trigger twice to do so.
-    const handleJump = () => {
-      const cellID = input.value.trim();
-
-      if (cellID) {
-        const idSplit = cellID.match(/[A-Za-z]+|\d+/g) || [];
-
-        if (idSplit.length === 2) {
-          const col = lettersToNumber(idSplit[0]);
-          const row = parseInt(idSplit[1], 10);
-
-          if (bodyRef.current) {
-            bodyRef.current.scrollToItem({
-              align: "smart",
-              columnIndex: col,
-              rowIndex: row,
-            });
-            setTimeout(() => {
-              // Delay to ensure the cell renders first
-              const targetCell = getCell(cellID);
-              if (targetCell) {
-                targetCell.focus();
-              }
-            }, 50);
-          }
-        }
-      }
-    };
-
     // Handle file drop events entirely in React
     function handleDrop(event: DragEvent) {
       event.preventDefault();
@@ -228,24 +211,14 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
     //--------------------------------------
     window.addEventListener("drop", handleDrop); // Drag and drop
     window.addEventListener("dragover", handleDragOver); // Drag and drop
-
     formulaBox.addEventListener("keydown", handleKeyDown);
     formulaBox.addEventListener("blur", handleBlur);
     formulaBox.addEventListener("input", handleFormulaChange);
-
     jumpButton.addEventListener("click", handleJump); // Jump to cell
     input.addEventListener("keydown", (e) => {
       // Jump to cell
       if (e.key === "Enter") handleJump();
     });
-    xmlExport.addEventListener("click", new XMLWriter().exportAsXML);
-    csvExport.addEventListener("click", new XMLWriter().exportAsCSV);
-    boldButton.addEventListener("click", makeBold);
-    italicButton.addEventListener("click", makeItalic);
-    underlineButton.addEventListener("click", makeUnderlined);
-
-    cellColor.addEventListener("input", setCellColor);
-    textColor.addEventListener("input", setTextColor);
 
     return () => {
       window.removeEventListener("drop", handleDrop); // Drag and drop
@@ -253,12 +226,9 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
       formulaBox.removeEventListener("input", handleFormulaChange);
       formulaBox.removeEventListener("keydown", handleKeyDown);
       formulaBox.removeEventListener("blur", handleBlur);
-      xmlExport.removeEventListener("click", new XMLWriter().exportAsXML);
-      csvExport.removeEventListener("click", new XMLWriter().exportAsCSV);
+
       jumpButton.removeEventListener("click", handleJump); // Jump to cell
-      boldButton.removeEventListener("click", makeBold);
-      italicButton.removeEventListener("click", makeItalic);
-      underlineButton.removeEventListener("click", makeUnderlined);
+      input.removeEventListener("keydown", (e) => {})
     };
   }, [scrollOffset]);
 
@@ -291,13 +261,7 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
   return (
     // Container that wraps around all parts of the sheet
     <div id="sheet">
-      <SheetSelector
-        sheetNames={sheetNames}
-        activeSheet={activeSheet}
-        setActiveSheet={setActiveSheet}
-        setSheetNames={setSheetNames}
-        scrollOffset={scrollOffset}
-      />
+      <SheetHeader/>
       {/* Header row as a 1-row grid */}
       <div style={{ display: "flex" }}>
         {/* Top-left corner */}
@@ -361,6 +325,13 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
           </Grid>
         </div>
       </div>
+      <SheetFooter
+          sheetNames={sheetNames}
+          activeSheet={activeSheet}
+          setActiveSheet={setActiveSheet}
+          setSheetNames={setSheetNames}
+          scrollOffset={scrollOffset}
+      />
     </div>
   );
 };
