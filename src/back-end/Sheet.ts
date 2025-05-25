@@ -2,6 +2,7 @@ import type { Workbook } from "./Workbook";
 import { Cell, BlankCell, CachedArrayFormula, Formula, ArrayFormula } from "./Cells";
 import {type Adjusted, Interval, SuperCellAddress} from "./CellAddressing";
 import type { Expr } from "./Expressions";
+import {adjustFormula} from "../front-end/HelperFunctions.tsx";
 
 /**
  * Creates a new sheet. Default size is 65536 columns and 1048576 rows.
@@ -263,7 +264,33 @@ export class Sheet {
         }
     }
 
+    public ForEachInArea(fromCol: number, fromRow: number, toCol: number, toRow: number, act:(cell:Cell, col:number, row:number,fromRow:number,fromCol:number) => void) {
+        for (let c = fromCol; c <= toCol; c++) {
+            for (let r = fromRow; r <= toRow; r++) {
+                const cell: Cell | null = this.Get(c, r);
+                if (cell != null) {
+                    act(cell, c, r,fromRow,fromCol)
+                }
+            }
+        }
+        this.workbook.Recalculate()
+    };
 
+
+    public CutCell(cell: Cell, col: number, row: number,fromRow:number,fromCol:number): void {
+        this.PasteCell(cell, col, row,fromRow,fromCol);
+        this.RemoveCell(cell.GetCol()!, cell.GetRow()!);
+    }
+
+
+    public PasteCell(cell:Cell, col: number, row: number,fromRow:number,fromCol:number):void {
+        const content = cell.GetText()
+        this.SetCell((cell instanceof Formula ? Cell.Parse(adjustFormula(
+            content!,
+            row - fromRow,
+            col - fromCol
+        ),this.workbook,col,row) : Cell.Parse(content!,this.workbook,col,row)!)!, col, row)
+    }
     /**
      * Moves a cell from its current column and row to another
      * It finds the cell based on the fromCol and fromRow

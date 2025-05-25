@@ -97,66 +97,63 @@ export function GetRawCellContent(cellID: string): string | null {
  */
 export function EvalCellsInViewport(): void {
     const wb = WorkbookManager.getWorkbook();
-    const sheet: Sheet = WorkbookManager.getActiveSheet()!; //This needs to be updated
+    const sheet: Sheet = WorkbookManager.getActiveSheet()!;
+
+    wb.Recalculate()
 
     if (!wb) {
         console.debug("[ShowWindowInGUI] No workbook found!");
         return;
     }
-    //wb.Recalculate();
-    if (sheet) {
 
+    if (sheet) {
         let cells = Array.from(document.getElementById("gridBody")!.querySelectorAll('div.Cell[contenteditable="true"]:not(.hide)'));
-        //console.log(cells.length)
-        for (let col: number = 0; col <= cells.length; col++) {
-            if(cells[col]) {               
+
+        for (let col: number = 0; col < cells.length; col++) {
+            if (cells[col]) {
                 const cellHTML = cells[col];
                 if (cellHTML != null) {
-
                     const cell = sheet.Get(new A1RefCellAddress(cells[col].id));
+
+                    // Skip active cell if it's not an ArrayFormula
                     if (cells[col].id == WorkbookManager.getActiveCell() && !(cell instanceof ArrayFormula)) {
                         continue;
                     }
+
                     if (cell != null) {
-                        // No recalculation needed if the cell is up to date
                         if (cell instanceof Formula) {
+                            // Handle Formula cells
+
                             const cellVal = cell.getValue();
                             if (cellVal instanceof ErrorValue) {
-                                cellHTML.innerHTML = cellVal.message;
-                                continue;
+                                cellHTML.textContent = cellVal.message;
+                            } else if (cellVal == undefined) {
+
+                                cellHTML.textContent = cell.GetText()!.replace("\n\n=","");
+                            } else {
+                                cellHTML.textContent = cell.getValue()?.ToObject() as string;
                             }
-                            else if (cellVal == undefined){
-                                cellHTML.innerHTML = cell.GetText()!;
-                                continue;
-                            }
-                            cellHTML.innerHTML = cell.getValue()?.ToObject() as string;
-                            continue;
-                            //cellHTML.innerText = cell.GetText()!;
-                        }
-                        // No recalculation needed if the cell is up to date
-                        let cellEval = cell.Eval(sheet, 0, 0);
-                        if (cell instanceof Formula) {
-                            cellHTML.innerHTML = cell.GetText()!;
-                        }
-                        if (cellEval instanceof ErrorValue) {
-                            cellHTML.innerHTML = cellEval.message;
-                        } else if (cellEval != undefined) {
-                            cellHTML.innerHTML = cellEval.ToObject() as string;
                         } else {
-                            cellHTML.innerHTML = cell.GetText()!;
+                            // Handle non-Formula cells
+                            let cellEval = cell.Eval(sheet, 0, 0);
+                            if (cellEval instanceof ErrorValue) {
+                                cellHTML.textContent = cellEval.message;
+                            } else if (cellEval != undefined) {
+                                cellHTML.textContent = cellEval.ToObject() as string;
+                            } else {
+                                cellHTML.textContent = cell.GetText()!;
+                            }
                         }
                     }
                 }
-
+            }
         }
     }
-    }
-
+/**
     if (document.getElementById(WorkbookManager.getActiveCell()!)) {
         document.getElementById(WorkbookManager.getActiveCell()!)!.focus();
-
     }
-
+        */
 }
 /**
  * Returns the supports in the viewport
