@@ -53,7 +53,6 @@ export function adjustFormula(formula: string, rowDiff: number, colDiff: number)
             if(newColNum <= 0) {
                 return
             }
-            console.log(`Values inside adjustFormula: ${colNum}, ${newColNum}, ${newColumn}`)
         }
 
         return colAbs + newColumn + rowAbs + newRow;
@@ -146,47 +145,4 @@ export function setTextColor() {
     if(colorPicker.value) {
         cell.style.color = colorPicker.value;
     }
-}
-
-/**
- * The CellInfo type is used to store information about a cell.
- * It is used to store the cell's row, column, content, relative row and relative column.
- */
-type CellInfo = {
-    row: number;
-    col: number;
-    cell: BackendCell;
-    content: string;
-    relRow: number;
-    relCol: number;
-};
-
-
-/**
- * Read area finds alls cells in the area and returns an array of CellInfo objects.
- * @param startRow
- * @param endRow
- * @param startCol
- * @param endCol
- * @constructor
- */
-export function ReadArea(startRow: number, endRow: number, startCol: number, endCol: number) {
-    let AreaArray: CellInfo[] = [];
-
-    for (let i = startRow; i <= endRow; i++) {
-        for (let j = startCol; j <= endCol; j++) {
-            const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
-            if (cell) {
-                AreaArray.push({
-                    row: i,
-                    col: j,
-                    cell: cell,
-                    content: cell.GetText()!,
-                    relRow: i - startRow,
-                    relCol: j - startCol
-                });
-            }
-        }
-    }
-    return AreaArray;
 }

@@ -1,7 +1,7 @@
 import type { Workbook } from "./Workbook";
 import { Cell, BlankCell, CachedArrayFormula, Formula, ArrayFormula } from "./Cells";
 import {type Adjusted, Interval, SuperCellAddress} from "./CellAddressing";
-import type { Expr } from "./Expressions";
+import {CellRef, Expr} from "./Expressions";
 import {adjustFormula} from "../front-end/HelperFunctions.tsx";
 
 /**
@@ -279,7 +279,7 @@ export class Sheet {
 
     public CutCell(cell: Cell, col: number, row: number,fromRow:number,fromCol:number): void {
         this.PasteCell(cell, col, row,fromRow,fromCol);
-        this.RemoveCell(cell.GetCol()!, cell.GetRow()!);
+        this.RemoveCell(fromCol, fromRow);
     }
 
 

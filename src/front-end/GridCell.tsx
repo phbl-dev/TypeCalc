@@ -2,7 +2,7 @@ import React, {useRef} from "react";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {makeBold, makeItalic,
-        makeUnderlined, numberToLetters, ReadArea} from "./HelperFunctions.tsx";
+        makeUnderlined, numberToLetters} from "./HelperFunctions.tsx";
 import {
     EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
     HandleArrayFormula, HandleArrayResult, ParseCellToBackend
@@ -17,7 +17,6 @@ interface GridCellProps {
 let selectionStartCell: string | null = null
 let AreaMarked = false
 let shiftKeyDown = false
-let forcedFocus = false
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
@@ -121,7 +120,6 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         const sheet = WorkbookManager.getActiveSheet();
 
         if (sheet) {
-            // Step 1: Copy all cells (don't remove yet)
             sheet.ForEachInArea(
                 range.startCol,
                 range.startRow,
@@ -130,17 +128,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 (cell, col, row,fromRow,fromCol) => {
                     const targetRow = targetCellRef.row + row - range.startRow;
                     const targetCol = targetCellRef.col + col - range.startCol;
-                    sheet.CutCell(cell, targetCol, targetRow, fromRow, fromCol); // Only paste, don't cut
-                }
-            );
-
-            sheet.ForEachInArea(
-                range.startCol,
-                range.startRow,
-                range.endCol,
-                range.endRow,
-                (_cell, col, row) => {
-                    sheet.RemoveCell(col, row);
+                    sheet.CutCell(cell, targetCol, targetRow, fromRow, fromCol);
                 }
             );
         }

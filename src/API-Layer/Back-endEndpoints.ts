@@ -1,6 +1,6 @@
 import {WorkbookManager} from "./WorkbookManager.ts";
 import {Sheet} from "../back-end/Sheet.ts";
-import {lettersToNumber, numberToLetters} from "../front-end/HelperFunctions.tsx";
+import {numberToLetters} from "../front-end/HelperFunctions.tsx";
 import {ArrayExplicit, ErrorValue} from "../back-end/Values.ts";
 import {A1RefCellAddress, FullCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {ArrayFormula, Cell, Formula} from "../back-end/Cells.ts";
@@ -149,7 +149,9 @@ export function EvalCellsInViewport(): void {
             }
         }
     }
+
 /**
+ *
     if (document.getElementById(WorkbookManager.getActiveCell()!)) {
         document.getElementById(WorkbookManager.getActiveCell()!)!.focus();
     }
