@@ -1,11 +1,12 @@
-import React, { useRef } from "react";
+import React, {useRef} from "react";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
-import {Formula} from "../back-end/Cells.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {adjustFormula, numberToLetters, ReadArea} from "./HelperFunctions.tsx";
 import { makeBold, makeItalic, makeUnderlined} from "./SheetHeader.tsx"
-import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
-        HandleArrayFormula, HandleArrayResult, ParseCellToBackend} from "../API-Layer/Back-endEndpoints.ts";
+import {
+    EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
+    HandleArrayFormula, HandleArrayResult, ParseCellToBackend
+} from "../API-Layer/Back-endEndpoints.ts";
 
 interface GridCellProps {
     columnIndex:number,
@@ -87,25 +88,22 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
     function PasteArea(areaRef: string) {
         const range = JSON.parse(areaRef);
         const targetCellRef = new A1RefCellAddress(ID);
+        const sheet = WorkbookManager.getActiveSheet();
 
-        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
-            const { row, col, cell, content, relRow, relCol } = cellInfo;
-            const targetRow = targetCellRef.row + relRow;
-            const targetCol = targetCellRef.col + relCol;
-
-            if (cell instanceof Formula) {
-                const nextFormula = adjustFormula(
-                    content!,
-                    targetRow - row,
-                    targetCol - col
-                );
-                handleInput(targetRow, targetCol, nextFormula!);
-            }
-            else {
-                handleInput(targetRow, targetCol, content!);
-            }
+        if (sheet) {
+            sheet.ForEachInArea(
+                range.startCol,
+                range.startRow,
+                range.endCol,
+                range.endRow,
+                (cell, col, row,fromRow:number,fromCol:number) => {
+                    const targetRow = targetCellRef.row + row - range.startRow;
+                    const targetCol = targetCellRef.col + col - range.startCol;
+                    sheet.PasteCell(cell, targetCol, targetRow,fromRow,fromCol);
+                }
+            );
         }
-        forceRefresh(range.startCol,range.startRow);
+        forceRefresh(range.startCol, range.startRow);
         AreaMarked = false;
     }
 
@@ -119,33 +117,24 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
     function CutArea(areaRef: string) {
         const range = JSON.parse(areaRef);
         const targetCellRef = new A1RefCellAddress(ID);
+        const sheet = WorkbookManager.getActiveSheet();
 
-        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
-            const { row, col, cell, content, relRow, relCol } = cellInfo;
-            const targetRow = targetCellRef.row + relRow;
-            const targetCol = targetCellRef.col + relCol;
-
-            // If cell is a formula
-            if (cell instanceof Formula) {
-                const nextFormula = adjustFormula(
-                    content!,
-                    targetRow - row,
-                    targetCol - col
-                );
-                handleInput(targetRow, targetCol, nextFormula!);
-                WorkbookManager.getActiveSheet()?.RemoveCell(col, row);
-            }
-            else {
-                WorkbookManager.getActiveSheet()?.MoveCell(col, row, targetCol, targetRow);
-
-            }
-
+        if (sheet) {
+            sheet.ForEachInArea(
+                range.startCol,
+                range.startRow,
+                range.endCol,
+                range.endRow,
+                (cell, col, row,fromRow,fromCol) => {
+                    const targetRow = targetCellRef.row + row - range.startRow;
+                    const targetCol = targetCellRef.col + col - range.startCol;
+                    sheet.CutCell(cell, targetCol, targetRow, fromRow, fromCol);
+                }
+            );
         }
 
         clearVisualHighlight();
-        forceRefresh(range.startCol,range.startRow);
-
-        AreaMarked = false;
+        forceRefresh(range.startCol, range.startRow);
     }
 
     /**
@@ -156,10 +145,24 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
      */
     function DeleteArea(areaRef:string) {
         const range = JSON.parse(areaRef);
-        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
-            WorkbookManager.getActiveSheet()?.RemoveCell(cellInfo.col, cellInfo.row);
+
+        const sheet = WorkbookManager.getActiveSheet();
+        if (sheet) {
+            sheet.ForEachInArea(
+                range.startCol,
+                range.startRow,
+                range.endCol,
+                range.endRow,
+                (cell, col, row) => {
+                    sheet.RemoveCell(col, row);
+                }
+            );
         }
-        EvalCellsInViewport();
+
+        clearVisualHighlight();
+        forceRefresh(range.startCol,range.startRow);
+
+        AreaMarked = false;
     }
 
 // Allows us to navigate the cells using the arrow and Enter keys
@@ -374,7 +377,8 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
              }}
 
              onFocus={(e) => {
-                 //All of this is to add and remove styling from the active cell
+                 //All of this is to add and remove styling from the active cell¨
+
                  const prev = WorkbookManager.getActiveCell();
                  if (prev && prev !== ID) {
                      const old = document.getElementById(prev);

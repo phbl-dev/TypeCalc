@@ -834,7 +834,6 @@ export class SpreadsheetVisitor extends new SpreadsheetParser().getBaseCstVisito
         } else if (ctx.FALSE) {
             this.cell = new BooleanCell(false);
         }
-
         else if (ctx.StringLiteral) {
             this.cell = new TextCell(ctx.StringLiteral[0].image.substring(1, ctx.StringLiteral[0].image.length - 1));
         } else if (ctx.Minus) {

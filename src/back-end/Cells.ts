@@ -274,7 +274,6 @@ export abstract class Cell {
 
     // Add to support sets of all cells referred to from this cell, when
     // the cell appears in the block supported[col..col+cols-1, row..row+rows-1]
-    // TODO: Does this do anything, maybe it should be abstract?
     public AddToSupportSets(supported: Sheet, col: number, row: number, cols: number, rows: number): void {}
 
     // Clear the cell's support set; in ArrayFormula also clear the supportSetUpdated flag
