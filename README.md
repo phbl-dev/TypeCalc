@@ -9,7 +9,7 @@ alternatively using docker with the following command from the root folder ```./
 
 ``` docker compose up --build ```
 
-_**Note that this requires docker to be installed in order to work as well as active**._
+_**Note that this requires docker to be installed and active in order to work**._
 
 Afterwards, go to the url:
 http://localhost:5173. 
