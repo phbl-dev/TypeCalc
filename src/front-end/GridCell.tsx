@@ -1,15 +1,8 @@
-import React, { useRef } from "react";
-import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
-import {Formula} from "../back-end/Cells.ts";
 import React, {useRef} from "react";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
 import {adjustFormula, numberToLetters, ReadArea} from "./HelperFunctions.tsx";
 import { makeBold, makeItalic, makeUnderlined} from "./SheetHeader.tsx"
-import {EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
-        HandleArrayFormula, HandleArrayResult, ParseCellToBackend} from "../API-Layer/Back-endEndpoints.ts";
-import {makeBold, makeItalic,
-        makeUnderlined, numberToLetters} from "./HelperFunctions.tsx";
 import {
     EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
     HandleArrayFormula, HandleArrayResult, ParseCellToBackend
