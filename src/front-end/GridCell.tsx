@@ -97,8 +97,11 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
 
 
 
-        forceRefresh(range.startCol, range.startRow);
-        AreaMarked = false;
+        WorkbookManager.getWorkbook().Recalculate()
+        EvalCellsInViewport()
+        forceRefresh(range.startCol,range.startRow);
+            AreaMarked = false;
+
     }
 
     /**
@@ -119,9 +122,9 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             sheet!.RemoveCell(col, row);
         }
 
-
-
-        forceRefresh(range.startCol, range.startRow);
+        WorkbookManager.getWorkbook().Recalculate()
+        EvalCellsInViewport()
+        forceRefresh(range.startCol,range.startRow);
         AreaMarked = false;
     }
 
@@ -146,6 +149,8 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 }
             );
         }
+
+        WorkbookManager.getWorkbook().Recalculate()
         EvalCellsInViewport()
         forceRefresh(range.startCol,range.startRow);
 
