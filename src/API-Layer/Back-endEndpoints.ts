@@ -142,8 +142,6 @@ export function EvalCellsInViewport(): void {
                                 cellHTML.innerText = cell.GetText()!;
                             }
                         }
-                    } else {
-                        cellHTML.textContent = "";
                     }
                     else {
                         cellHTML.innerText = "";
