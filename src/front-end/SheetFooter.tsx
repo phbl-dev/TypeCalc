@@ -25,8 +25,7 @@ export const SheetFooter: React.FC<SheetSelectorProps> = ({ sheetNames, activeSh
             {sheetNames.map((name:any) => (
                 <button
                     key={name}
-                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name);
-                        (document.activeElement! as HTMLElement).blur(); EvalCellsInViewport();
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport();
                         document.getElementById("documentTitle")!.innerText = WorkbookManager.getActiveSheetName();}}
                     style={{
                         backgroundColor: activeSheet === name ? 'darkslategrey' : '',
