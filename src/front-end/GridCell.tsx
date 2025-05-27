@@ -146,9 +146,10 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                 }
             );
         }
+        EvalCellsInViewport()
+        forceRefresh(range.startCol,range.startRow);
 
         clearVisualHighlight();
-        forceRefresh(range.startCol,range.startRow);
 
         AreaMarked = false;
     }

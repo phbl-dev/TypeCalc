@@ -276,12 +276,7 @@ export class Sheet {
         this.workbook.Recalculate()
     };
 
-/**
-    public CutCell(cell: Cell, col: number, row: number,fromRow:number,fromCol:number): void {
-        this.PasteCell(cell, col, row,fromRow,fromCol);
-        this.RemoveCell(fromCol, fromRow);
-    }
-*/
+
 
 
 
