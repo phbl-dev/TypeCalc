@@ -150,14 +150,8 @@ export function EvalCellsInViewport(): void {
             }
         }
     }
-
-/**
- *
-    if (document.getElementById(WorkbookManager.getActiveCell()!)) {
-        document.getElementById(WorkbookManager.getActiveCell()!)!.focus();
-    }
-        */
 }
+
 /**
  * Returns the supports in the viewport
  * Uses the ForEachReferred method to iterate through the support set of the cell.
@@ -168,11 +162,10 @@ export function EvalCellsInViewport(): void {
 export function GetSupportsInViewPort(col: number, row:number): string[] {
     let supports: string[] = []
     WorkbookManager.getActiveSheet()?.Get(col,row)?.ForEachReferred(WorkbookManager.getActiveSheet()!,col,row,((addr:FullCellAddress) => {
-    supports.push(numberToLetters(addr.cellAddress.col + 1) + (addr.cellAddress.row + 1) as string);
+        supports.push(numberToLetters(addr.cellAddress.col + 1) + (addr.cellAddress.row + 1) as string);
     }));
 
     return supports;
-
 }
 
 export function ParseCellToBackend(content:string,columnIndex:number,rowIndex:number):boolean{
