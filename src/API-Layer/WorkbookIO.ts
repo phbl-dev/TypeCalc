@@ -3,6 +3,7 @@ import {Workbook} from "../back-end/Workbook.ts";
 import {Sheet} from "../back-end/Sheet.ts";
 import {Cell} from "../back-end/Cells.ts";
 import {WorkbookManager} from "./WorkbookManager.ts";
+import {EvalCellsInViewport} from "./Back-endEndpoints.ts";
 
 /**
  *  The readFile method makes use of the package fast-xml-parser to turn an XML file into a
@@ -81,6 +82,8 @@ export class XMLReader {
                         }
                     }
                 }
+                WorkbookManager.getWorkbook().Recalculate();
+                //EvalCellsInViewport();
                 resolve();
             } catch (error) {
                 reject(error);

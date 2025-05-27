@@ -20,3 +20,7 @@ This is down by writing:
 
 ```docker compose down```
 
+
+To see the Vitest test coverage of the back-end run:
+    npx vitest run --coverage --coverage.include="src/back-end/**/*"
+

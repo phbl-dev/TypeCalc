@@ -90,19 +90,13 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        if (sheet) {
-            sheet.ForEachInArea(
-                range.startCol,
-                range.startRow,
-                range.endCol,
-                range.endRow,
-                (cell, col, row,fromRow:number,fromCol:number) => {
-                    const targetRow = targetCellRef.row + row - range.startRow;
-                    const targetCol = targetCellRef.col + col - range.startCol;
-                    sheet.PasteCell(cell, targetCol, targetRow,fromRow,fromCol);
-                }
-            );
-        }
+            for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
+                const { row, col, cell, content, relRow, relCol } = cellInfo;
+                sheet!.PasteCell(cell, col, row,targetCellRef.col + relCol,targetCellRef.row + relRow, content);
+            }
+
+
+
         forceRefresh(range.startCol, range.startRow);
         AreaMarked = false;
     }
@@ -119,22 +113,16 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        if (sheet) {
-            sheet.ForEachInArea(
-                range.startCol,
-                range.startRow,
-                range.endCol,
-                range.endRow,
-                (cell, col, row,fromRow,fromCol) => {
-                    const targetRow = targetCellRef.row + row - range.startRow;
-                    const targetCol = targetCellRef.col + col - range.startCol;
-                    sheet.CutCell(cell, targetCol, targetRow, fromRow, fromCol);
-                }
-            );
+        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
+            const { row, col, cell, content, relRow, relCol } = cellInfo;
+            sheet!.PasteCell(cell, col, row,targetCellRef.col + relCol,targetCellRef.row + relRow, content);
+            sheet!.RemoveCell(col, row);
         }
 
-        clearVisualHighlight();
+
+
         forceRefresh(range.startCol, range.startRow);
+        AreaMarked = false;
     }
 
     /**

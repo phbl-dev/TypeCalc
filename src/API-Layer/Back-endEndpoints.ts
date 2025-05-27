@@ -99,15 +99,13 @@ export function EvalCellsInViewport(): void {
     const wb = WorkbookManager.getWorkbook();
     const sheet: Sheet = WorkbookManager.getActiveSheet()!;
 
-    wb.Recalculate()
-
     if (!wb) {
         console.debug("[ShowWindowInGUI] No workbook found!");
         return;
     }
 
     if (sheet) {
-        let cells = Array.from(document.getElementById("gridBody")!.querySelectorAll('div.Cell[contenteditable="true"]:not(.hide)'));
+        let cells = Array.from(document.getElementById("gridBody")!.querySelectorAll('div.Cell[contenteditable="true"]:not(.hide)')) as HTMLElement[];
 
         for (let col: number = 0; col < cells.length; col++) {
             if (cells[col]) {
@@ -126,23 +124,27 @@ export function EvalCellsInViewport(): void {
 
                             const cellVal = cell.getValue();
                             if (cellVal instanceof ErrorValue) {
-                                cellHTML.textContent = cellVal.message;
+                                cellHTML.innerText = cellVal.message;
                             } else if (cellVal == undefined) {
-                                cellHTML.textContent = cell.GetText()!
+
+                                cellHTML.innerText = cell.GetText()!.replace("\n\n=","");
                             } else {
-                                cellHTML.textContent = cell.getValue()?.ToObject() as string;
+                                cellHTML.innerText = cell.getValue()?.ToObject() as string;
                             }
                         } else {
                             // Handle non-Formula cells
                             let cellEval = cell.Eval(sheet, 0, 0);
                             if (cellEval instanceof ErrorValue) {
-                                cellHTML.textContent = cellEval.message;
+                                cellHTML.innerText = cellEval.message;
                             } else if (cellEval != undefined) {
-                                cellHTML.textContent = cellEval.ToObject() as string;
+                                cellHTML.innerText = cellEval.ToObject() as string;
                             } else {
-                                cellHTML.textContent = cell.GetText()!;
+                                cellHTML.innerText = cell.GetText()!;
                             }
                         }
+                    }
+                    else {
+                        cellHTML.innerText = "";
                     }
                 }
             }
