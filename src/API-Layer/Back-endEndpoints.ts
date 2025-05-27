@@ -128,8 +128,7 @@ export function EvalCellsInViewport(): void {
                             if (cellVal instanceof ErrorValue) {
                                 cellHTML.textContent = cellVal.message;
                             } else if (cellVal == undefined) {
-
-                                cellHTML.textContent = cell.GetText()!.replace("\n\n=","");
+                                cellHTML.textContent = cell.GetText()!
                             } else {
                                 cellHTML.textContent = cell.getValue()?.ToObject() as string;
                             }
@@ -149,13 +148,6 @@ export function EvalCellsInViewport(): void {
             }
         }
     }
-
-/**
- *
-    if (document.getElementById(WorkbookManager.getActiveCell()!)) {
-        document.getElementById(WorkbookManager.getActiveCell()!)!.focus();
-    }
-        */
 }
 /**
  * Returns the supports in the viewport
