@@ -173,7 +173,6 @@ export function GetSupportsInViewPort(col: number, row:number): string[] {
     }));
 
     return supports;
-
 }
 
 export function ParseCellToBackend(content:string,columnIndex:number,rowIndex:number):boolean{
