@@ -402,7 +402,8 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  //clearAllSupportCells()
 
 
-                let mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
+                 let mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
+
 
                  if (!mySupports) {
                      return;
