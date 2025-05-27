@@ -144,6 +144,8 @@ export function EvalCellsInViewport(): void {
                                 cellHTML.textContent = cell.GetText()!;
                             }
                         }
+                    } else {
+                        cellHTML.textContent = "";
                     }
                 }
             }

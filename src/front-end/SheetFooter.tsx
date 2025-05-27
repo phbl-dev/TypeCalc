@@ -8,7 +8,6 @@ interface SheetSelectorProps {
     activeSheet: string;
     setActiveSheet: (sheetName: string) => void;
     setSheetNames: (sheetNames: string[]) => void;
-    scrollOffset: {left: number, top: number};
 }
 
 /**
@@ -17,17 +16,17 @@ interface SheetSelectorProps {
  * @param activeSheet
  * @param setActiveSheet
  * @param setSheetNames
- * @param scrollOffset
  * @constructor
  */
 // @ts-ignore
-export const SheetFooter: React.FC<SheetSelectorProps> = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames, scrollOffset }) => {
+export const SheetFooter: React.FC<SheetSelectorProps> = ({ sheetNames, activeSheet, setActiveSheet, setSheetNames }: SheetSelectorProps) => {
     return (
         <footer style={{ display: 'flex', gap: '1px'}}>
             {sheetNames.map((name:any) => (
                 <button
                     key={name}
-                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name); EvalCellsInViewport()
+                    onClick={() => {setActiveSheet(name); WorkbookManager.setActiveSheet(name);
+                        (document.activeElement! as HTMLElement).blur(); EvalCellsInViewport();
                         document.getElementById("documentTitle")!.innerText = WorkbookManager.getActiveSheetName();}}
                     style={{
                         backgroundColor: activeSheet === name ? 'darkslategrey' : '',
