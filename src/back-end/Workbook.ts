@@ -168,17 +168,18 @@ export class Workbook {
 
     /**
      */
-    //public FullRecalculation(): number {
-    //    return this.TimeRecalculation(() => {
-    //        this.UseSupportSets = false;
-    //        this.ResetCellState();
-    //        // For all formulas f, f.state==Dirty
-    //        this.sheets.forEach(sheet => {
-    //            sheet.RecalculateFull();
-    //        })
-    //        this.Cyclic = null; // After one Full Recalculation have been made, set Cyclic back to null, so we don't do a full recalculation on all standard minimal recalculations.
-    //    });
-    //}
+    public FullRecalculation(): number {
+        console.log("Full recalculation");
+        return this.TimeRecalculation(() => {
+            this.UseSupportSets = false;
+            this.ResetCellState();
+            // For all formulas f, f.state==Dirty
+            this.sheets.forEach(sheet => {
+                sheet.RecalculateFull();
+            })
+            this.Cyclic = null; // After one Full Recalculation have been made, set Cyclic back to null, so we don't do a full recalculation on all standard minimal recalculations.
+        });
+    }
 
     public AddToQueue(sheet: Sheet, col: number, row: number) {
         this.awaitsEvaluation.push(new FullCellAddress(sheet, null, col, row));
@@ -199,6 +200,9 @@ export class Workbook {
             act(); // This runs Recalculate()
         } catch (exn) {
             console.log("BAD:", exn);
+            if (exn instanceof RangeError) { // If the call stack gets to deep e.g. on an import we do a fill recalculation.
+                return this.FullRecalculation()
+            }
         }
 
         const swStop = performance.now();
