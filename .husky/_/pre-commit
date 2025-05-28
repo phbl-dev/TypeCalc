@@ -1,2 +1,7 @@
 #!/usr/bin/env sh
-. "$(dirname "$0")/h"
+npm run format
+git add -u
+
+npm run docs
+
+git add docs/

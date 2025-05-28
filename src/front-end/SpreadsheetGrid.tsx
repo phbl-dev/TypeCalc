@@ -97,11 +97,11 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
 
   useEffect(() => {
     const formulaBox = document.getElementById(
-      "formulaBox"
+      "formulaBox",
     ) as HTMLInputElement;
     const input = document.getElementById("cellIdInput") as HTMLInputElement;
     const jumpButton = document.getElementById(
-        "jumpToCell"
+      "jumpToCell",
     ) as HTMLButtonElement;
 
     addEventListener("resize", () => {
@@ -148,7 +148,7 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
       value = (e.target as HTMLInputElement).value;
       valueChanged = true;
       let activeCell = document.getElementById(
-        WorkbookManager.getActiveCell()!
+        WorkbookManager.getActiveCell()!,
       );
       if (activeCell) {
         activeCell.innerHTML = value;
@@ -228,7 +228,7 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
       formulaBox.removeEventListener("blur", handleBlur);
 
       jumpButton.removeEventListener("click", handleJump); // Jump to cell
-      input.removeEventListener("keydown", (e) => {})
+      input.removeEventListener("keydown", (e) => {});
     };
   }, [scrollOffset]);
 
@@ -261,7 +261,7 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
   return (
     // Container that wraps around all parts of the sheet
     <div id="sheet">
-      <SheetHeader/>
+      <SheetHeader />
       {/* Header row as a 1-row grid */}
       <div style={{ display: "flex" }}>
         {/* Top-left corner */}
@@ -315,21 +315,21 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
             rowCount={rowCount}
             rowHeight={(): number => rowHeight}
             width={width - rowHeaderWidth}
-            onItemsRendered={ () => EvalCellsInViewport()}
+            onItemsRendered={() => EvalCellsInViewport()}
             overscanColumnCount={5}
             overscanRowCount={5}
             ref={bodyRef}
-              onScroll={syncScroll}
-              >
+            onScroll={syncScroll}
+          >
             {GridCell}
           </Grid>
         </div>
       </div>
       <SheetFooter
-          sheetNames={sheetNames}
-          activeSheet={activeSheet}
-          setActiveSheet={setActiveSheet}
-          setSheetNames={setSheetNames}
+        sheetNames={sheetNames}
+        activeSheet={activeSheet}
+        setActiveSheet={setActiveSheet}
+        setSheetNames={setSheetNames}
       />
     </div>
   );

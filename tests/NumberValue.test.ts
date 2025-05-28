@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {ErrorValue, NumberValue, Value} from "../src/back-end/Values";
+import { ErrorValue, NumberValue, Value } from "../src/back-end/Values";
 
 describe("NumberValue can be Instantiated properly", () => {
   test("NumberValue can be instantiated from a number", () => {
@@ -25,7 +25,6 @@ describe("NumberValue can be Instantiated properly", () => {
 
     expect(nv1.Equals(nv2)).toBeFalsy();
   });
-
 
   test("ToObject should return the inner value as Values tupe", () => {
     const nv1 = NumberValue.Make(10);
@@ -79,7 +78,6 @@ describe("NumberValue can be Instantiated properly", () => {
       NumberValue.ZERO,
     );
   });
-
 
   test("Boolean Conversion to Values Object(true)", () => {
     const nvBool: Value = NumberValue.FromBoolean(new Boolean(true))!;
