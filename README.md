@@ -1,6 +1,6 @@
 This is a thesis project based on the book "Spreadsheet Implementation Technology: Basics and extensions" written by Peter Sestoft.
 
-Documentation exists within the code itself, or as part of the associated thesis report, which are found as a .tex file.
+Documentation exists within the code itself, or as part of the associated thesis report, which are found as a .pdf file.
 
 The project is an adaption of the accompanied C# code, 
 which has been rewritten entirely in Typescript and react, 
@@ -22,5 +22,5 @@ This is down by writing:
 
 
 To see the Vitest test coverage of the back-end run:
-    npx vitest run --coverage --coverage.include="src/back-end/**/*"
+``` npx vitest run --coverage --coverage.include="src/back-end/**/*" ```
 
