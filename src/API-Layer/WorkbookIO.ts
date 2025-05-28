@@ -1,7 +1,7 @@
 import {XMLParser} from "fast-xml-parser";
 import {Workbook} from "../back-end/Workbook.ts";
 import {Sheet} from "../back-end/Sheet.ts";
-import {Cell} from "../back-end/Cells.ts";
+import {Cell, NumberCell} from "../back-end/Cells.ts";
 import {WorkbookManager} from "./WorkbookManager.ts";
 import {EvalCellsInViewport} from "./Back-endEndpoints.ts";
 
@@ -131,8 +131,6 @@ export class XMLWriter {
     /**
      * Exports the workbook contents as an Excel 2003 XML File (XMLSS).
      */
-
-
     exportAsXML() {
         let xmlOutput =
             "<?xml version=\"1.0\"?>\n" +
@@ -201,26 +199,24 @@ export class XMLWriter {
                     }
                 }
 
-                const cellContent = cell.GetText();
+                let cellContent = cell.GetText();
                 const cellCol = cell.GetCol();
 
                 // Determine cell data type, with String as default
                 let cellType = "String";
-                let cellValue = cellContent;
-
-                // Try to detect numbers, if any change dataType to Number
-                if (/^-?\d+(\.\d+)?$/.test(cellContent!))
+                if(cell instanceof NumberCell) {
                     cellType = "Number";
+                }
 
                 // If the cell is a String, escape special characters
                 if (cellType === "String") {
-                    cellValue = cellContent!.replace(/&/g, '&amp;') // Escape &
+                    cellContent = cellContent!.replace(/&/g, '&amp;') // Escape &
                         .replace(/</g, '&lt;') // Escape <
                         .replace(/>/g, '&gt;') // Escape >
                         .replace(/"/g, '&quot;') // Escape "
                         .replace(/'/g, '&apos;'); // Escape '
                 }
-                xmlOutput += `\n      <Cell ss:Index="${cellCol}"><Data ss:Type="${cellType}">${cellValue}</Data></Cell>`;
+                xmlOutput += `\n      <Cell ss:Index="${cellCol}"><Data ss:Type="${cellType}">${cellContent}</Data></Cell>`;
             }
 
             // Close the last row
