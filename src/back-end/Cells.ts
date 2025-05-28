@@ -554,20 +554,15 @@ export class Formula extends Cell {
             case CellState.Uptodate:
                 break;
             case CellState.Computing:
-                console.log("Computing");
                 const culprit: FullCellAddress = new FullCellAddress(sheet, null, col, row);
                 const msg = `### CYCLE in cell ${culprit} formula ${this.Show(col, row, this.workbook.format)} `;
                 const err = ErrorValue.cycleError;
                 this.v = err;
-                console.error(msg);
-                this.workbook.Cyclic = new CyclicException("#CYCLE!", new FullCellAddress(sheet, null, col, row)); // new
                 return this.v;
             case CellState.Dirty:
             case CellState.Enqueued:
-                console.debug(`Evaluating cell at (${col}, ${row})`);
                 this.state = CellState.Computing;
                 this.v = this.e.Eval(sheet, col, row);
-                console.debug(`Result of Eval:`, this.v);
                 this.state = CellState.Uptodate;
                 if (this.workbook.UseSupportSets) {
                     this.ForEachSupported(Formula.EnqueueCellForEvaluation);
