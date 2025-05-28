@@ -1,10 +1,10 @@
 import React, {useRef} from "react";
 import {A1RefCellAddress, SuperCellAddress} from "../back-end/CellAddressing.ts";
 import {WorkbookManager} from "../API-Layer/WorkbookManager.ts";
-import {adjustFormula, numberToLetters, ReadArea} from "./HelperFunctions.tsx";
+import {numberToLetters, ReadArea} from "./HelperFunctions.tsx";
 import { makeBold, makeItalic, makeUnderlined} from "./SheetHeader.tsx"
 import {
-    EvalCellsInViewport, GetRawCellContent, GetSupportsInViewPort,
+    EvalCellsInViewport, GetDependenciesInViewPort, GetRawCellContent, GetSupportsInViewPort,
     HandleArrayFormula, HandleArrayResult, ParseCellToBackend
 } from "../API-Layer/Back-endEndpoints.ts";
 
@@ -17,6 +17,8 @@ interface GridCellProps {
 let selectionStartCell: string | null = null
 let AreaMarked = false
 let shiftKeyDown = false
+let showDependencies = false
+
 
 /** Defines the regular cell along with an ID in A1 format. It also passes on its ID when hovered over.
  * @param columnIndex - Current column index, used to define cell ID
@@ -27,6 +29,7 @@ let shiftKeyDown = false
 export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style }: GridCellProps) => {
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
     const [valueHolder, setValueHolder] = React.useState<string>("");
+
     let initialValueRef = useRef<string>("");
 
     // Passes the cell ID to the 'Go to cell' input box as its value of the
@@ -44,6 +47,15 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             cell.classList.remove('support-cell');
         });
     };
+
+    const clearAllDependentCells = () => {
+        const allSupportCells = document.querySelectorAll('.depend-cell');
+        console.log(allSupportCells)
+        allSupportCells.forEach(cell => {
+            cell.classList.remove('depend-cell');
+        });
+    };
+
 
     /**
      * Clears the visual highlight of all cells in the range.
@@ -90,21 +102,18 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        if (sheet) {
-            sheet.ForEachInArea(
-                range.startCol,
-                range.startRow,
-                range.endCol,
-                range.endRow,
-                (cell, col, row,fromRow:number,fromCol:number) => {
-                    const targetRow = targetCellRef.row + row - range.startRow;
-                    const targetCol = targetCellRef.col + col - range.startCol;
-                    sheet.PasteCell(cell, targetCol, targetRow,fromRow,fromCol);
-                }
-            );
-        }
-        forceRefresh(range.startCol, range.startRow);
-        AreaMarked = false;
+            for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
+                const { row, col, cell, content, relRow, relCol } = cellInfo;
+                sheet!.PasteCell(cell, col, row,targetCellRef.col + relCol,targetCellRef.row + relRow, content);
+            }
+
+
+
+        WorkbookManager.getWorkbook().Recalculate()
+        EvalCellsInViewport()
+        forceRefresh(range.startCol,range.startRow);
+            AreaMarked = false;
+
     }
 
     /**
@@ -119,22 +128,16 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        if (sheet) {
-            sheet.ForEachInArea(
-                range.startCol,
-                range.startRow,
-                range.endCol,
-                range.endRow,
-                (cell, col, row,fromRow,fromCol) => {
-                    const targetRow = targetCellRef.row + row - range.startRow;
-                    const targetCol = targetCellRef.col + col - range.startCol;
-                    sheet.CutCell(cell, targetCol, targetRow, fromRow, fromCol);
-                }
-            );
+        for (const cellInfo of ReadArea(range.startRow, range.endRow, range.startCol, range.endCol)) {
+            const { row, col, cell, content, relRow, relCol } = cellInfo;
+            sheet!.PasteCell(cell, col, row,targetCellRef.col + relCol,targetCellRef.row + relRow, content);
+            sheet!.RemoveCell(col, row);
         }
 
-        clearVisualHighlight();
-        forceRefresh(range.startCol, range.startRow);
+        WorkbookManager.getWorkbook().Recalculate()
+        EvalCellsInViewport()
+        forceRefresh(range.startCol,range.startRow);
+        AreaMarked = false;
     }
 
     /**
@@ -159,8 +162,11 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             );
         }
 
-        clearVisualHighlight();
+        WorkbookManager.getWorkbook().Recalculate()
+        EvalCellsInViewport()
         forceRefresh(range.startCol,range.startRow);
+
+        clearVisualHighlight();
 
         AreaMarked = false;
     }
@@ -175,9 +181,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
         if (AreaMarked && (event.key === "Backspace" || event.key === "Delete")) {
             setHighlight(selectionStartCell!, true);
             areaRef = sessionStorage.getItem('selectionRange')!;
-
             DeleteArea(areaRef);
-
             clearVisualHighlight()
             AreaMarked = false
         }
@@ -231,6 +235,14 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                     break
                 case "u":
                     makeUnderlined();
+                    break;
+                case "m":
+                    showDependencies = !showDependencies;
+                    if(showDependencies) {
+                        showDeps()
+                    } else {
+                        clearAllDependentCells()
+                    }
                     break;
             }
         }
@@ -369,6 +381,22 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
             }));
         }
     }
+
+    function showDeps() {
+        if (showDependencies) {
+            let myDependencies = GetDependenciesInViewPort(columnIndex, rowIndex)!
+
+            if (myDependencies) {
+                for (let i = 0; i < myDependencies.length; i++) {
+                    let supportingCell = document.getElementById(myDependencies[i]);
+                    if (supportingCell && !supportingCell.classList.contains("depend-cell")) {
+                        supportingCell.classList.add("depend-cell");
+                    }
+                }
+            }
+        }
+    }
+
     return (
         <div className="Cell" contentEditable={true} id={ID} title={ID}
              style={{
@@ -404,11 +432,8 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  (e.target as HTMLInputElement).innerText = rawCellContent;
                  updateFormulaBox(ID, rawCellContent);
 
-
-                 //clearAllSupportCells()
-
-
                  let mySupports = GetSupportsInViewPort(columnIndex,rowIndex)!
+                 showDeps();
 
 
                  if (!mySupports) {
@@ -451,6 +476,7 @@ export const GridCell: React.FC<GridCellProps> = ({ columnIndex, rowIndex, style
                  }
                  else {(e.target as HTMLElement).innerText = valueHolder}
                  clearAllSupportCells()
+                 clearAllDependentCells()
              }}
 
             //Update formula box alongside cell input, also show caret (text cursor) once writing starts
