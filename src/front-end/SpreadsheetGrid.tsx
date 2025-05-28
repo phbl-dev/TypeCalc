@@ -330,7 +330,6 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
           activeSheet={activeSheet}
           setActiveSheet={setActiveSheet}
           setSheetNames={setSheetNames}
-          scrollOffset={scrollOffset}
       />
     </div>
   );
