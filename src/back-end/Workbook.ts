@@ -136,53 +136,49 @@ export class Workbook {
      * @constructor
      */
     public Recalculate(): number {
-        // Now Cyclic != null or for all formulas f, f.state==Uptodate
-        if (this.Cyclic != null) {
-            return this.FullRecalculation();
-        } else {
-            return this.TimeRecalculation(() => {
-                this.UseSupportSets = true;
-                // Requires for all formulas f, f.state==Uptodate
-                // Stage (1): Mark formulas reachable from roots, f.state=Dirty
-                SupportArea.idempotentForeach = true;
-                this.volatileCells.forEach((fca: FullCellAddress) => {
-                    Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row); // When marking cells as "dirty" we mark them for recalculation.
-                });
-                this.editedCells.forEach((fca: FullCellAddress) => {
-                    Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
-                })
-
-                // Stage (2): Evaluate Dirty formulas (and Dirty cells they depend on)
-                this.Clear("awaitsEvaluation");
-                SupportArea.idempotentForeach = true;
-                this.volatileCells.forEach((fca: FullCellAddress) => {
-                    Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
-                });
-
-                this.editedCells.forEach((fca: FullCellAddress) => {
-                    Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
-                });
-
-                while (this.awaitsEvaluation.length > 0) {
-                    this.awaitsEvaluation.shift()?.Eval() // because the value returned by shift() could possibly be undefined we use optional chaining (?.) to safely return undefined instead of throwing an error.
-                }
+    // Now Cyclic != null or for all formulas f, f.state==Uptodate
+        return this.TimeRecalculation(() => {
+            this.UseSupportSets = true;
+            // Requires for all formulas f, f.state==Uptodate
+            // Stage (1): Mark formulas reachable from roots, f.state=Dirty
+            SupportArea.idempotentForeach = true;
+            this.volatileCells.forEach((fca: FullCellAddress) => {
+                Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row); // When marking cells as "dirty" we mark them for recalculation.
             });
-        }
+            this.editedCells.forEach((fca: FullCellAddress) => {
+                Cell.MarkCellDirty(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
+            })
+
+            // Stage (2): Evaluate Dirty formulas (and Dirty cells they depend on)
+            this.Clear("awaitsEvaluation");
+            SupportArea.idempotentForeach = true;
+            this.volatileCells.forEach((fca: FullCellAddress) => {
+                Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
+            });
+
+            this.editedCells.forEach((fca: FullCellAddress) => {
+                Cell.EnqueueCellForEvaluation(fca.sheet, fca.cellAddress.col, fca.cellAddress.row);
+            });
+
+            while (this.awaitsEvaluation.length > 0) {
+                this.awaitsEvaluation.shift()?.Eval() // because the value returned by shift() could possibly be undefined we use optional chaining (?.) to safely return undefined instead of throwing an error.
+            }
+        });
     }
 
     /**
      */
-    public FullRecalculation(): number {
-        return this.TimeRecalculation(() => {
-            this.UseSupportSets = false;
-            this.ResetCellState();
-            // For all formulas f, f.state==Dirty
-            this.sheets.forEach(sheet => {
-                sheet.RecalculateFull();
-            })
-            this.Cyclic = null; // After one Full Recalculation have been made, set Cyclic back to null, so we don't do a full recalculation on all standard minimal recalculations.
-        });
-    }
+    //public FullRecalculation(): number {
+    //    return this.TimeRecalculation(() => {
+    //        this.UseSupportSets = false;
+    //        this.ResetCellState();
+    //        // For all formulas f, f.state==Dirty
+    //        this.sheets.forEach(sheet => {
+    //            sheet.RecalculateFull();
+    //        })
+    //        this.Cyclic = null; // After one Full Recalculation have been made, set Cyclic back to null, so we don't do a full recalculation on all standard minimal recalculations.
+    //    });
+    //}
 
     public AddToQueue(sheet: Sheet, col: number, row: number) {
         this.awaitsEvaluation.push(new FullCellAddress(sheet, null, col, row));
