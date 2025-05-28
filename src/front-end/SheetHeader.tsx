@@ -149,7 +149,7 @@ export const SheetHeader: React.FC = () => {
                 <input className="color" type="color" id="textColorPicker" value="#000000"/>
             </div>
             <label htmlFor="formulaBox"></label><input className="formulaBox" type="text" id="formulaBox"/>
-            <h4 contentEditable="true" id="documentTitle">Sheet1</h4>
+            <h4 id="documentTitle">Sheet1</h4>
         </header>
     )
 }
