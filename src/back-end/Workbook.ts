@@ -169,7 +169,6 @@ export class Workbook {
     /**
      */
     public FullRecalculation(): number {
-        console.log("Full recalculation");
         return this.TimeRecalculation(() => {
             this.UseSupportSets = false;
             this.ResetCellState();
@@ -202,6 +201,9 @@ export class Workbook {
             console.log("BAD:", exn);
             if (exn instanceof RangeError) { // If the call stack gets to deep e.g. on an import we do a fill recalculation.
                 return this.FullRecalculation()
+            }
+            if (exn instanceof CyclicException) {
+                this.Cyclic = exn as CyclicException;
             }
         }
 
