@@ -208,3 +208,5 @@ export  function HandleArrayFormula(columnIndex:number,rowIndex:number):boolean{
     const checkCell = WorkbookManager.getWorkbook()?.getSheet(WorkbookManager.getActiveSheetName())?.Get(columnIndex, rowIndex);
     return !(checkCell instanceof ArrayFormula);
 }
+
+const trial = "hej"
