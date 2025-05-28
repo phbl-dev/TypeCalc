@@ -277,19 +277,22 @@ export class Sheet {
     };
 
 
-    public CutCell(cell: Cell, col: number, row: number,fromRow:number,fromCol:number): void {
-        this.PasteCell(cell, col, row,fromRow,fromCol);
-        this.RemoveCell(fromCol, fromRow);
-    }
 
 
-    public PasteCell(cell:Cell, col: number, row: number,fromRow:number,fromCol:number):void {
-        const content = cell.GetText()
-        this.SetCell((cell instanceof Formula ? Cell.Parse(adjustFormula(
-            content!,
-            row - fromRow,
-            col - fromCol
-        ),this.workbook,col,row) : Cell.Parse(content!,this.workbook,col,row)!)!, col, row)
+
+
+    public PasteCell(cell:Cell, col: number, row: number, targetCol:number, targetRow:number, content:string):void {
+        if (cell instanceof Formula) {
+            const nextFormula = adjustFormula(
+                content!,
+                targetRow - row,
+                targetCol - col
+            );
+            this.SetCell(Cell.Parse(nextFormula!, this.workbook, targetCol, targetRow)!,targetCol,targetRow);
+        }
+        else {
+            this.SetCell(Cell.Parse(content, this.workbook, targetCol, targetRow)!,targetCol,targetRow);
+        }
     }
     /**
      * Moves a cell from its current column and row to another
