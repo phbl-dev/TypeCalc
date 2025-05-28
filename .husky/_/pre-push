@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-git add dist/
+git add docs/
