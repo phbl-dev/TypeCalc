@@ -53,6 +53,9 @@ export const GridCell: React.FC<GridCellProps> = ({
     }
   };
 
+  /**
+   * Removes all cells from the class "support-cell"
+   */
   const clearAllSupportCells = () => {
     const allSupportCells = document.querySelectorAll(".support-cell");
     console.log(allSupportCells);
@@ -61,6 +64,9 @@ export const GridCell: React.FC<GridCellProps> = ({
     });
   };
 
+  /**
+   * Removes all cells from the class "depend-cell"
+   */
   const clearAllDependentCells = () => {
     const allSupportCells = document.querySelectorAll(".depend-cell");
     console.log(allSupportCells);
@@ -80,6 +86,13 @@ export const GridCell: React.FC<GridCellProps> = ({
     });
   };
 
+  /**
+   * Forces a refresh of the current cell by briefly changing the focused element and then
+   * re-focusing. This is done because a focused cell is currently not properly updated by
+   * the PasteArea(), CutArea() and DeleteArea() functions.
+   * @param col
+   * @param row
+   */
   const forceRefresh = (col: number, row: number) => {
     const currCellID = WorkbookManager.getActiveCell()!;
     const currCell = document.getElementById(currCellID);
@@ -203,7 +216,11 @@ export const GridCell: React.FC<GridCellProps> = ({
     AreaMarked = false;
   }
 
-  // Allows us to navigate the cells using the arrow and Enter keys
+  /**
+   * Enables all keyboard-related interaction, such as navigation with the arrow keys
+   * and all the various keybindings for, e.g., copy-paste or undo/redo.
+   * @param event - looks for events related to keyboard input like event.key or event.ctrlKey
+   */
   const keyNav = (event: any): void => {
     let nextRow = rowIndex;
     let nextCol = columnIndex;
@@ -220,16 +237,13 @@ export const GridCell: React.FC<GridCellProps> = ({
 
     if (event.ctrlKey) {
       switch (event.key) {
-        // Undo functionality:
-        case "z":
+        case "z": // Undo functionality:
           event.preventDefault();
           WorkbookManager.getActiveSheet()?.undo();
-
           EvalCellsInViewport();
           break;
 
-        // Redo functionality:
-        case "y":
+        case "y": // Redo functionality:
           event.preventDefault();
           WorkbookManager.getActiveSheet()?.redo();
           EvalCellsInViewport();
@@ -240,10 +254,9 @@ export const GridCell: React.FC<GridCellProps> = ({
           if (AreaMarked) {
             sessionStorage.removeItem("tmpCellRef");
             setHighlight(selectionStartCell!, true);
-          } else {
-            setHighlight(ID, true);
-          }
+          } else {setHighlight(ID, true);}
           break;
+
         case "x":
           event.preventDefault();
           areaRef = sessionStorage.getItem("selectionRange");
@@ -252,6 +265,7 @@ export const GridCell: React.FC<GridCellProps> = ({
           }
           sessionStorage.removeItem("selectionRange");
           break;
+
         case "v":
           event.preventDefault();
           areaRef = sessionStorage.getItem("selectionRange");
@@ -259,6 +273,7 @@ export const GridCell: React.FC<GridCellProps> = ({
             PasteArea(areaRef);
           }
           break;
+
         case "b":
           makeBold();
           break;
@@ -442,6 +457,10 @@ export const GridCell: React.FC<GridCellProps> = ({
     }
   }
 
+  /**
+   * Shows a cell's dependencies by fetching any dependencies in view port from the back-end
+   * through the API-layer. It then adds any such dependencies to a class "depend-cell"
+   */
   function showDeps() {
     if (showDependencies) {
       let myDependencies = GetDependenciesInViewPort(columnIndex, rowIndex)!;
