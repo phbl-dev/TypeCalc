@@ -1,12 +1,16 @@
 import { WorkbookManager } from "../API-Layer/WorkbookManager.ts";
 import { Cell as BackendCell } from "../back-end/Cells.ts";
 
+/**
+ * Gets the HTML element based on a provided cell ID
+ * @param cellID - the cell's ID, which is a string written in A1 notation
+ */
 export function getCell(cellID: string): HTMLElement | null {
   return document.getElementById(cellID);
 }
 
-/** Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
- *
+/**
+ * Converts a number to a letter or multiple (AA, AB, ..., AZ etc.)
  * @param n - The number to convert
  */
 export function numberToLetters(n: number) {
@@ -19,8 +23,8 @@ export function numberToLetters(n: number) {
   return letter;
 }
 
-/** Converts letters to a number, following the same formula as above.
- *
+/**
+ * Converts letters to a number, following the same formula as above.
  * @param letters - The letters to convert
  */
 export function lettersToNumber(letters: string): number {

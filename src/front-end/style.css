@@ -242,7 +242,7 @@ header h4 {
 }
 
 .depend-cell {
-    outline: 3px groove #3194e0 !important;
+    outline: 3px dotted rgba(0, 17, 252, 0.65) !important;
     outline-offset: -2px;
     z-index: 2;
 }

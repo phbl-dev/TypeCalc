@@ -137,6 +137,11 @@ interface CellType {
   Data: CellData;
 }
 
+
+/**
+ * Contains our two file exporting functions for exporting workbook contents
+ * as either an XMLSS or a CSV file.
+ */
 export class XMLWriter {
   constructor() {}
 
@@ -255,7 +260,6 @@ export class XMLWriter {
   /**
    * Exports the active sheet's contents as a CSV file.
    */
-
   exportAsCSV() {
     const currentSheet = WorkbookManager.getActiveSheet();
     const sheetData = currentSheet?.getCells();
