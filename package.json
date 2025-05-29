@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": " playwright test",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "format": "npx prettier . --write"
   },
   "dependencies": {
     "@formulajs/formulajs": "^4.4.11",

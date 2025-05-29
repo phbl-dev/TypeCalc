@@ -25,7 +25,7 @@ describe("Sheet Testing", () => {
     sheet.Set(cellAddress, cellToAdd);
 
     console.log(cellAddress.toString());
-    console.log()
+    console.log();
 
     //expect(sheet.ShowValue(1, 2).search("10")).toBe(9); // should return 9 as that is where the value 10 is found at (index-wise)
   });
@@ -44,14 +44,12 @@ describe("Sheet Testing", () => {
 
   test.skip("insertion of rows", () => {
     const cellAddress: SuperCellAddress = new SuperCellAddress(2, 2);
-    const nc:NumberCell = new NumberCell(10);
+    const nc: NumberCell = new NumberCell(10);
     sheet.Set(cellAddress, nc);
 
-    sheet.InsertRowsCols(2,2,true)
+    sheet.InsertRowsCols(2, 2, true);
 
-
-    expect(sheet.Show(2,4)).toBe("10")
-    expect(sheet.Show(2,2)).toBe("")
-
-  })
+    expect(sheet.Show(2, 4)).toBe("10");
+    expect(sheet.Show(2, 2)).toBe("");
+  });
 });
