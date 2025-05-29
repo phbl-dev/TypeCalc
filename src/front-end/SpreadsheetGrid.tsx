@@ -28,8 +28,8 @@ interface GridProps {
   ref?: React.Ref<any>;
 }
 
-/** Defines the column headers as a div with ID, style, and contents
- *
+/**
+ * Defines the column headers as a div with ID, style, and contents
  * @param columnIndex - Current column index shown in the header as a corresponding letter, as defined in the numberToLetters function
  * @param style - Lets the header inherit style from a css style sheet
  * @constructor
@@ -51,8 +51,8 @@ const ColumnHeader = ({
   </div>
 );
 
-/** Defines the row headers as a div with ID, style, and contents
- *
+/**
+ * Defines the row headers as a div with ID, style, and contents
  * @param rowIndex - Current row index shown in the header
  * @param style - Lets the header inherit style from a css style sheet
  * @constructor
@@ -68,11 +68,21 @@ const RowHeader = ({ rowIndex, style }: { rowIndex: number; style: any }) => (
   </div>
 );
 
-/** Creates the sheet itself with headers and body. It extends the GridInterface so that
+/**
+ * Creates the sheet itself with headers and body. It extends the GridInterface so that
  * we can create a sheet with a self-defined number of rows and columns.
  * The sheet itself consists of a top row flexbox with a corner cell and a row of column
  * headers created as a Grid. The main body itself is also a flexbox, consisting of two
  * additional grids; one for the row headers and one for the regular cells.
+ * @param columnCount - number of columns, received as a parameter when rendering VirtualizedGrid
+ * @param rowCount - number of rows, received as a parameter when rendering VirtualizedGrid
+ * @param columnWidth - width of the columns and all regular cells
+ * @param rowHeight - height of the rows and all regular cells
+ * @param colHeaderHeight - custom height for the column header
+ * @param rowHeaderWidth - custom width for the row header
+ * @param width - overall width of the entire grid
+ * @param height - overall height of the entire grid
+ * @constructor
  */
 export const VirtualizedGrid: React.FC<GridProps> = ({
   columnCount,
@@ -144,6 +154,10 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
     // Handles formulaBox input
     let value: string;
     let valueChanged: boolean = false;
+    /**
+     * Passes changes made in the formula box to the HTML element of the active cell
+     * @param e
+     */
     const handleFormulaChange = (e: Event) => {
       value = (e.target as HTMLInputElement).value;
       valueChanged = true;
@@ -155,7 +169,13 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
       }
     };
 
-    // Updates cells when changing the value of a cell
+    /**
+     * If the Enter key is pressed and the active cell's value has been changed,
+     * Handles the keyboard "keydown" event, specifically for the "Enter" key. If so,
+     * it updates cell contents.
+     *
+     * @param e - Checks for keyboard events, specifically the Enter key
+     */
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
         if (valueChanged) {
@@ -164,21 +184,32 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
       }
     };
 
-    // Updates cells when leaving if entering a different cell and the value was change
+    /**
+     * Does the same as handleKeyDown, except when leaving a cell rather than detecting
+     * the Enter key.
+     */
     const handleBlur = () => {
       if (valueChanged) {
         updateCellContents();
       }
     };
 
-    // Does the actual updating
+    /**
+     * Performs the actual updating of the currently active cell's contents. It first
+     * resets the valueChanged flag before parsing the provided value. Lastly, all
+     * cells in the current viewport are evaluated.
+     */
     const updateCellContents = () => {
       valueChanged = false;
       ParseToActiveCell(value);
       EvalCellsInViewport();
     };
 
-    // Handle file drop events entirely in React
+    /**
+     * Handles the drag-and-drop of an XMLSS file to be read and loaded
+     * in TypeCalc.
+     * @param event - a DragEvent
+     */
     function handleDrop(event: DragEvent) {
       event.preventDefault();
       const file = event.dataTransfer?.files?.[0];
@@ -203,6 +234,10 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
       }
     }
 
+    /**
+     * Prevents default browser behaviour from occurring when dragging in a file
+     * @param event
+     */
     function handleDragOver(event: DragEvent) {
       event.preventDefault();
     }
@@ -232,8 +267,8 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
     };
   }, [scrollOffset]);
 
-  /** Synchronizes scrolling between the grid body and the headers so that it works
-   * like one, big grid. Does not currently synchronize scrolling done on the headers.
+  /** Synchronises scrolling between the grid body and the headers so that it works
+   * like one, big grid. Does not currently synchronise scrolling done on the headers.
    *
    * @param scrollLeft Horizontal scrolling value
    * @param scrollTop Vertical scrolling value

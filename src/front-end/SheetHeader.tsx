@@ -2,6 +2,9 @@ import React, { useEffect } from "react";
 import { WorkbookManager } from "../API-Layer/WorkbookManager.ts";
 import { XMLWriter } from "../API-Layer/WorkbookIO.ts";
 
+/**
+ * Makes the cell's text bold
+ */
 export function makeBold() {
   let cellID = WorkbookManager.getActiveCell();
   if (!cellID) {
@@ -23,6 +26,9 @@ export function makeBold() {
   }
 }
 
+/**
+ * Makes the cell's text italic
+ */
 export function makeItalic() {
   let cellID = WorkbookManager.getActiveCell();
   if (!cellID) {
@@ -44,6 +50,9 @@ export function makeItalic() {
   }
 }
 
+/**
+ * Makes the cell's text underlined
+ */
 export function makeUnderlined() {
   let cellID = WorkbookManager.getActiveCell();
   if (!cellID) {
@@ -65,6 +74,9 @@ export function makeUnderlined() {
   }
 }
 
+/**
+ * Changes the background colour of the cell
+ */
 export const SheetHeader: React.FC = () => {
   function resetWorkbook() {
     localStorage.clear();
@@ -90,6 +102,9 @@ export const SheetHeader: React.FC = () => {
     }
   }
 
+  /**
+   * Changes the colour of the text in a cell
+   */
   function setTextColor() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) {
@@ -109,6 +124,7 @@ export const SheetHeader: React.FC = () => {
     }
   }
 
+  // Used to create all the EventListeners needed by SheetHeader functions and remove them at the end
   useEffect(() => {
     const resetButton = document.getElementById("reset") as HTMLButtonElement;
     const xmlExport = document.getElementById("xmlExport") as HTMLElement;

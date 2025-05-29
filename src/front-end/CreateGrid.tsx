@@ -2,7 +2,7 @@ import ReactDOM from "react-dom/client";
 import { VirtualizedGrid } from "./SpreadsheetGrid.tsx";
 
 /**
- * Renders the grid to the DOM.
+ * Renders the grid to the DOM with the specified number of columns and rows.
  * @constructor
  */
 export const renderGrid = () => {
