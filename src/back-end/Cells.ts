@@ -426,12 +426,12 @@ export class BlankCell extends ConstCell {
     super();
   }
   public override Eval(sheet: Sheet, col: number, row: number): Value | null {
-    console.log(sheet, col, row);
+    //console.log(sheet, col, row);
     return null;
   }
 
   public override Show(col: number, row: number, fo: Formats): string {
-    console.log(col, row, fo);
+    //console.log(col, row, fo);
 
     return "";
   }

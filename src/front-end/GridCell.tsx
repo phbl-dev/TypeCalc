@@ -254,7 +254,9 @@ export const GridCell: React.FC<GridCellProps> = ({
           if (AreaMarked) {
             sessionStorage.removeItem("tmpCellRef");
             setHighlight(selectionStartCell!, true);
-          } else {setHighlight(ID, true);}
+          } else {
+            setHighlight(ID, true);
+          }
           break;
 
         case "x":
