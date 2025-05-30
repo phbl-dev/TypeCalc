@@ -1,39 +1,39 @@
 import { describe, expect, test } from "vitest";
 import {
-  A1RefCellAddress,
-  R1C1RARef,
-  RARefCellAddress,
-  SuperCellAddress,
-  SuperRARef,
+    A1RefCellAddress,
+    R1C1RARef,
+    RARefCellAddress,
+    SuperCellAddress,
+    SuperRARef,
 } from "../src/back-end/CellAddressing";
 
 describe("Cell Addressing tests", () => {
-  test("A1 Cell Address construction", () => {
-    const a1ref = new A1RefCellAddress("A2");
+    test("A1 Cell Address construction", () => {
+        const a1ref = new A1RefCellAddress("A2");
 
-    expect(a1ref.toString()).toBe("A2");
-  });
+        expect(a1ref.toString()).toBe("A2");
+    });
 
-  test("RARef Cell Address construction", () => {
-    const raref = new SuperRARef(false, 0, false, 1);
+    test("RARef Cell Address construction", () => {
+        const raref = new SuperRARef(false, 0, false, 1);
 
-    const rarefCA = new RARefCellAddress(raref, 0, 0);
+        const rarefCA = new RARefCellAddress(raref, 0, 0);
 
-    expect(rarefCA.toString()).toBe("A2");
-  });
+        expect(rarefCA.toString()).toBe("A2");
+    });
 
-  test("SuperCellAddress construction", () => {
-    const superCA = new SuperCellAddress(0, 1);
+    test("SuperCellAddress construction", () => {
+        const superCA = new SuperCellAddress(0, 1);
 
-    expect(superCA.toString()).toBe("A2");
-  });
+        expect(superCA.toString()).toBe("A2");
+    });
 
-  //Reevaluate this test
-  test("R1C1RARef Cell Address construction", () => {
-    const r1c1raref = new R1C1RARef("R[2]C[1]");
+    //Reevaluate this test
+    test("R1C1RARef Cell Address construction", () => {
+        const r1c1raref = new R1C1RARef("R[2]C[1]");
 
-    const rarefCA = new RARefCellAddress(r1c1raref, 0, 0);
+        const rarefCA = new RARefCellAddress(r1c1raref, 0, 0);
 
-    expect(rarefCA.toString()).toBe("B3");
-  });
+        expect(rarefCA.toString()).toBe("B3");
+    });
 });

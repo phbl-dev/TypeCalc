@@ -1,43 +1,43 @@
 name: Test Script
 on:
-  pull_request:
-    branches: [main]
+    pull_request:
+        branches: [main]
 
 jobs:
-  Unit-Tests:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - name: Install dependencies
-        run: npm ci
-      - name: Run unit tests
-        run: npm run test
+    Unit-Tests:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                node-version: [20]
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  cache: "npm"
+            - name: Install dependencies
+              run: npm ci
+            - name: Run unit tests
+              run: npm run test
 
-  E2E-Tests:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - name: Install dependencies
-        run: npm install
-      - name: Setup Playwright
-        run: npx playwright install --with-deps
-      - name: Run E2E tests
-        run: npm run test:e2e
+    E2E-Tests:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                node-version: [20]
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node-version }}
+                  cache: "npm"
+            - name: Install dependencies
+              run: npm install
+            - name: Setup Playwright
+              run: npx playwright install --with-deps
+            - name: Run E2E tests
+              run: npm run test:e2e
