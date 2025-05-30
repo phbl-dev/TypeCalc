@@ -194,9 +194,7 @@ export class XMLWriter {
       xmlOutput += xmlSheetHeader;
 
       const sheet: Sheet|null = WorkbookManager.getWorkbook().getSheet(sheetName);
-      if (!sheet) {
-        continue;
-      } // Skip invalid sheets
+      if (!sheet) {continue;} // Skip invalid sheets
 
       const sheetCells = sheet.getCells();
       let currentRow: number = -1; // Instantiate with an invalid row number
