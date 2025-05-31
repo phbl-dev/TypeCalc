@@ -4,6 +4,7 @@ import { XMLWriter, XMLReader } from "../API-Layer/WorkbookIO.ts";
 import { WorkbookManager } from "../API-Layer/WorkbookManager.ts";
 import {
     EvalCellsInViewport,
+    ParseCellToBackend,
     ParseToActiveCell,
 } from "../API-Layer/Back-endEndpoints.ts";
 import {
@@ -14,6 +15,7 @@ import {
 import { GridCell } from "./GridCell.tsx";
 import { SheetFooter } from "./SheetFooter.tsx";
 import { SheetHeader } from "./SheetHeader.tsx";
+import { NumberCell } from "../back-end/Cells.ts";
 
 // Created interface so that we can modify columnCount and rowCount when creating the grid
 interface GridProps {
@@ -167,7 +169,7 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
                 WorkbookManager.getActiveCell()!,
             );
             if (activeCell) {
-                activeCell.innerHTML = value;
+                activeCell.innerText = value;
             }
         };
 
@@ -192,7 +194,25 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
          */
         const handleBlur = () => {
             if (valueChanged) {
-                updateCellContents();
+                const activeId = WorkbookManager.getActiveCell();
+                const activeCell = document.getElementById(activeId!);
+                const valueHolder = (
+                    document.getElementById("formulaBox") as HTMLInputElement
+                ).value;
+                console.log(
+                    "formulaBox",
+                    document.getElementById("formulaBox")!.innerHTML,
+                );
+                console.log("innertext: ", activeCell!.innerHTML);
+                activeCell!.focus();
+                activeCell!.innerHTML = valueHolder;
+                const enterEvent = new KeyboardEvent("keydown", {
+                    key: "Enter",
+                    code: "Enter",
+                    bubbles: true,
+                });
+                activeCell?.dispatchEvent(enterEvent);
+                valueChanged = false;
             }
         };
 
@@ -202,9 +222,8 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
          * cells in the current viewport are evaluated.
          */
         const updateCellContents = () => {
-            valueChanged = false;
-            ParseToActiveCell(value);
-            EvalCellsInViewport();
+            let fmb = document.getElementById("formulaBox");
+            fmb!.blur();
         };
 
         /**

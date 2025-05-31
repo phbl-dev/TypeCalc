@@ -97,6 +97,11 @@ export class XMLReader {
                                 );
                             }
                         }
+
+                        if (g % 1000 == 0) {
+                            WorkbookManager.getWorkbook().Recalculate();
+                            console.log("recalculating");
+                        }
                     }
                 }
                 WorkbookManager.getWorkbook().Recalculate();

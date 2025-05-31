@@ -633,7 +633,7 @@ export class SpreadsheetVisitor
      */
     public powFactor(ctx: PowFactorCstChildren): Expr {
         // Get the first factor
-        console.log(ctx.factor);
+        //console.log(ctx.factor);
         let e: Expr = this.visit(ctx.factor[0]);
 
         if (ctx.Power && ctx.Power.length > 0) {
