@@ -92,6 +92,11 @@ export class XMLReader {
                 sheet.SetCell(cellToBeAdded, colIndex - 1, rowIndex - 1);
               }
             }
+
+            if (g % 1000 == 0) {
+              WorkbookManager.getWorkbook().Recalculate();
+              console.log("recalculating");
+            }
           }
         }
         WorkbookManager.getWorkbook().Recalculate();
@@ -135,7 +140,6 @@ interface CellType {
   Formula?: string; // Optional, stores formulas if present
   Data: CellData;
 }
-
 
 /**
  * Contains our two file exporting functions for exporting workbook contents
