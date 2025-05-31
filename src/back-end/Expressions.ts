@@ -313,7 +313,6 @@ export class ExprArray extends Expr {
     }
 
     Eval(sheet: Sheet, col: number, row: number): Value {
-        console.log("this is where things go wrong");
         throw new ErrorConst("Not implemented"); // this is most likely a problem
     }
 
@@ -642,7 +641,6 @@ export class FunCall extends Expr {
 
         const args = FunCall.getExprValues(sheet, col, row, this.es);
 
-        console.log("Args before error check:", args);
         // Check for error values
         function findErrorValue(arg: any): ErrorValue | null {
             if (arg instanceof ErrorValue) {
