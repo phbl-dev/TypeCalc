@@ -36,6 +36,12 @@ export class Workbook {
         this._Cyclic = arg;
     }
 
+    /**
+     * Gets number of recalculations done for this Workbook.
+     * This is used for testing purposes.
+     * @returns
+     * @constructor
+     */
     get RecalcCount(): number {
         return this._RecalcCount;
     }
@@ -182,6 +188,8 @@ export class Workbook {
     }
 
     /**
+     * Mark all cells as dirty and subsequently recalculate them.
+     * This is done for each sheet in the workbook.
      */
     public FullRecalculation(): number {
         return this.TimeRecalculation(() => {
@@ -195,6 +203,13 @@ export class Workbook {
         });
     }
 
+    /**
+     * Add a cell to the awaitsEvaluation queue.
+     * @param sheet
+     * @param col
+     * @param row
+     * @constructor
+     */
     public AddToQueue(sheet: Sheet, col: number, row: number) {
         this.awaitsEvaluation.push(new FullCellAddress(sheet, null, col, row));
     }
@@ -234,9 +249,12 @@ export class Workbook {
         });
     }
 
-    // TODO: This is not used?
+    /**
+     * Used to rebuild workbook with support graph.
+     * Not implemented in TypeCalc.
+     * @constructor
+     */
     public RebuildSupportGraph(): void {
-        console.log("Rebuilding support graph");
         // For each sheet in sheets and for all cells in each sheet: call ResetSupportSet() from Cells.ts which sets the SupportSet to null.
         for (const sheet of this.sheets) {
             sheet.getCells().Forall((c, r, cell) => {
@@ -249,6 +267,10 @@ export class Workbook {
         } // Leaves all cells Dirty
     }
 
+    /**
+     * Clear VolatileSet
+     * @constructor
+     */
     public ResetVolatileSet(): void {
         this.Clear("volatileCells");
         for (const sheet of this.sheets) {
@@ -283,7 +305,7 @@ export class Workbook {
         }
     }
 
-    public SheetCount(): number {
+    public get SheetCount(): number {
         return this.sheets.length;
     }
 
@@ -293,6 +315,9 @@ export class Workbook {
         }
     }
 
+    /**
+     * Method for clearing sheets, editedCells, volatileCells, or awaitsEvaluation arrays.
+     */
     public Clear(name: string): void {
         if (name === "sheets") {
             this.sheets.length = 0;

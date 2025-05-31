@@ -41,7 +41,7 @@ export const GridCell: React.FC<GridCellProps> = ({
     const ID = numberToLetters(columnIndex + 1) + (rowIndex + 1); // +1 to offset 0-index
     const [valueHolder, setValueHolder] = React.useState<string>("");
 
-    let initialValueRef = useRef<string>("");
+    const initialValueRef = useRef<string>("");
 
     // Passes the cell ID to the 'Go to cell' input box as its value of the
     const displayCellId = () => {
@@ -85,34 +85,6 @@ export const GridCell: React.FC<GridCellProps> = ({
     };
 
     /**
-     * Forces a refresh of the current cell by briefly changing the focused element and then
-     * re-focusing. This is done because a focused cell is currently not properly updated by
-     * the PasteArea(), CutArea() and DeleteArea() functions.
-     * @param col
-     * @param row
-     */
-    const forceRefresh = (col: number, row: number) => {
-        const currCellID = WorkbookManager.getActiveCell()!;
-        const currCell = document.getElementById(currCellID);
-
-        const nextCellID = numberToLetters(col + 1) + (row + 1);
-        const nextCell = document.getElementById(nextCellID);
-        const cellIdInput = document.getElementById(
-            "cellIdInput",
-        ) as HTMLInputElement;
-
-        if (nextCell && cellIdInput) {
-            nextCell.focus();
-            cellIdInput.value = nextCellID;
-        }
-
-        if (currCell && cellIdInput) {
-            currCell.focus();
-            cellIdInput.value = currCellID;
-        }
-    };
-
-    /**
      * Paste functionality. Based on the areaRef, it will paste the contents of the area into the current cell.
      * If multiple cells are part of the copied area, it will paste onto multiple cells.
      * If the copied area is a formula, it will adjust the formula to fit the current cell.
@@ -124,7 +96,7 @@ export const GridCell: React.FC<GridCellProps> = ({
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        let area = ReadArea(range.ulCa, range.lrCa);
+        const area = ReadArea(range.ulCa, range.lrCa);
 
         if (!area) {
             return;
@@ -159,7 +131,7 @@ export const GridCell: React.FC<GridCellProps> = ({
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        let area = ReadArea(range.ulCa, range.lrCa);
+        const area = ReadArea(range.ulCa, range.lrCa);
 
         if (!area) {
             return;
@@ -432,14 +404,14 @@ export const GridCell: React.FC<GridCellProps> = ({
         arrowOptRow?: number,
     ): void {
         const endCellRef = new A1RefCellAddress(endCell);
-        let currentActiveCellRef =
+        const currentActiveCellRef =
             arrowOptCol && arrowOptRow
                 ? new A1RefCellAddress(
                       numberToLetters(arrowOptCol + 1) + (arrowOptRow + 1),
                   )
                 : new A1RefCellAddress(ID);
 
-        let { ulCa, lrCa } = SuperCellAddress.normalizeArea(
+        const { ulCa, lrCa } = SuperCellAddress.normalizeArea(
             currentActiveCellRef,
             endCellRef,
         );
@@ -462,14 +434,14 @@ export const GridCell: React.FC<GridCellProps> = ({
      */
     function showDeps() {
         if (showDependencies) {
-            let myDependencies = GetDependenciesInViewPort(
+            const myDependencies = GetDependenciesInViewPort(
                 columnIndex,
                 rowIndex,
             )!;
 
             if (myDependencies) {
                 for (let i = 0; i < myDependencies.length; i++) {
-                    let supportingCell = document.getElementById(
+                    const supportingCell = document.getElementById(
                         myDependencies[i],
                     );
                     if (
@@ -521,14 +493,19 @@ export const GridCell: React.FC<GridCellProps> = ({
                 (e.target as HTMLInputElement).innerText = rawCellContent;
                 updateFormulaBox(ID, rawCellContent);
 
-                let mySupports = GetSupportsInViewPort(columnIndex, rowIndex)!;
+                const mySupports = GetSupportsInViewPort(
+                    columnIndex,
+                    rowIndex,
+                )!;
                 showDeps();
 
                 if (!mySupports) {
                     return;
                 }
                 for (let i = 0; i < mySupports.length; i++) {
-                    let supportingCell = document.getElementById(mySupports[i]);
+                    const supportingCell = document.getElementById(
+                        mySupports[i],
+                    );
                     if (
                         supportingCell &&
                         !supportingCell.classList.contains("support-cell")

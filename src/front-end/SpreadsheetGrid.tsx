@@ -165,7 +165,7 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
         const handleFormulaChange = (e: Event) => {
             value = (e.target as HTMLInputElement).value;
             valueChanged = true;
-            let activeCell = document.getElementById(
+            const activeCell = document.getElementById(
                 WorkbookManager.getActiveCell()!,
             );
             if (activeCell) {
@@ -222,7 +222,7 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
          * cells in the current viewport are evaluated.
          */
         const updateCellContents = () => {
-            let fmb = document.getElementById("formulaBox");
+            const fmb = document.getElementById("formulaBox");
             fmb!.blur();
         };
 

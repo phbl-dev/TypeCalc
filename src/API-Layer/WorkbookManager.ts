@@ -106,7 +106,7 @@ export class WorkbookManager {
             );
             return [];
         }
-        let sheetNames: string[] = [];
+        const sheetNames: string[] = [];
         this.instance.GetSheets().forEach((sheet: Sheet) => {
             sheetNames.push(sheet.getName());
         });

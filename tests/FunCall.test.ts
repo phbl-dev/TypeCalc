@@ -34,22 +34,22 @@ describe("Formula.js", () => {
     });
 
     test("Make method", () => {
-        let expr1: Expr = new NumberConst(1);
-        let expr2: Expr = new NumberConst(2);
+        const expr1: Expr = new NumberConst(1);
+        const expr2: Expr = new NumberConst(2);
 
-        let maker = FunCall.Make("SUM", [expr1, expr2]);
+        const maker = FunCall.Make("SUM", [expr1, expr2]);
 
         expect(maker instanceof Expr).toBe(true);
     });
 
     test("Make method with NEG", () => {
-        let expr1: Expr = new NumberConst(1);
-        let expr2: Expr = new NumberConst(20);
-        let expr3: Expr = new NumberConst(-20);
+        const expr1: Expr = new NumberConst(1);
+        const expr2: Expr = new NumberConst(20);
+        const expr3: Expr = new NumberConst(-20);
 
-        let maker = FunCall.Make("NEG", [expr1]);
-        let maker2 = FunCall.Make("NEG", [expr2]);
-        let maker3 = FunCall.Make("NEG", [expr3]);
+        const maker = FunCall.Make("NEG", [expr1]);
+        const maker2 = FunCall.Make("NEG", [expr2]);
+        const maker3 = FunCall.Make("NEG", [expr3]);
 
         expect(NumberValue.ToNumber(maker.Eval(sheet, 0, 0))).toBe(-1);
         expect(NumberValue.ToNumber(maker2.Eval(sheet, 0, 0))).toBe(-20);
@@ -70,20 +70,20 @@ describe("Formula.js", () => {
     });
 
     test("Eval with SUM", () => {
-        let expr1: Expr = new NumberConst(1);
-        let expr2: Expr = new NumberConst(2);
-        let expr3: Expr = new NumberConst(2);
-        let expr4: Expr = new NumberConst(3);
-        let expr5: Expr = new NumberConst(1);
+        const expr1: Expr = new NumberConst(1);
+        const expr2: Expr = new NumberConst(2);
+        const expr3: Expr = new NumberConst(2);
+        const expr4: Expr = new NumberConst(3);
+        const expr5: Expr = new NumberConst(1);
 
-        let funCall: Expr = FunCall.Make("SUM", [
+        const funCall: Expr = FunCall.Make("SUM", [
             expr1,
             expr2,
             expr3,
             expr4,
             expr5,
         ]);
-        let funCall2: Expr = FunCall.Make("SUM", [
+        const funCall2: Expr = FunCall.Make("SUM", [
             expr1,
             expr2,
             expr3,
@@ -91,7 +91,7 @@ describe("Formula.js", () => {
             expr5,
             funCall,
         ]);
-        let funCall3: Expr = FunCall.Make("SUM", [
+        const funCall3: Expr = FunCall.Make("SUM", [
             expr1,
             expr2,
             expr3,
@@ -106,20 +106,20 @@ describe("Formula.js", () => {
     });
 
     test("Eval with PRODUCT", () => {
-        let expr1: Expr = new NumberConst(3);
-        let expr2: Expr = new NumberConst(2);
-        let expr3: Expr = new NumberConst(2);
+        const expr1: Expr = new NumberConst(3);
+        const expr2: Expr = new NumberConst(2);
+        const expr3: Expr = new NumberConst(2);
 
-        let funCall: Expr = FunCall.Make("PRODUCT", [expr1, expr2, expr3]);
-        let funCall2: Expr = FunCall.Make("PRODUCT", [expr1]);
+        const funCall: Expr = FunCall.Make("PRODUCT", [expr1, expr2, expr3]);
+        const funCall2: Expr = FunCall.Make("PRODUCT", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(12); // Works with multiple arguments
         expect(NumberValue.ToNumber(funCall2.Eval(sheet, 0, 0))).toBe(3); // Works with a single argument
     });
 
     test("Eval with POWER", () => {
-        let expr1: Expr = new NumberConst(3);
-        let expr2: Expr = new NumberConst(2);
+        const expr1: Expr = new NumberConst(3);
+        const expr2: Expr = new NumberConst(2);
 
         // Setting a number cell to be 10 and creating a reference for it:
         const cellRef1 = new CellRef(sheet, new SuperRARef(true, 0, true, 5));
@@ -137,8 +137,8 @@ describe("Formula.js", () => {
         sheet.SetCell(cell4, 1, 6);
         workbook.Recalculate();
 
-        let funCall: Expr = FunCall.Make("POWER", [expr1, expr2]);
-        let funCall2: Expr = FunCall.Make("POWER", [cellRef1, cellRef2]);
+        const funCall: Expr = FunCall.Make("POWER", [expr1, expr2]);
+        const funCall2: Expr = FunCall.Make("POWER", [cellRef1, cellRef2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(9); // Works with expressions
         expect(NumberValue.ToNumber(funCall2.Eval(sheet, 0, 0))).toBe(9); // Works with cell references that are linked to number cells
@@ -146,15 +146,15 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ABS", () => {
-        let expr1: Expr = new NumberConst(-4);
-        let funCall: Expr = FunCall.Make("ABS", [expr1]);
+        const expr1: Expr = new NumberConst(-4);
+        const funCall: Expr = FunCall.Make("ABS", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(4);
     });
 
     test("Eval with ACOS", () => {
-        let expr1: Expr = new NumberConst(-0.5);
-        let funCall: Expr = FunCall.Make("ACOS", [expr1]);
+        const expr1: Expr = new NumberConst(-0.5);
+        const funCall: Expr = FunCall.Make("ACOS", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             2.0943951023931957,
@@ -162,8 +162,8 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ACOSH", () => {
-        let expr1: Expr = new NumberConst(10);
-        let funCall: Expr = FunCall.Make("ACOSH", [expr1]);
+        const expr1: Expr = new NumberConst(10);
+        const funCall: Expr = FunCall.Make("ACOSH", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             2.993222846126381,
@@ -171,8 +171,8 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ACOT", () => {
-        let expr1: Expr = new NumberConst(2);
-        let funCall: Expr = FunCall.Make("ACOT", [expr1]);
+        const expr1: Expr = new NumberConst(2);
+        const funCall: Expr = FunCall.Make("ACOT", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             0.4636476090008061,
@@ -180,8 +180,8 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ACOTH", () => {
-        let expr1: Expr = new NumberConst(6);
-        let funCall: Expr = FunCall.Make("ACOTH", [expr1]);
+        const expr1: Expr = new NumberConst(6);
+        const funCall: Expr = FunCall.Make("ACOTH", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             0.16823611831060642,
@@ -196,14 +196,14 @@ describe("Formula.js", () => {
             10,
         );
 
-        let expr1: Expr = new NumberConst(9);
-        let expr2: Expr = new NumberConst(4);
-        let expr3: Expr = new NumberConst(-5);
-        let expr4: Expr = new NumberConst(15);
-        let expr5: Expr = new NumberConst(32);
-        let expr6: Expr = new TextConst("Hello World!");
+        const expr1: Expr = new NumberConst(9);
+        const expr2: Expr = new NumberConst(4);
+        const expr3: Expr = new NumberConst(-5);
+        const expr4: Expr = new NumberConst(15);
+        const expr5: Expr = new NumberConst(32);
+        const expr6: Expr = new TextConst("Hello World!");
 
-        let funCall: Expr = FunCall.Make("AGGREGATE", [
+        const funCall: Expr = FunCall.Make("AGGREGATE", [
             expr1,
             expr2,
             ExprArray.MakeExprArray([expr3, expr4]),
@@ -214,15 +214,15 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ARABIC", () => {
-        let expr1: Expr = new TextConst("MCMXII");
-        let funCall: Expr = FunCall.Make("ARABIC", [expr1]);
+        const expr1: Expr = new TextConst("MCMXII");
+        const funCall: Expr = FunCall.Make("ARABIC", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(1912);
     });
 
     test("Eval with ASIN", () => {
-        let expr1: Expr = new NumberConst(-0.5);
-        let funCall: Expr = FunCall.Make("ASIN", [expr1]);
+        const expr1: Expr = new NumberConst(-0.5);
+        const funCall: Expr = FunCall.Make("ASIN", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             -0.5235987755982989,
@@ -230,8 +230,8 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ASINH", () => {
-        let expr1: Expr = new NumberConst(-2.5);
-        let funCall: Expr = FunCall.Make("ASINH", [expr1]);
+        const expr1: Expr = new NumberConst(-2.5);
+        const funCall: Expr = FunCall.Make("ASINH", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             -1.6472311463710965,
@@ -239,8 +239,8 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ATAN", () => {
-        let expr1: Expr = new NumberConst(1);
-        let funCall: Expr = FunCall.Make("ATAN", [expr1]);
+        const expr1: Expr = new NumberConst(1);
+        const funCall: Expr = FunCall.Make("ATAN", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             0.7853981633974483,
@@ -248,10 +248,10 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ATAN2", () => {
-        let expr1: Expr = new NumberConst(-1);
-        let expr2: Expr = new NumberConst(-1);
+        const expr1: Expr = new NumberConst(-1);
+        const expr2: Expr = new NumberConst(-1);
 
-        let funCall: Expr = FunCall.Make("ATAN2", [expr1, expr2]);
+        const funCall: Expr = FunCall.Make("ATAN2", [expr1, expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             -2.356194490192345,
@@ -259,8 +259,8 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ATANH", () => {
-        let expr1: Expr = new NumberConst(-0.1);
-        let funCall: Expr = FunCall.Make("ATANH", [expr1]);
+        const expr1: Expr = new NumberConst(-0.1);
+        const funCall: Expr = FunCall.Make("ATANH", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             -0.10033534773107562,
@@ -268,11 +268,11 @@ describe("Formula.js", () => {
     });
 
     test("Eval with BASE", () => {
-        let expr1: Expr = new NumberConst(15);
-        let expr2: Expr = new NumberConst(2);
-        let expr3: Expr = new NumberConst(10);
+        const expr1: Expr = new NumberConst(15);
+        const expr2: Expr = new NumberConst(2);
+        const expr3: Expr = new NumberConst(10);
 
-        let funCall: Expr = FunCall.Make("BASE", [expr1, expr2, expr3]);
+        const funCall: Expr = FunCall.Make("BASE", [expr1, expr2, expr3]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             "0000001111",
@@ -280,9 +280,9 @@ describe("Formula.js", () => {
     });
 
     test("Eval with CEILING", () => {
-        let expr1: Expr = new NumberConst(-5.5);
-        let expr2: Expr = new NumberConst(2);
-        let funCall: Expr = FunCall.Make("CEILING", [expr1, expr2]);
+        const expr1: Expr = new NumberConst(-5.5);
+        const expr2: Expr = new NumberConst(2);
+        const funCall: Expr = FunCall.Make("CEILING", [expr1, expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(-4);
     });
@@ -293,10 +293,14 @@ describe("Formula.js", () => {
         expect(func(-5.5, 2, -1)).toBe(-6);
         expect(formulajs.CEILINGMATH(-5.5, 2, -1)).toBe(-6);
 
-        let expr1: Expr = new NumberConst(-5.5);
-        let expr2: Expr = new NumberConst(2);
-        let expr3: Expr = new NumberConst(-1);
-        let funCall: Expr = FunCall.Make("CEILINGMATH", [expr1, expr2, expr3]);
+        const expr1: Expr = new NumberConst(-5.5);
+        const expr2: Expr = new NumberConst(2);
+        const expr3: Expr = new NumberConst(-1);
+        const funCall: Expr = FunCall.Make("CEILINGMATH", [
+            expr1,
+            expr2,
+            expr3,
+        ]);
 
         // Doesn't work because the current implementation of Eval() calls the function with two
         // of the expressions at a time and CEILINGMATH must have all three arguments at the same time to work:
@@ -304,32 +308,32 @@ describe("Formula.js", () => {
     });
 
     test("Eval with CEILINGPRECISE", () => {
-        let expr1: Expr = new NumberConst(-5.5);
-        let expr2: Expr = new NumberConst(2);
-        let funCall: Expr = FunCall.Make("CEILINGPRECISE", [expr1, expr2]);
+        const expr1: Expr = new NumberConst(-5.5);
+        const expr2: Expr = new NumberConst(2);
+        const funCall: Expr = FunCall.Make("CEILINGPRECISE", [expr1, expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(-4);
     });
 
     test("Eval with COMBIN", () => {
-        let expr1: Expr = new NumberConst(8);
-        let expr2: Expr = new NumberConst(2);
-        let funCall: Expr = FunCall.Make("COMBIN", [expr1, expr2]);
+        const expr1: Expr = new NumberConst(8);
+        const expr2: Expr = new NumberConst(2);
+        const funCall: Expr = FunCall.Make("COMBIN", [expr1, expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(28);
     });
 
     test("Eval with COMBINA", () => {
-        let expr1: Expr = new NumberConst(4);
-        let expr2: Expr = new NumberConst(3);
-        let funCall: Expr = FunCall.Make("COMBINA", [expr1, expr2]);
+        const expr1: Expr = new NumberConst(4);
+        const expr2: Expr = new NumberConst(3);
+        const funCall: Expr = FunCall.Make("COMBINA", [expr1, expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(20);
     });
 
     test("Eval with COS", () => {
-        let expr1: Expr = new NumberConst(1);
-        let funCall: Expr = FunCall.Make("COS", [expr1]);
+        const expr1: Expr = new NumberConst(1);
+        const funCall: Expr = FunCall.Make("COS", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             0.5403023058681398,
@@ -337,8 +341,8 @@ describe("Formula.js", () => {
     });
 
     test("Eval with COSH", () => {
-        let expr1: Expr = new NumberConst(1);
-        let funCall: Expr = FunCall.Make("COSH", [expr1]);
+        const expr1: Expr = new NumberConst(1);
+        const funCall: Expr = FunCall.Make("COSH", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             1.5430806348152437,
@@ -346,41 +350,41 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ISEVEN", () => {
-        let expr1: Expr = new NumberConst(2);
-        let expr2: Expr = new NumberConst(2.5);
+        const expr1: Expr = new NumberConst(2);
+        const expr2: Expr = new NumberConst(2.5);
 
-        let funCall: Expr = FunCall.Make("ISEVEN", [expr1]);
-        let funCall2: Expr = FunCall.Make("ISEVEN", [expr2]);
+        const funCall: Expr = FunCall.Make("ISEVEN", [expr1]);
+        const funCall2: Expr = FunCall.Make("ISEVEN", [expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(true);
         expect(NumberValue.ToNumber(funCall2.Eval(sheet, 0, 0))).toBe(true);
     });
 
     test("Eval with FACT", () => {
-        let expr1: Expr = new NumberConst(5);
-        let funCall: Expr = FunCall.Make("FACT", [expr1]);
+        const expr1: Expr = new NumberConst(5);
+        const funCall: Expr = FunCall.Make("FACT", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(120);
     });
 
     test("Eval with FLOOR", () => {
         console.log(formulajs.FLOOR(3.1, 1));
-        let expr1: Expr = new NumberConst(3.1);
-        let expr2: Expr = new NumberConst(1);
-        let funCall: Expr = FunCall.Make("FLOOR", [expr1, expr2]);
+        const expr1: Expr = new NumberConst(3.1);
+        const expr2: Expr = new NumberConst(1);
+        const funCall: Expr = FunCall.Make("FLOOR", [expr1, expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(3);
     });
 
     // ======== [ DATE TESTS ] ========
     test("Eval with DATE", () => {
-        let expr1: Expr = new NumberConst(2008);
-        let expr2: Expr = new NumberConst(7);
-        let expr3: Expr = new NumberConst(8);
+        const expr1: Expr = new NumberConst(2008);
+        const expr2: Expr = new NumberConst(7);
+        const expr3: Expr = new NumberConst(8);
 
-        let funCall: Expr = FunCall.Make("DATE", [expr1, expr2, expr3]);
+        const funCall: Expr = FunCall.Make("DATE", [expr1, expr2, expr3]);
         let array: string[] = [];
-        let str: string | null | undefined = TextValue.ToString(
+        const str: string | null | undefined = TextValue.ToString(
             funCall.Eval(sheet, 0, 0),
         );
 
@@ -394,11 +398,11 @@ describe("Formula.js", () => {
     });
 
     test("Eval with DATEVALUE", () => {
-        let expr1: Expr = new TextConst("7/8/2008");
+        const expr1: Expr = new TextConst("7/8/2008");
 
-        let funCall: Expr = FunCall.Make("DATEVALUE", [expr1]);
+        const funCall: Expr = FunCall.Make("DATEVALUE", [expr1]);
         let array: string[] = [];
-        let str: string | null | undefined = TextValue.ToString(
+        const str: string | null | undefined = TextValue.ToString(
             funCall.Eval(sheet, 0, 0),
         );
 
@@ -412,38 +416,38 @@ describe("Formula.js", () => {
     });
 
     test("Eval with DAY", () => {
-        let expr1: Expr = new TextConst("15-Apr-11");
+        const expr1: Expr = new TextConst("15-Apr-11");
 
-        let funCall: Expr = FunCall.Make("DAY", [expr1]);
+        const funCall: Expr = FunCall.Make("DAY", [expr1]);
 
         expect(TextValue.ToString(funCall.Eval(sheet, 0, 0))).toBe(15);
     });
 
     test("Eval with DAYS", () => {
-        let expr1: Expr = new TextConst("3/15/11");
-        let expr2: Expr = new TextConst("2/1/11");
+        const expr1: Expr = new TextConst("3/15/11");
+        const expr2: Expr = new TextConst("2/1/11");
 
-        let funCall: Expr = FunCall.Make("DAYS", [expr1, expr2]);
+        const funCall: Expr = FunCall.Make("DAYS", [expr1, expr2]);
 
         expect(TextValue.ToString(funCall.Eval(sheet, 0, 0))).toBe(42);
     });
 
     test("Eval with DAYS360", () => {
-        let expr1: Expr = new TextConst("1-Jan-11");
-        let expr2: Expr = new TextConst("31-Dec-11");
+        const expr1: Expr = new TextConst("1-Jan-11");
+        const expr2: Expr = new TextConst("31-Dec-11");
 
-        let funCall: Expr = FunCall.Make("DAYS360", [expr1, expr2]);
+        const funCall: Expr = FunCall.Make("DAYS360", [expr1, expr2]);
 
         expect(TextValue.ToString(funCall.Eval(sheet, 0, 0))).toBe(360);
     });
 
     test("Eval with EDATE", () => {
-        let expr1: Expr = new TextConst("1/15/11");
-        let expr2: Expr = new NumberConst(-1);
+        const expr1: Expr = new TextConst("1/15/11");
+        const expr2: Expr = new NumberConst(-1);
 
-        let funCall: Expr = FunCall.Make("EDATE", [expr1, expr2]);
+        const funCall: Expr = FunCall.Make("EDATE", [expr1, expr2]);
         let array: string[] = [];
-        let str: string | null | undefined = TextValue.ToString(
+        const str: string | null | undefined = TextValue.ToString(
             funCall.Eval(sheet, 0, 0),
         );
 
@@ -457,12 +461,12 @@ describe("Formula.js", () => {
     });
 
     test("Eval with EOMONTH", () => {
-        let expr1: Expr = new TextConst("1/1/11");
-        let expr2: Expr = new NumberConst(-3);
+        const expr1: Expr = new TextConst("1/1/11");
+        const expr2: Expr = new NumberConst(-3);
 
-        let funCall: Expr = FunCall.Make("EOMONTH", [expr1, expr2]);
+        const funCall: Expr = FunCall.Make("EOMONTH", [expr1, expr2]);
         let array: string[] = [];
-        let str: string | null | undefined = TextValue.ToString(
+        const str: string | null | undefined = TextValue.ToString(
             funCall.Eval(sheet, 0, 0),
         );
 
@@ -477,33 +481,37 @@ describe("Formula.js", () => {
 
     // ======== [ TEXT TESTS ] ========
     test("Eval with CHAR", () => {
-        let expr1: Expr = new NumberConst(65);
-        let expr2: Expr = new NumberConst(89);
+        const expr1: Expr = new NumberConst(65);
+        const expr2: Expr = new NumberConst(89);
 
-        let funCall: Expr = FunCall.Make("CHAR", [expr1]);
-        let funCall2: Expr = FunCall.Make("CHAR", [expr2]);
+        const funCall: Expr = FunCall.Make("CHAR", [expr1]);
+        const funCall2: Expr = FunCall.Make("CHAR", [expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe("A");
         expect(NumberValue.ToNumber(funCall2.Eval(sheet, 0, 0))).toBe("Y");
     });
 
     test("Eval with CODE", () => {
-        let expr1: Expr = new TextConst("A");
-        let expr2: Expr = new TextConst("Y");
+        const expr1: Expr = new TextConst("A");
+        const expr2: Expr = new TextConst("Y");
 
-        let funCall: Expr = FunCall.Make("CODE", [expr1]);
-        let funCall2: Expr = FunCall.Make("CODE", [expr2]);
+        const funCall: Expr = FunCall.Make("CODE", [expr1]);
+        const funCall2: Expr = FunCall.Make("CODE", [expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(65);
         expect(NumberValue.ToNumber(funCall2.Eval(sheet, 0, 0))).toBe(89);
     });
 
     test("Eval with CONCATENATE", () => {
-        let expr1: Expr = new TextConst("Hello");
-        let expr2: Expr = new TextConst(" ");
-        let expr3: Expr = new TextConst("World!");
+        const expr1: Expr = new TextConst("Hello");
+        const expr2: Expr = new TextConst(" ");
+        const expr3: Expr = new TextConst("World!");
 
-        let funCall: Expr = FunCall.Make("CONCATENATE", [expr1, expr2, expr3]);
+        const funCall: Expr = FunCall.Make("CONCATENATE", [
+            expr1,
+            expr2,
+            expr3,
+        ]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             "Hello World!",
@@ -511,12 +519,12 @@ describe("Formula.js", () => {
     });
 
     test("Eval with TEXTJOIN", () => {
-        let expr1: Expr = new TextConst("Hello");
-        let expr2: Expr = new TextConst(" ");
-        let expr3: Expr = new TextConst("World!");
-        let expr4: Expr = new TextConst("true");
+        const expr1: Expr = new TextConst("Hello");
+        const expr2: Expr = new TextConst(" ");
+        const expr3: Expr = new TextConst("World!");
+        const expr4: Expr = new TextConst("true");
 
-        let funCall: Expr = FunCall.Make("TEXTJOIN", [
+        const funCall: Expr = FunCall.Make("TEXTJOIN", [
             expr2,
             expr4,
             expr1,
@@ -529,40 +537,40 @@ describe("Formula.js", () => {
     });
 
     test("Eval with EXACT", () => {
-        let expr1: Expr = new TextConst("Test");
-        let expr2: Expr = new TextConst("test");
-        let expr3: Expr = new TextConst("Test");
+        const expr1: Expr = new TextConst("Test");
+        const expr2: Expr = new TextConst("test");
+        const expr3: Expr = new TextConst("Test");
 
-        let funCall: Expr = FunCall.Make("EXACT", [expr1, expr2]);
-        let funCall2: Expr = FunCall.Make("EXACT", [expr1, expr3]);
+        const funCall: Expr = FunCall.Make("EXACT", [expr1, expr2]);
+        const funCall2: Expr = FunCall.Make("EXACT", [expr1, expr3]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(false);
         expect(NumberValue.ToNumber(funCall2.Eval(sheet, 0, 0))).toBe(true);
     });
 
     test("Eval with FIND", () => {
-        let expr1: Expr = new TextConst("I");
-        let expr2: Expr = new TextConst("Welcome to ITU");
-        let expr3: Expr = new NumberConst(5);
+        const expr1: Expr = new TextConst("I");
+        const expr2: Expr = new TextConst("Welcome to ITU");
+        const expr3: Expr = new NumberConst(5);
 
         // Finds the position of "I" in "Welcome to ITU" at word "ITU"
-        let funCall: Expr = FunCall.Make("FIND", [expr1, expr2, expr3]);
+        const funCall: Expr = FunCall.Make("FIND", [expr1, expr2, expr3]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(12);
     });
 
     test("Eval with LEN", () => {
-        let expr1: Expr = new TextConst("Welcome to ITU");
+        const expr1: Expr = new TextConst("Welcome to ITU");
 
-        let funCall: Expr = FunCall.Make("LEN", [expr1]);
+        const funCall: Expr = FunCall.Make("LEN", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(14);
     });
 
     test("Eval with UPPER", () => {
-        let expr1: Expr = new TextConst("Welcome to ITU");
+        const expr1: Expr = new TextConst("Welcome to ITU");
 
-        let funCall: Expr = FunCall.Make("UPPER", [expr1]);
+        const funCall: Expr = FunCall.Make("UPPER", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             "WELCOME TO ITU",
@@ -570,9 +578,9 @@ describe("Formula.js", () => {
     });
 
     test("Eval with LOWER", () => {
-        let expr1: Expr = new TextConst("Welcome to ITU");
+        const expr1: Expr = new TextConst("Welcome to ITU");
 
-        let funCall: Expr = FunCall.Make("LOWER", [expr1]);
+        const funCall: Expr = FunCall.Make("LOWER", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             "welcome to itu",
@@ -580,9 +588,9 @@ describe("Formula.js", () => {
     });
 
     test("Eval with PROPER", () => {
-        let expr1: Expr = new TextConst("Welcome to ITU");
+        const expr1: Expr = new TextConst("Welcome to ITU");
 
-        let funCall: Expr = FunCall.Make("PROPER", [expr1]);
+        const funCall: Expr = FunCall.Make("PROPER", [expr1]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe(
             "Welcome To Itu",
@@ -590,11 +598,11 @@ describe("Formula.js", () => {
     });
 
     test("Eval with ROMAN", () => {
-        let expr1: Expr = new NumberConst(100);
-        let expr2: Expr = new NumberConst(499);
+        const expr1: Expr = new NumberConst(100);
+        const expr2: Expr = new NumberConst(499);
 
-        let funCall: Expr = FunCall.Make("ROMAN", [expr1]);
-        let funCall2: Expr = FunCall.Make("ROMAN", [expr2]);
+        const funCall: Expr = FunCall.Make("ROMAN", [expr1]);
+        const funCall2: Expr = FunCall.Make("ROMAN", [expr2]);
 
         expect(NumberValue.ToNumber(funCall.Eval(sheet, 0, 0))).toBe("C");
         expect(NumberValue.ToNumber(funCall2.Eval(sheet, 0, 0))).toBe("CDXCIX");
@@ -603,10 +611,10 @@ describe("Formula.js", () => {
     // ======== [ LOGICAL TESTS ] ========
     test("Eval with AND", () => {
         console.log(formulajs.AND(false, true));
-        let expr1: Expr = new NumberConst(0); // We don't have a BooleanConst, but we can make boolean NumberConst
-        let expr2: Expr = new NumberConst(1);
+        const expr1: Expr = new NumberConst(0); // We don't have a BooleanConst, but we can make boolean NumberConst
+        const expr2: Expr = new NumberConst(1);
 
-        let funCall: Expr = FunCall.Make("AND", [expr1, expr2]);
+        const funCall: Expr = FunCall.Make("AND", [expr1, expr2]);
 
         expect(TextValue.ToString(funCall.Eval(sheet, 0, 0))).toBe(false);
     });

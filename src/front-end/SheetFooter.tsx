@@ -62,7 +62,7 @@ export const SheetFooter: React.FC<SheetSelectorProps> = ({
                         !sheetNames.includes(newSheetName) &&
                         newSheetName.trim() !== ""
                     ) {
-                        let newSheet = new Sheet(
+                        const newSheet = new Sheet(
                             WorkbookManager.getWorkbook(),
                             newSheetName,
                             65536,

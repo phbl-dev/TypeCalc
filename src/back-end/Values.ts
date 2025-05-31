@@ -3,6 +3,10 @@ import type { Sheet } from "./Sheet.ts";
 import type { Cell } from "./Cells.ts";
 import { ValueCache } from "./Types.ts";
 
+/**
+ * Abstract class used for subsequent value types.
+ * It contains a number of methods, that are inherited by all value types.
+ */
 export abstract class Value {
     public abstract Equals(v: Value): boolean;
 
@@ -11,12 +15,24 @@ export abstract class Value {
         return Value.ToObject(v);
     }
 
+    /**
+     * Returns the Value as an object
+     * @constructor
+     */
     public abstract ToObject(): unknown;
 
+    /**
+     * Applies the provided action to the current instance.
+     */
     public Apply(act: (value: Value) => void): void {
         act(this);
     }
 
+    /**
+     * Convert Value type to boolean type.
+     * @param value
+     * @constructor
+     */
     public static ToBoolean(value: Value): boolean {
         if (value instanceof BooleanValue) {
             return value.value;
@@ -29,6 +45,10 @@ export abstract class Value {
         return false;
     }
 
+    /**
+     * Create a new blank string value
+     * @constructor
+     */
     public static MakeVoid(): Value {
         return this.createTextValue();
     }
@@ -38,8 +58,13 @@ export abstract class Value {
     }
 }
 
+/**
+ * Represents an error value that extends the base `Value` class.
+ * This class provides error handling and representation functionality,
+ * including error message management, indexing, creation, and equality checks.
+ * To store error more efficient, we make use of a map like structure.
+ */
 export class ErrorValue extends Value {
-    // OBS: exporting this class to enable import in TextValue
     public readonly message: string;
     public readonly index: number;
 
@@ -63,10 +88,19 @@ export class ErrorValue extends Value {
         this.index = errorIndex;
     }
 
+    /**
+     * Get index of string in map if it exists
+     * @param message
+     * @constructor
+     */
     public static GetIndex(message: string): number {
         return ErrorValue.errorTable.getIndex(message);
     }
 
+    /**
+     * Create a NaN value.
+     * @constructor
+     */
     public ErrorNan(): number {
         return ErrorValue.MakeNan(this.index);
     }
@@ -79,10 +113,14 @@ export class ErrorValue extends Value {
         return this.errorTable.get(errorIndex);
     }
 
+    /**
+     * Constructor for ErrorValue
+     * @param message
+     * @constructor
+     */
     public static Make(message: string): ErrorValue {
         return this.errorTable.get(this.errorTable.getIndex(message));
     }
-
     public Equals(v: Value): boolean {
         return (v as ErrorValue) && (v as ErrorValue).index == this.index;
     }
@@ -95,6 +133,9 @@ export class ErrorValue extends Value {
         return this.message;
     }
 
+    /**
+     * Creates a custom NaN (Not-a-Number) value where specific bits are modified to encode an error index.
+     */
     public static MakeNan(errorIndex: number): number {
         // Get NaN's bit pattern
         const nanBits = new Float64Array([Number.NaN]);
@@ -111,13 +152,18 @@ export class ErrorValue extends Value {
         return nanBits[0];
     }
 
+    /**
+     * Generate ErrorCode from number
+     * @param d
+     * @constructor
+     */
     public static ErrorCode(d: number): number {
         // Convert the number to its 64-bit representation
         const buffer = new ArrayBuffer(8); // 8 bytes (64 bits)
         const dataView = new DataView(buffer);
 
         // Store the number's bits as a 64-bit integer
-        dataView.setFloat64(0, d, true); // true for little-endian byte order
+        dataView.setFloat64(0, d, true);
 
         // Read the bits as an int64
         const bits = dataView.getBigInt64(0, true);
@@ -127,6 +173,10 @@ export class ErrorValue extends Value {
     }
 }
 
+/**
+ * Represents a boolean value, encapsulating various operations and functionalities
+ * related to boolean values. This class inherits from the base `Value` class.
+ */
 export class BooleanValue extends Value {
     public readonly value: boolean;
 
@@ -356,12 +406,12 @@ export class NumberValue extends Value {
      */
 
     public override ToObject(): object {
-        return this.value as Object;
+        return this.value as unknown as object;
     }
 
     /**
      * Implementation for ToX methods from CoreCalc implementation.
-     * Since TS/JS utilises the type: number for every value, that is less than 64bit,
+     * Since TS/JS uses the type: number for every value that is less than 64bit,
      * it can parse all other values that are less than this. For numbers larger than this, we use the BigInt type.
      * @param v - the value to be parsed
      * @constructor
@@ -372,7 +422,7 @@ export class NumberValue extends Value {
     }
 
     /**
-     * The method that converts an object into a value.
+     * The method that converts an object  into a value.
      * For more info {@link ToNumber}
      * @param o - the object to be parsed into a value
      * @constructor
@@ -386,6 +436,10 @@ export class NumberValue extends Value {
         }
     }
 
+    /**
+     * Used to work with dates in NumberValues
+     * @private
+     */
     private static readonly basedate: number = new Date(1899, 12, 30).getTime();
     private static readonly daysPerTick = 1000 * 60 * 60 * 24;
 
@@ -410,6 +464,11 @@ export class NumberValue extends Value {
     }
 }
 
+/**
+ * Represents an abstract class for working with multidimensional array values.
+ * Inherits from the `Value` class and provides methods and properties to handle array-like data structure.
+ * Subclasses must implement abstract methods defined in this class.
+ */
 export abstract class ArrayValue extends Value {
     public static readonly Type = typeof ArrayValue;
 
@@ -439,7 +498,10 @@ export abstract class ArrayValue extends Value {
     ): Value;
 
     /**
-     * Performs a slice on an ArrayValue area
+     * Performs a slice on an ArrayValue area. This means that we generate two corner locations based on the inserted coordinates.
+     * The first corner is the upper left corner of the area. The second corner is the lower right corner of the area.
+     * The area is then sliced based on the two corners.
+     *
      * @param r1
      * @param c1
      * @param r2
@@ -468,6 +530,15 @@ export abstract class ArrayValue extends Value {
             return ErrorValue.refError;
         }
     }
+
+    /**
+     * Check if two ArrayValue are the same.
+     * This returns true if the two arrays have the same dimensions and the same values in the same positions.
+     *
+     * @param arr1
+     * @param arr2
+     * @constructor
+     */
     public static EqualsElements(arr1: ArrayValue, arr2: ArrayValue): boolean {
         if (arr1 == arr2) {
             return true;
@@ -497,7 +568,7 @@ export abstract class ArrayValue extends Value {
         const sb: string[] = [];
         for (let i = 0; i < this.Rows; i++) {
             for (let j = 0; j < this.Cols; j++) {
-                const v: Value = this.Get(j, i); // In sestoft's implementation this is reversed.
+                const v: Value = this.Get(j, i);
                 sb.push(v == null ? "[none]" : v.toString());
                 if (j < this.Cols - 1) {
                     sb.push("\t");
@@ -511,6 +582,11 @@ export abstract class ArrayValue extends Value {
     }
 }
 
+/**
+ * Represents a specific view or subset of a two-dimensional array or grid located on a sheet.
+ * The array is defined by a starting upper-left cell and an ending lower-right cell.
+ * Provides methods to access and manipulate parts of the array data.
+ */
 export class ArrayView extends ArrayValue {
     public readonly ulCa: SuperCellAddress;
     public readonly lrCa: SuperCellAddress;
@@ -527,6 +603,13 @@ export class ArrayView extends ArrayValue {
         this.rows = lrCa.row - ulCa.row + 1;
     }
 
+    /**
+     * Create an ArrayView using two SuperCellAddress objects.
+     * @param ulCa
+     * @param lrCa
+     * @param sheet
+     * @constructor
+     */
     public static Make(
         ulCa: SuperCellAddress,
         lrCa: SuperCellAddress,
@@ -545,6 +628,13 @@ export class ArrayView extends ArrayValue {
         return this.rows;
     }
 
+    /**
+     * Retrieves a cell address from within the ArrayView.
+     * @param col
+     * @param col
+     * @param row
+     * @constructor
+     */
     public override Get(col: number, row: number): Value {
         if (0 <= col && col < this.Cols && 0 <= row && row < this.Rows) {
             const c = this.ulCa.col + col,
@@ -582,6 +672,9 @@ export class ArrayView extends ArrayValue {
         }
     }
 
+    /**
+     * Applies a given action to each value in a defined range.
+     */
     public Apply(act: ((val: Value) => void) | ((val: number) => void)): void {
         const col0: number = this.ulCa.col,
             row0 = this.ulCa.row;
@@ -599,6 +692,12 @@ export class ArrayView extends ArrayValue {
         }
     }
 
+    /**
+     * Perform a slice on an ArrayView area. This means that we generate two corner locations based on the inserted coordinates.
+     * @param ulCa
+     * @param lrCa
+     * @constructor
+     */
     Slice(ulCa: SuperCellAddress, lrCa: SuperCellAddress): Value {
         return new ArrayView(
             ulCa.offset(this.ulCa),
@@ -616,6 +715,11 @@ export class ArrayView extends ArrayValue {
     }
 }
 
+/**
+ * Represents a multidimensional array with explicit handling of cell addresses
+ * for upper-left (UL) and lower-right (LR) corners and provides various operations
+ * for accessing and manipulating its components.
+ */
 export class ArrayExplicit extends ArrayValue {
     public ulCellAddress!: SuperCellAddress;
     public lrCellAddress!: SuperCellAddress;

@@ -142,11 +142,11 @@ describe("Workbook", () => {
     test.skip("RebuildSupportGraph", () => {
         expect(workbook.GetSheets().length).toBe(0); // The sheets array should have length 0 initially
         workbook.AddSheet(sheet);
-        let numbercellA1 = new NumberCell(5); // Creating numbercellA1 of value 5
+        const numbercellA1 = new NumberCell(5); // Creating numbercellA1 of value 5
         sheet.SetCell(numbercellA1, 0, 0); // Setting numbercellA1 at position 0,0
         expect(sheet.Get(0, 0)).toBeDefined(); // Ensures that cell at position 0,0 is neither null or undefined.
 
-        let numbercellB2 = new NumberCell(10); // Creating numbercellB2 of value 10
+        const numbercellB2 = new NumberCell(10); // Creating numbercellB2 of value 10
         sheet.SetCell(numbercellB2, 1, 1); // Setting numbercellB2 at position 1,1
         expect(sheet.Get(1, 1)).toBeDefined(); // Ensures that cell at position 1,1 is neither null or undefined.
 

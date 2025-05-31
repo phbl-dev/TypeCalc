@@ -6,13 +6,13 @@ import { XMLWriter } from "../API-Layer/WorkbookIO.ts";
  * Makes the cell's text bold
  */
 export function makeBold() {
-    let cellID = WorkbookManager.getActiveCell();
+    const cellID = WorkbookManager.getActiveCell();
     if (!cellID) {
         return null;
     }
 
-    let cell = document.getElementById(cellID);
-    let button = document.getElementById("bold");
+    const cell = document.getElementById(cellID);
+    const button = document.getElementById("bold");
     if (!cell || !button) {
         return null;
     }
@@ -30,13 +30,13 @@ export function makeBold() {
  * Makes the cell's text italic
  */
 export function makeItalic() {
-    let cellID = WorkbookManager.getActiveCell();
+    const cellID = WorkbookManager.getActiveCell();
     if (!cellID) {
         return null;
     }
 
-    let cell = document.getElementById(cellID);
-    let button = document.getElementById("italic");
+    const cell = document.getElementById(cellID);
+    const button = document.getElementById("italic");
     if (!cell || !button) {
         return null;
     }
@@ -54,13 +54,13 @@ export function makeItalic() {
  * Makes the cell's text underlined
  */
 export function makeUnderlined() {
-    let cellID = WorkbookManager.getActiveCell();
+    const cellID = WorkbookManager.getActiveCell();
     if (!cellID) {
         return null;
     }
 
-    let cell = document.getElementById(cellID);
-    let button = document.getElementById("underline");
+    const cell = document.getElementById(cellID);
+    const button = document.getElementById("underline");
     if (!cell || !button) {
         return null;
     }
@@ -84,12 +84,12 @@ export const SheetHeader: React.FC = () => {
     }
 
     function setCellColor() {
-        let cellID = WorkbookManager.getActiveCell();
+        const cellID = WorkbookManager.getActiveCell();
         if (!cellID) {
             return null;
         }
 
-        let cell = document.getElementById(cellID);
+        const cell = document.getElementById(cellID);
         const colorPicker = document.getElementById(
             "cellColorPicker",
         ) as HTMLInputElement;
@@ -106,12 +106,12 @@ export const SheetHeader: React.FC = () => {
      * Changes the colour of the text in a cell
      */
     function setTextColor() {
-        let cellID = WorkbookManager.getActiveCell();
+        const cellID = WorkbookManager.getActiveCell();
         if (!cellID) {
             return null;
         }
 
-        let cell = document.getElementById(cellID);
+        const cell = document.getElementById(cellID);
         const colorPicker = document.getElementById(
             "textColorPicker",
         ) as HTMLInputElement;

@@ -7,11 +7,11 @@ import {
     ArrayFormula,
 } from "./Cells";
 import { type Adjusted, Interval, SuperCellAddress } from "./CellAddressing";
-import { CellRef, Expr } from "./Expressions";
+import { Expr } from "./Expressions";
 import { adjustFormula } from "../front-end/HelperFunctions.tsx";
 
 /**
- * Creates a new sheet. Default size is 65536 columns and 1048576 rows.
+ * Represents a spreadsheet sheet.
  */
 export class Sheet {
     public cols = 65536;
@@ -23,16 +23,6 @@ export class Sheet {
     private historyPointer: number; // Added for undo/redo functionality. Points at where we are in the history.
     private undoCount: number; // Added for undo/redo functionality. Counts how deep we are in undo calls.
     private functionSheet: boolean;
-
-    constructor(workbook: Workbook, name: string, functionSheet: boolean);
-
-    constructor(
-        workbook: Workbook,
-        name: string,
-        cols: number,
-        rows: number,
-        functionSheet: boolean,
-    );
 
     /**
      * Constructors are defined below. There is supposed to be two constructors,
@@ -173,7 +163,7 @@ export class Sheet {
         if (this.undoCount > 0) {
             // We get index that undoCount is at in relation to the history length because we
             // want to redo and get update the cell in that spot.
-            let i = this.history.length - this.undoCount;
+            const i = this.history.length - this.undoCount;
             this.cells.Set(
                 this.history[i].col,
                 this.history[i].row,
@@ -257,8 +247,8 @@ export class Sheet {
     }
 
     /**
-     * Inserts the cell array formula onto the sheet.
-     * It throws an error if the input given is invalid.
+     * Certain expressions can result in multiple values being outputted.
+     * Inserts the resulting values into the sheet, pointing to a CachedArrayFormula
      * @param cell
      * @param col
      * @param row
@@ -308,6 +298,17 @@ export class Sheet {
         }
     }
 
+    /**
+     * Perform an operation on each Cell within a designated area.
+     * Makes use of a callback function to perform the operation.
+     * @param fromCol
+     * @param fromCol
+     * @param fromRow
+     * @param toCol
+     * @param toRow
+     * @param act
+     * @constructor
+     */
     public ForEachInArea(
         fromCol: number,
         fromRow: number,
@@ -332,6 +333,17 @@ export class Sheet {
         this.workbook.Recalculate();
     }
 
+    /**
+     * Copies the cell at col, row to the targetCol and targetRow
+     * It uses the SetCell method to set the cell at targetCol and targetRow
+     * @param cell
+     * @param col
+     * @param row
+     * @param targetCol
+     * @param targetRow
+     * @param content
+     * @constructor
+     */
     public PasteCell(
         cell: Cell,
         col: number,
@@ -340,26 +352,31 @@ export class Sheet {
         targetRow: number,
         content: string,
     ): void {
-        if (cell instanceof Formula) {
-            const nextFormula = adjustFormula(
-                content!,
-                targetRow - row,
-                targetCol - col,
-            );
-            this.SetCell(
-                Cell.Parse(nextFormula!, this.workbook, targetCol, targetRow)!,
+        this.SetCell(
+            Cell.Parse(
+                cell instanceof Formula
+                    ? adjustFormula(content!, targetRow - row, targetCol - col)
+                    : content,
+                this.workbook,
                 targetCol,
                 targetRow,
-            );
-        } else {
-            this.SetCell(
-                Cell.Parse(content, this.workbook, targetCol, targetRow)!,
-                targetCol,
-                targetRow,
-            );
-        }
+            )!,
+            targetCol,
+            targetRow,
+        );
     }
 
+    /**
+     * Moves the cell at col, row to the targetCol and targetRow
+     * It uses the SetCell method to set the cell at targetCol and targetRow
+     * @param cell
+     * @param col
+     * @param row
+     * @param targetCol
+     * @param targetRow
+     * @param content
+     * @constructor
+     */
     public CutCell(
         cell: Cell,
         col: number,
@@ -371,52 +388,20 @@ export class Sheet {
         this.PasteCell(cell, col, row, targetCol, targetRow, content);
         this.RemoveCell(col, row);
     }
+
     /**
-     * Moves a cell from its current column and row to another
-     * It finds the cell based on the fromCol and fromRow
-     * @param fromCol
-     * @param fromRow
+     * Removes the cell at col, row
      * @param col
      * @param row
      * @constructor
      */
-    public MoveCell(
-        fromCol: number,
-        fromRow: number,
-        col: number,
-        row: number,
-    ) {
-        if (this.cells != null) {
-            const originalCell: Cell = this.cells.Get(fromCol, fromRow)!;
-
-            const originalSupportSet = originalCell.GetSupportSet();
-
-            this.Set(
-                col as number,
-                originalCell.MoveContents(col - fromCol, row - fromRow),
-                row,
-            );
-
-            const newCell: Cell = this.cells.Get(col, row)!;
-
-            this.RemoveCell(fromCol, fromRow);
-
-            if (originalSupportSet != null) {
-                const blankCell = this.cells.Get(fromCol, fromRow)!;
-
-                newCell.TransferSupportTo(blankCell);
-                this.workbook.RecordCellChange(fromCol, fromRow, this);
-                this.workbook.RecordCellChange(col, row, this);
-            }
-        }
-    }
-
     public RemoveCell(col: number, row: number): void {
         this.cells.Set(col, row, new BlankCell());
     }
 
     /**
      * Inserts new Rows or Cols, depending on the doRows value.
+     * Not used in TypeCalc as of this version!
      * @param R
      * @param N
      * @param doRows
@@ -529,6 +514,14 @@ export class Sheet {
         return null as unknown as string;
     }
 
+    /**
+     * Returns a string on the contents of a cell.
+     * format is defined in workbook, and it utilises the internal method of cell
+     * @see Cell#Show
+     * @param col
+     * @param row
+     * @constructor
+     */
     public ShowValue(col: number, row: number): string {
         console.log("Entered into this");
 
@@ -678,6 +671,7 @@ export class Sheet {
     }
 
     /**
+     * Detect blocks of formula copies, for finding compact support sets
      */
     public AddToSupportSets(): void {
         const sheetCols = this.Cols,
@@ -819,6 +813,7 @@ export class Sheet {
 
 /**
  * This class maintains the sheet using the QT4-structure as defined by Sestoft (2014)
+ * We have described this in detail on the TypeCalc Repository report.
  */
 class SheetRep {
     private LOGW = 4;

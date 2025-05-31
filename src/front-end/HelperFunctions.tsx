@@ -93,12 +93,12 @@ type CellInfo = {
  * @param lrCa
  */
 export function ReadArea(ulCa: SuperCellAddress, lrCa: SuperCellAddress) {
-    let sheet = WorkbookManager.getActiveSheet();
+    const sheet = WorkbookManager.getActiveSheet();
     if (!sheet) {
         return;
     }
 
-    let AreaArray: CellInfo[] = [];
+    const AreaArray: CellInfo[] = [];
 
     for (let i = ulCa.row; i <= lrCa.row; i++) {
         for (let j = ulCa.col; j <= lrCa.row; j++) {
