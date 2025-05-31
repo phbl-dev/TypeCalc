@@ -3,7 +3,6 @@ import { Workbook } from "../back-end/Workbook.ts";
 import { Sheet } from "../back-end/Sheet.ts";
 import { Cell, NumberCell } from "../back-end/Cells.ts";
 import { WorkbookManager } from "./WorkbookManager.ts";
-import { EvalCellsInViewport } from "./Back-endEndpoints.ts";
 
 /**
  *  The readFile method makes use of the package fast-xml-parser to turn an XML file into a
@@ -156,8 +155,8 @@ export class XMLWriter {
     /**
      * Exports the workbook contents as an Excel 2003 XML File (XMLSS).
      */
-    exportAsXML() {
-        let xmlOutput =
+    exportAsXML(): void {
+        let xmlOutput: string =
             '<?xml version="1.0"?>\n' +
             '<?mso-application progid="Excel.Sheet"?>\n' +
             '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n' +
@@ -186,7 +185,7 @@ export class XMLWriter {
             "  </Style>\n" +
             " </Styles>\n";
 
-        const sheetNames = WorkbookManager.getSheetNames();
+        const sheetNames: string[] = WorkbookManager.getSheetNames();
 
         for (const sheetName of sheetNames) {
             // Escape special characters in sheetName
@@ -197,22 +196,23 @@ export class XMLWriter {
                 .replace(/"/g, "&quot;") // Escape "
                 .replace(/'/g, "&apos;"); // Escape '
 
-            const xmlSheetHeader =
+            const xmlSheetHeader: string =
                 `  <Worksheet ss:Name="${escapedSheetName}">\n` +
                 '   <Table ss:ExpandedColumnCount="1000" ss:ExpandedRowCount="1000" x:FullColumns="1" x:FullRows="1">\n';
             xmlOutput += xmlSheetHeader;
 
-            const sheet = WorkbookManager.getWorkbook().getSheet(sheetName);
+            const sheet: Sheet | null =
+                WorkbookManager.getWorkbook().getSheet(sheetName);
             if (!sheet) {
                 continue;
             } // Skip invalid sheets
 
             const sheetCells = sheet.getCells();
-            let currentRow = -1; // Instantiate with an invalid row number
-            let firstRow = true; // Used to create the first <Row> without a closing </Row> before it
+            let currentRow: number = -1; // Instantiate with an invalid row number
+            let firstRow: boolean = true; // Used to create the first <Row> without a closing </Row> before it
 
             for (const cell of sheetCells.iterateForExport()) {
-                const cellRow = cell.GetRow();
+                const cellRow: number | null = cell.GetRow();
 
                 // If the row changes, close the row and start a new one
                 if (cellRow !== currentRow) {
@@ -227,11 +227,11 @@ export class XMLWriter {
                     }
                 }
 
-                let cellContent = cell.GetText();
-                const cellCol = cell.GetCol();
+                let cellContent: string | null = cell.GetText();
+                const cellCol: number | null = cell.GetCol();
 
                 // Determine cell data type, with String as default
-                let cellType = "String";
+                let cellType: string = "String";
                 if (cell instanceof NumberCell) {
                     cellType = "Number";
                 }
@@ -251,7 +251,8 @@ export class XMLWriter {
             // Close the last row
             xmlOutput += "\n     </Row>";
 
-            const xmlSheetFooter = "\n   </Table>\n" + "  </Worksheet>\n";
+            const xmlSheetFooter: string =
+                "\n   </Table>\n" + "  </Worksheet>\n";
             xmlOutput += xmlSheetFooter;
         }
 
@@ -259,7 +260,7 @@ export class XMLWriter {
         xmlOutput += xmlFooter;
 
         const blob = new Blob([xmlOutput], { type: "application/xml" });
-        const link = document.createElement("a");
+        const link: HTMLAnchorElement = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = "workbook.xml";
         link.click();
@@ -269,27 +270,27 @@ export class XMLWriter {
      * Exports the active sheet's contents as a CSV file.
      */
     exportAsCSV() {
-        const currentSheet = WorkbookManager.getActiveSheet();
+        const currentSheet: Sheet | null = WorkbookManager.getActiveSheet();
         const sheetData = currentSheet?.getCells();
         if (!sheetData) {
             return;
         }
         let output: string = "";
 
-        let currentRow = 1;
-        let currentCol = 1;
+        let currentRow: number = 1;
+        let currentCol: number = 1;
 
         for (const cell of sheetData.iterateForExport()) {
-            const cellRow = cell.GetRow();
-            const cellCol = cell.GetCol();
+            const cellRow: number | null = cell.GetRow();
+            const cellCol: number | null = cell.GetCol();
             if (cellRow !== currentRow) {
                 currentRow = cellRow!;
                 currentCol = 1;
                 output += "\n";
             }
-            const diff = cellCol! - currentCol;
+            const diff: number = cellCol! - currentCol;
             currentCol = cellCol!;
-            for (let i = 0; i < diff; i++) {
+            for (let i: number = 0; i < diff; i++) {
                 output += ",";
             }
 
@@ -297,7 +298,7 @@ export class XMLWriter {
         }
 
         const blob = new Blob([output], { type: "application/csv" });
-        const link = document.createElement("a");
+        const link: HTMLAnchorElement = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = "workbook.csv";
         link.click();

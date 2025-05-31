@@ -17,7 +17,19 @@ import { SheetFooter } from "./SheetFooter.tsx";
 import { SheetHeader } from "./SheetHeader.tsx";
 import { NumberCell } from "../back-end/Cells.ts";
 
-// Created interface so that we can modify columnCount and rowCount when creating the grid
+/**
+ * Defines the props for the VirtualizedGrid component.
+ * @param columnCount - number of columns, received as a parameter when rendering VirtualizedGrid
+ * @param rowCount - number of rows, received as a parameter when rendering VirtualizedGrid
+ * @param columnWidth - width of the columns and all regular cells
+ * @param rowHeight - height of the rows and all regular cells
+ * @param colHeaderHeight - custom height for the column header
+ * @param rowHeaderWidth - custom width for the row header
+ * @param width - overall width of the entire grid
+ * @param height - overall height of the entire grid
+ * @param ref - React ref to the grid, used to access the grid's methods'
+ * @constructor
+ */
 interface GridProps {
     columnCount: number;
     rowCount: number;
@@ -71,11 +83,9 @@ const RowHeader = ({ rowIndex, style }: { rowIndex: number; style: any }) => (
 );
 
 /**
- * Creates the sheet itself with headers and body. It extends the GridInterface so that
- * we can create a sheet with a self-defined number of rows and columns.
- * The sheet itself consists of a top row flexbox with a corner cell and a row of column
- * headers created as a Grid. The main body itself is also a flexbox, consisting of two
- * additional grids; one for the row headers and one for the regular cells.
+ * Creates the sheet itself with headers and body. The sheet itself consists of a top row flexbox
+ * with a corner cell and a row of column headers created as a Grid. The main body itself is also
+ * a flexbox, consisting of two additional grids; one for the row headers and one for the regular cells.
  * @param columnCount - number of columns, received as a parameter when rendering VirtualizedGrid
  * @param rowCount - number of rows, received as a parameter when rendering VirtualizedGrid
  * @param columnWidth - width of the columns and all regular cells
@@ -125,8 +135,11 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
             });
         });
 
-        // Handles the "Go to"/jump to a specific cell. Currently, bugged when trying to focus a cell off-screen
-        // and must trigger twice to do so.
+        /**
+         * Handles the "Go to"/jump to a specific cell. First checks if the cell ID input is not empty,
+         * and, if so, checks if the cell ID is valid. If both cases pass, it scrolls to and focuses on
+         * the specified cell.
+         */
         const handleJump = () => {
             const cellID = input.value.trim();
 
@@ -155,7 +168,6 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
             }
         };
 
-        // Handles formulaBox input
         let value: string;
         let valueChanged: boolean = false;
         /**
@@ -165,7 +177,7 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
         const handleFormulaChange = (e: Event) => {
             value = (e.target as HTMLInputElement).value;
             valueChanged = true;
-            const activeCell = document.getElementById(
+            let activeCell = document.getElementById(
                 WorkbookManager.getActiveCell()!,
             );
             if (activeCell) {
@@ -177,7 +189,6 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
          * If the Enter key is pressed and the active cell's value has been changed,
          * Handles the keyboard "keydown" event, specifically for the "Enter" key. If so,
          * it updates cell contents.
-         *
          * @param e - Checks for keyboard events, specifically the Enter key
          */
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -189,8 +200,7 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
         };
 
         /**
-         * Does the same as handleKeyDown, except when leaving a cell rather than detecting
-         * the Enter key.
+         * Identical to handleKeyDown(), but instead triggers when leaving a cell.
          */
         const handleBlur = () => {
             if (valueChanged) {
@@ -222,13 +232,12 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
          * cells in the current viewport are evaluated.
          */
         const updateCellContents = () => {
-            const fmb = document.getElementById("formulaBox");
+            let fmb = document.getElementById("formulaBox");
             fmb!.blur();
         };
 
         /**
-         * Handles the drag-and-drop of an XMLSS file to be read and loaded
-         * in TypeCalc.
+         * Handles the drag-and-drop of an XMLSS file to be read and loaded in TypeCalc.
          * @param event - a DragEvent
          */
         function handleDrop(event: DragEvent) {
@@ -288,9 +297,9 @@ export const VirtualizedGrid: React.FC<GridProps> = ({
         };
     }, [scrollOffset]);
 
-    /** Synchronises scrolling between the grid body and the headers so that it works
-     * like one, big grid. Does not currently synchronise scrolling done on the headers.
-     *
+    /**
+     * Synchronises scrolling between the grid body and the headers so that it works
+     * like one, whole grid. Currently, does not synchronise scrolling done on the headers.
      * @param scrollLeft Horizontal scrolling value
      * @param scrollTop Vertical scrolling value
      */
