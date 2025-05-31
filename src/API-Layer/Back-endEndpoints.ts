@@ -20,12 +20,12 @@ import { Workbook } from "../back-end/Workbook.ts";
 export function ParseToActiveCell(content: string): void {
   const a1Address: string | null = WorkbookManager.getActiveCell();
   if (!a1Address) {
-    console.debug("[WorkbookIO] ParseToActiveCell cant find active cell");
+    //console.debug("[WorkbookIO] ParseToActiveCell cant find active cell");
     return;
   }
   const activeSheet: Sheet | null = WorkbookManager.getActiveSheet();
   if (!activeSheet) {
-    console.debug("[WorkbookIO] ParseToActiveCell No activeSheet found!");
+    //console.debug("[WorkbookIO] ParseToActiveCell No activeSheet found!");
     return;
   }
   const ca: A1RefCellAddress = new A1RefCellAddress(a1Address);
@@ -38,7 +38,7 @@ export function ParseToActiveCell(content: string): void {
     cellRow,
   );
   if (!cellToBeAdded) {
-    console.debug("[WorkbookIO] ParseToActiveCell cellToBeAdded not found!");
+    //console.debug("[WorkbookIO] ParseToActiveCell cellToBeAdded not found!");
     return;
   }
   WorkbookManager.getWorkbook()
@@ -58,25 +58,25 @@ export function GetRawCellContent(cellID: string): string | null {
   const cellRow: number = ca.row;
   const wb: Workbook = WorkbookManager.getWorkbook();
   if (!wb) {
-    console.debug("[GetRawCellContent] No workbook found!");
+    //console.debug("[GetRawCellContent] No workbook found!");
     return null;
   }
   const activeSheet: Sheet | null = WorkbookManager.getActiveSheet();
   if (!activeSheet) {
-    console.debug("[GetRawCellContent] No activeSheet found!");
+    //console.debug("[GetRawCellContent] No activeSheet found!");
     return null;
   }
 
   const cell = activeSheet.Get(cellCol, cellRow);
   if (!cell) {
-    console.debug("[GetRawCellContent] No cell found!");
+    //console.debug("[GetRawCellContent] No cell found!");
     return null;
   }
 
-  console.log("This is the cell", cell.GetText());
+  //console.log("This is the cell", cell.GetText());
   // Special handling for Formula cells
   if (cell instanceof Formula) {
-    console.log("This is a formula cell");
+    //console.log("This is a formula cell");
     let formulaText = cell.GetText()!;
     if (!formulaText.startsWith("=")) {
       formulaText = "=" + formulaText;
@@ -87,15 +87,15 @@ export function GetRawCellContent(cellID: string): string | null {
   const cellContent: string | null | undefined = activeSheet
     .Get(cellCol, cellRow)
     ?.GetText();
-  console.log("This is the cell content", cellContent);
+  //console.log("This is the cell content", cellContent);
   if (!cellContent && cellContent != "0") {
-    console.debug("[GetRawCellContent] No cell found!");
+    //console.debug("[GetRawCellContent] No cell found!");
     return null;
   }
   const colChar: string = numberToLetters(cellCol + 1);
   const cellHTML = document.getElementById((colChar + (cellRow + 1)) as string);
   if (!cellHTML) {
-    console.debug("[GetRawCellContent] No cell found in frontend!");
+    //console.debug("[GetRawCellContent] No cell found in frontend!");
     return null;
   }
   return cellContent;
@@ -111,7 +111,7 @@ export function EvalCellsInViewport(): void {
   const sheet: Sheet = WorkbookManager.getActiveSheet()!;
 
   if (!wb) {
-    console.debug("[ShowWindowInGUI] No workbook found!");
+    //console.debug("[ShowWindowInGUI] No workbook found!");
     return;
   }
 
@@ -244,7 +244,7 @@ export function HandleArrayResult(
   );
 
   if (cell instanceof Formula && result instanceof ArrayExplicit) {
-    console.log("This is an array formula:");
+    //console.log("This is an array formula:");
     WorkbookManager.getWorkbook()
       ?.getSheet(WorkbookManager.getActiveSheetName())
       ?.SetArrayFormula(
