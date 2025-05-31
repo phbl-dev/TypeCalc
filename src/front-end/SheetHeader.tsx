@@ -83,6 +83,9 @@ export const SheetHeader: React.FC = () => {
     location.reload();
   }
 
+  /**
+   * Changes the background colour of the cell.
+   */
   function setCellColor() {
     let cellID = WorkbookManager.getActiveCell();
     if (!cellID) {
@@ -103,7 +106,7 @@ export const SheetHeader: React.FC = () => {
   }
 
   /**
-   * Changes the colour of the text in a cell
+   * Changes the colour cell's text
    */
   function setTextColor() {
     let cellID = WorkbookManager.getActiveCell();

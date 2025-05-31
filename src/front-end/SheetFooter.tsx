@@ -3,6 +3,15 @@ import { EvalCellsInViewport } from "../API-Layer/Back-endEndpoints.ts";
 import { Sheet } from "../back-end/Sheet.ts";
 import React from "react";
 
+/**
+ * The SheetSelectorProps interface is used to define the properties of the SheetSelector component.
+ * @interface SheetSelectorProps
+ * @property sheetNames - The names of the sheets.
+ * @property activeSheet - The name of the active sheet.
+ * @property setActiveSheet - A function that sets the active sheet.
+ * @property setSheetNames - A function that sets the names of the sheets.
+ * @constructor
+ */
 interface SheetSelectorProps {
   sheetNames: string[];
   activeSheet: string;
@@ -11,14 +20,13 @@ interface SheetSelectorProps {
 }
 
 /**
- * Used to differentiate between multiple sheets.
- * @param sheetNames
- * @param activeSheet
- * @param setActiveSheet
- * @param setSheetNames
+ * The SheetSelector component is used to switch between sheets and create new ones.
+ * @property sheetNames - The names of the sheets.
+ * @property activeSheet - The name of the active sheet.
+ * @property setActiveSheet - A function that sets the active sheet.
+ * @property setSheetNames - A function that sets the names of the sheets.
  * @constructor
  */
-// @ts-ignore
 export const SheetFooter: React.FC<SheetSelectorProps> = ({
   sheetNames,
   activeSheet,
