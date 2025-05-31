@@ -16,6 +16,13 @@ import {
   ParseCellToBackend,
 } from "../API-Layer/Back-endEndpoints.ts";
 
+/**
+ * Defines the props for the GridCell component.
+ * @param columnIndex - Current column index, used to define cell ID
+ * @param rowIndex - Current row index, used to define cell ID and determine cell background color
+ * @param style - Lets the cell inherit the style from a css style sheet
+ * @constructor
+ */
 interface GridCellProps {
   columnIndex: number;
   rowIndex: number;
