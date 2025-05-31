@@ -146,7 +146,6 @@ export const GridCell: React.FC<GridCellProps> = ({
 
         WorkbookManager.getWorkbook().Recalculate();
         EvalCellsInViewport();
-        forceRefresh(range.startCol, range.startRow);
         AreaMarked = false;
     }
 
@@ -170,7 +169,7 @@ export const GridCell: React.FC<GridCellProps> = ({
 
         for (const cellInfo of area) {
             const { row, col, cell, content, relRow, relCol } = cellInfo;
-            sheet!.PasteCell(
+            sheet!.CutCell(
                 cell,
                 col,
                 row,
@@ -178,12 +177,10 @@ export const GridCell: React.FC<GridCellProps> = ({
                 targetCellRef.row + relRow,
                 content,
             );
-            sheet!.RemoveCell(col, row);
         }
 
         WorkbookManager.getWorkbook().Recalculate();
         EvalCellsInViewport();
-        forceRefresh(range.startCol, range.startRow);
         AreaMarked = false;
     }
 
@@ -211,7 +208,6 @@ export const GridCell: React.FC<GridCellProps> = ({
 
         WorkbookManager.getWorkbook().Recalculate();
         EvalCellsInViewport();
-        forceRefresh(range.startCol, range.startRow);
 
         clearVisualHighlight();
 

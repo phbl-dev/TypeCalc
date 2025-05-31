@@ -178,6 +178,8 @@ test("DnD", async ({ page }) => {
     const B1 = page.locator("div#B1.Cell");
     await B1.click();
     await page.keyboard.press("Control+x");
+    const C17 = page.locator("div#C17.Cell");
+    await C17.click();
     await expect(B1).toContainText("10");
 
     const A2 = page.locator("div#A2.Cell");
@@ -189,15 +191,14 @@ test("DnD", async ({ page }) => {
 
     await page.keyboard.press("Control+v");
 
+    await C17.click();
+
     await expect(C2).toContainText("20");
 
     const A3 = page.locator("div#A3.Cell");
 
     await A3.click();
     await page.hover("div#C3.Cell");
-    await page.keyboard.press("F4");
-
-    await page.keyboard.press("F5");
 });
 
 test("Copy and cut single cell", async ({ page }) => {

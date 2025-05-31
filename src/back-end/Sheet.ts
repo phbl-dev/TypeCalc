@@ -359,6 +359,18 @@ export class Sheet {
             );
         }
     }
+
+    public CutCell(
+        cell: Cell,
+        col: number,
+        row: number,
+        targetCol: number,
+        targetRow: number,
+        content: string,
+    ): void {
+        this.PasteCell(cell, col, row, targetCol, targetRow, content);
+        this.RemoveCell(col, row);
+    }
     /**
      * Moves a cell from its current column and row to another
      * It finds the cell based on the fromCol and fromRow
