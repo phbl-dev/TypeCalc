@@ -1,5 +1,6 @@
 import { WorkbookManager } from "../API-Layer/WorkbookManager.ts";
 import { Cell as BackendCell } from "../back-end/Cells.ts";
+import { SuperCellAddress } from "../back-end/CellAddressing.ts";
 
 /**
  * Gets the HTML element based on a provided cell ID
@@ -87,31 +88,29 @@ type CellInfo = {
 
 /**
  * Read area finds alls cells in the area and returns an array of CellInfo objects.
- * @param startRow
- * @param endRow
- * @param startCol
- * @param endCol
  * @constructor
+ * @param ulCa
+ * @param lrCa
  */
-export function ReadArea(
-    startRow: number,
-    endRow: number,
-    startCol: number,
-    endCol: number,
-) {
+export function ReadArea(ulCa: SuperCellAddress, lrCa: SuperCellAddress) {
+    let sheet = WorkbookManager.getActiveSheet();
+    if (!sheet) {
+        return;
+    }
+
     let AreaArray: CellInfo[] = [];
 
-    for (let i = startRow; i <= endRow; i++) {
-        for (let j = startCol; j <= endCol; j++) {
-            const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
+    for (let i = ulCa.row; i <= lrCa.row; i++) {
+        for (let j = ulCa.col; j <= lrCa.row; j++) {
+            const cell = sheet.Get(j, i);
             if (cell) {
                 AreaArray.push({
                     row: i,
                     col: j,
                     cell: cell,
                     content: cell.GetText()!,
-                    relRow: i - startRow,
-                    relCol: j - startCol,
+                    relRow: i - ulCa.row,
+                    relCol: j - ulCa.col,
                 });
             }
         }

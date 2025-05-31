@@ -126,12 +126,13 @@ export const GridCell: React.FC<GridCellProps> = ({
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        for (const cellInfo of ReadArea(
-            range.startRow,
-            range.endRow,
-            range.startCol,
-            range.endCol,
-        )) {
+        let area = ReadArea(range.ulCa, range.lrCa);
+
+        if (!area) {
+            return;
+        }
+
+        for (const cellInfo of area) {
             const { row, col, cell, content, relRow, relCol } = cellInfo;
             sheet!.PasteCell(
                 cell,
@@ -161,12 +162,13 @@ export const GridCell: React.FC<GridCellProps> = ({
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        for (const cellInfo of ReadArea(
-            range.startRow,
-            range.endRow,
-            range.startCol,
-            range.endCol,
-        )) {
+        let area = ReadArea(range.ulCa, range.lrCa);
+
+        if (!area) {
+            return;
+        }
+
+        for (const cellInfo of area) {
             const { row, col, cell, content, relRow, relCol } = cellInfo;
             sheet!.PasteCell(
                 cell,
@@ -278,7 +280,6 @@ export const GridCell: React.FC<GridCellProps> = ({
                         PasteArea(areaRef);
                     }
                     break;
-
                 case "b":
                     makeBold();
                     break;
@@ -413,6 +414,21 @@ export const GridCell: React.FC<GridCellProps> = ({
         (formulaBox as HTMLInputElement).value = content as string;
     };
 
+    function highlightSelectedCells(
+        ulCa: SuperCellAddress,
+        lrCa: SuperCellAddress,
+    ) {
+        for (let r = ulCa.row; r <= lrCa.row; r++) {
+            for (let c = ulCa.col; c <= lrCa.col; c++) {
+                const cellID = numberToLetters(c + 1) + (r + 1);
+                const cell = document.getElementById(cellID);
+                if (cell) {
+                    cell.classList.add("selected-cell");
+                }
+            }
+        }
+    }
+
     /**
      * Highlights an area. If saveHighlight = true, it is saved as session storage
      * @param endCell
@@ -427,14 +443,13 @@ export const GridCell: React.FC<GridCellProps> = ({
         arrowOptRow?: number,
     ): void {
         const endCellRef = new A1RefCellAddress(endCell);
-        let currentActiveCellRef;
-        if (arrowOptCol && arrowOptRow) {
-            currentActiveCellRef = new A1RefCellAddress(
-                numberToLetters(arrowOptCol + 1) + (arrowOptRow + 1),
-            );
-        } else {
-            currentActiveCellRef = new A1RefCellAddress(ID);
-        }
+        let currentActiveCellRef =
+            arrowOptCol && arrowOptRow
+                ? new A1RefCellAddress(
+                      numberToLetters(arrowOptCol + 1) + (arrowOptRow + 1),
+                  )
+                : new A1RefCellAddress(ID);
+
         let { ulCa, lrCa } = SuperCellAddress.normalizeArea(
             currentActiveCellRef,
             endCellRef,
@@ -442,25 +457,12 @@ export const GridCell: React.FC<GridCellProps> = ({
 
         clearVisualHighlight();
 
-        // Highlight all cells in the range
-        for (let r = ulCa.row; r <= lrCa.row; r++) {
-            for (let c = ulCa.col; c <= lrCa.col; c++) {
-                const cellID = numberToLetters(c + 1) + (r + 1);
-                const cell = document.getElementById(cellID);
-                if (cell) {
-                    cell.classList.add("selected-cell");
-                }
-            }
-        }
+        highlightSelectedCells(ulCa, lrCa);
+
         if (saveHighlight) {
             sessionStorage.setItem(
                 "selectionRange",
-                JSON.stringify({
-                    startCol: ulCa.col,
-                    startRow: ulCa.row,
-                    endCol: lrCa.col,
-                    endRow: lrCa.row,
-                }),
+                JSON.stringify({ ulCa: ulCa, lrCa: lrCa }),
             );
         }
     }
