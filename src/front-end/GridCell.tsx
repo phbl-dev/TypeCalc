@@ -58,7 +58,6 @@ export const GridCell: React.FC<GridCellProps> = ({
    */
   const clearAllSupportCells = () => {
     const allSupportCells = document.querySelectorAll(".support-cell");
-    console.log(allSupportCells);
     allSupportCells.forEach((cell) => {
       cell.classList.remove("support-cell");
     });
@@ -69,7 +68,6 @@ export const GridCell: React.FC<GridCellProps> = ({
    */
   const clearAllDependentCells = () => {
     const allSupportCells = document.querySelectorAll(".depend-cell");
-    console.log(allSupportCells);
     allSupportCells.forEach((cell) => {
       cell.classList.remove("depend-cell");
     });
@@ -400,10 +398,8 @@ export const GridCell: React.FC<GridCellProps> = ({
   const updateFormulaBox = (cellID: string, content: string | null): void => {
     const formulaBox = document.getElementById("formulaBox");
     if (!formulaBox) {
-      console.debug("[SpreadsheetGrid.tsx Cell] FormulaBox not found");
       return;
     }
-    console.log("this is the content for the formula box:", content as string);
     (formulaBox as HTMLInputElement).value = content as string;
   };
 
@@ -509,7 +505,7 @@ export const GridCell: React.FC<GridCellProps> = ({
         WorkbookManager.setActiveCell(ID);
         EvalCellsInViewport();
         if (!rawCellContent) {
-          console.debug("[SpreadsheetGrid.tsx Cell] Cell Content not updated");
+          //console.debug("[SpreadsheetGrid.tsx Cell] Cell Content not updated");
           updateFormulaBox(ID, rawCellContent);
           return;
         }
@@ -547,27 +543,14 @@ export const GridCell: React.FC<GridCellProps> = ({
       onKeyUp={(e) => {
         if (e.key === "Shift") {
           shiftKeyDown = false;
-          console.log("Shift released", shiftKeyDown);
         }
       }}
       onBlur={(e) => {
-        console.debug(
-          "Values not found:",
-          WorkbookManager.getWorkbook()
-            ?.getSheet(WorkbookManager.getActiveSheetName())
-            ?.Get(columnIndex, rowIndex),
-        );
 
-        console.log(
-          WorkbookManager.getWorkbook()
-            ?.getSheet(WorkbookManager.getActiveSheetName())
-            ?.Get(columnIndex, rowIndex),
-        );
         //Only update cell if the contents have changed!
         const newValue = (e.target as HTMLElement).innerText;
         if (newValue !== initialValueRef.current) {
           handleInput(rowIndex, columnIndex, newValue);
-          console.debug("Cell Updated");
         } else {
           (e.target as HTMLElement).innerText = valueHolder;
         }
