@@ -91,6 +91,27 @@ export const GridCell: React.FC<GridCellProps> = ({
         });
     };
 
+    const forceRefresh = (col: number, row: number) => {
+        const currCellID = WorkbookManager.getActiveCell()!;
+        const currCell = document.getElementById(currCellID);
+
+        const nextCellID = numberToLetters(col + 1) + (row + 1);
+        const nextCell = document.getElementById(nextCellID);
+        const cellIdInput = document.getElementById(
+            "cellIdInput",
+        ) as HTMLInputElement;
+
+        if (nextCell && cellIdInput) {
+            nextCell.focus();
+            cellIdInput.value = nextCellID;
+        }
+
+        if (currCell && cellIdInput) {
+            currCell.focus();
+            cellIdInput.value = currCellID;
+        }
+    };
+
     /**
      * Paste functionality. Based on the areaRef, it will paste the contents of the area into the current cell.
      * If multiple cells are part of the copied area, it will paste onto multiple cells.
@@ -128,6 +149,8 @@ export const GridCell: React.FC<GridCellProps> = ({
 
         WorkbookManager.getWorkbook().Recalculate();
         EvalCellsInViewport();
+        forceRefresh(range.startCol, range.startRow);
+
         AreaMarked = false;
     }
 
@@ -168,6 +191,8 @@ export const GridCell: React.FC<GridCellProps> = ({
 
         WorkbookManager.getWorkbook().Recalculate();
         EvalCellsInViewport();
+        forceRefresh(range.startCol, range.startRow);
+
         AreaMarked = false;
     }
 
@@ -194,9 +219,10 @@ export const GridCell: React.FC<GridCellProps> = ({
         }
 
         WorkbookManager.getWorkbook().Recalculate();
-        EvalCellsInViewport();
 
+        EvalCellsInViewport();
         clearVisualHighlight();
+        forceRefresh(range.startCol, range.startRow);
 
         AreaMarked = false;
     }
