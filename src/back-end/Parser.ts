@@ -167,16 +167,14 @@ class SpreadsheetLexer {
         name: "XMLSSRARef31",
         pattern: /R\[[+-]?[0-9]+]C/,
     }); // Match R[+9]C
-
+    static XMLSSRARef32: TokenType = createToken({
+        name: "XMLSSRARef32",
+        pattern: /R\[[+-]?[0-9]+]C[0-9]+/,
+    });
     static XMLSSRARef33: TokenType = createToken({
         name: "XMLSSRARef33",
         pattern: /R\[[+-]?[0-9]+]C\[[+-]?[0-9]+]/,
     }); // Match R[-0000]C[-10]
-    static XMLSSRARef32: TokenType = createToken({
-        name: "XMLSSRARef32",
-        pattern: /R\[[+-]?[0-9]+]C\[[0-9]+]/,
-        longer_alt: SpreadsheetLexer.XMLSSRARef33,
-    }); // Match R[+9]C[9]
 
     /**
      * Array of all tokens used in the project.
@@ -188,8 +186,8 @@ class SpreadsheetLexer {
      * and if XMLSSRARef11 is defined first, it will ignore XMLSSRARef12
      */
     static AllTokens: TokenType[] = [
-        SpreadsheetLexer.XMLSSRARef32,
         SpreadsheetLexer.XMLSSRARef33,
+        SpreadsheetLexer.XMLSSRARef32,
         SpreadsheetLexer.XMLSSRARef31,
         SpreadsheetLexer.XMLSSRARef23,
         SpreadsheetLexer.XMLSSRARef22,
