@@ -1,8 +1,14 @@
 {
-  "entryPoints": ["./src"],
-  "entryPointStrategy": "expand",
-  "out": "docs",
-  "excludePrivate": true,
-  "excludeProtected": true,
-  "excludeExternals": true
+    "entryPoints": ["src/"],
+    "entryPointStrategy": "expand",
+    "out": "docs/",
+    "validation": {
+        "notExported": false,
+        "invalidLink": true,
+        "notDocumented": true
+    },
+    "treatWarningsAsErrors": false,
+    "excludePrivate": true,
+    "excludeProtected": false,
+    "excludeExternals": true
 }
