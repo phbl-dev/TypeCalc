@@ -331,7 +331,7 @@ export class SuperRARef {
 }
 
 /**
- * Signature RARef(String a1ref) in C# source
+ * Signature RARef(String a1ref) in C# source.
  * It uses the A1 format.
  *
  */

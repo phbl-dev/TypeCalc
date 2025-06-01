@@ -10,7 +10,7 @@ export const renderGrid = () => {
     if (location) {
         const table = ReactDOM.createRoot(location);
         table.render(
-            <VirtualizedGrid columnCount={64000} rowCount={1000000} />,
+            <VirtualizedGrid columnCount={65536} rowCount={1048576} />,
         );
     }
 };
