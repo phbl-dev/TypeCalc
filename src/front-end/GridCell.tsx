@@ -103,7 +103,12 @@ export const GridCell: React.FC<GridCellProps> = ({
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        const area = ReadArea(range.ulCa, range.lrCa);
+        const area = ReadArea(
+            range.startRow,
+            range.endRow,
+            range.startCol,
+            range.endCol,
+        );
 
         if (!area) {
             return;
@@ -138,7 +143,12 @@ export const GridCell: React.FC<GridCellProps> = ({
         const targetCellRef = new A1RefCellAddress(ID);
         const sheet = WorkbookManager.getActiveSheet();
 
-        const area = ReadArea(range.ulCa, range.lrCa);
+        const area = ReadArea(
+            range.startRow,
+            range.endRow,
+            range.startCol,
+            range.endCol,
+        );
 
         if (!area) {
             return;
@@ -412,7 +422,7 @@ export const GridCell: React.FC<GridCellProps> = ({
     ): void {
         const endCellRef = new A1RefCellAddress(endCell);
         const currentActiveCellRef =
-            arrowOptCol && arrowOptRow
+            arrowOptCol !== undefined && arrowOptRow !== undefined
                 ? new A1RefCellAddress(
                       numberToLetters(arrowOptCol + 1) + (arrowOptRow + 1),
                   )
@@ -424,13 +434,17 @@ export const GridCell: React.FC<GridCellProps> = ({
         );
 
         clearVisualHighlight();
-
         highlightSelectedCells(ulCa, lrCa);
 
         if (saveHighlight) {
             sessionStorage.setItem(
                 "selectionRange",
-                JSON.stringify({ ulCa: ulCa, lrCa: lrCa }),
+                JSON.stringify({
+                    startCol: ulCa.col,
+                    startRow: ulCa.row,
+                    endCol: lrCa.col,
+                    endRow: lrCa.row,
+                }),
             );
         }
     }

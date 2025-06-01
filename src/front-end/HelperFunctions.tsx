@@ -89,28 +89,30 @@ type CellInfo = {
 /**
  * Read area finds alls cells in the area and returns an array of CellInfo objects.
  * @constructor
- * @param ulCa
- * @param lrCa
+ * @param startRow
+ * @param endRow
+ * @param startCol
+ * @param endCol
  */
-export function ReadArea(ulCa: SuperCellAddress, lrCa: SuperCellAddress) {
-    const sheet = WorkbookManager.getActiveSheet();
-    if (!sheet) {
-        return;
-    }
+export function ReadArea(
+    startRow: number,
+    endRow: number,
+    startCol: number,
+    endCol: number,
+) {
+    let AreaArray: CellInfo[] = [];
 
-    const AreaArray: CellInfo[] = [];
-
-    for (let i = ulCa.row; i <= lrCa.row; i++) {
-        for (let j = ulCa.col; j <= lrCa.row; j++) {
-            const cell = sheet.Get(j, i);
+    for (let i = startRow; i <= endRow; i++) {
+        for (let j = startCol; j <= endCol; j++) {
+            const cell = WorkbookManager.getActiveSheet()?.Get(j, i);
             if (cell) {
                 AreaArray.push({
                     row: i,
                     col: j,
                     cell: cell,
                     content: cell.GetText()!,
-                    relRow: i - ulCa.row,
-                    relCol: j - ulCa.col,
+                    relRow: i - startRow,
+                    relCol: j - startCol,
                 });
             }
         }

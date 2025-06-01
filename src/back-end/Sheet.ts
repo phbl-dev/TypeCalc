@@ -383,18 +383,24 @@ export class Sheet {
         targetRow: number,
         content: string,
     ): void {
-        this.SetCell(
-            Cell.Parse(
-                cell instanceof Formula
-                    ? adjustFormula(content!, targetRow - row, targetCol - col)
-                    : content,
-                this.workbook,
+        if (cell instanceof Formula) {
+            this.SetCell(
+                Cell.Parse(
+                    adjustFormula(content!, targetRow - row, targetCol - col),
+                    this.workbook,
+                    targetCol,
+                    targetRow,
+                )!,
                 targetCol,
                 targetRow,
-            )!,
-            targetCol,
-            targetRow,
-        );
+            );
+        } else {
+            this.SetCell(
+                Cell.Parse(content!, this.workbook, targetCol, targetRow)!,
+                targetCol,
+                targetRow,
+            );
+        }
     }
 
     /**
