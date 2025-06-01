@@ -2,7 +2,7 @@
 
 ## About
 
-TypeCalc is a thesis-related project that was started in Spring 2025 based on the book: "Spreadsheet Implementation Technology: Basics and Extensions" (2014) written by Peter Sestoft, as well as the accompanying C# implementation "CoreCalc"
+TypeCalc is a master's thesis project that was started in Spring 2025 based on the book: "Spreadsheet Implementation Technology: Basics and Extensions" (2014) written by Peter Sestoft, as well as the accompanying C# implementation "CoreCalc"
 
 The reasoning for the project lies in a desire to create an open-source spreadsheet implementation in TypeScript that is well-documented, tested and make use of the QT4 simplified quad-tree as described by Peter Sestoft.
 
@@ -40,7 +40,7 @@ TypeCalc can be run in the repository in one of two ways:
 
     Which should create a server on the address: http://localhost:5173/
 
-2. Alternatively, we provide a docker compose file, which only requires the user to have docker installed on their system. If docker is installed, then the user can simply use `docker compose up --build`, which will compile and run the server on the same localhost connection as previously described.
+2. Alternatively, we provide a docker compose file, which only requires the user to have docker installed on their system. If docker is installed, then the user can simply use `docker compose up --build` from the root directory while docker is running. This will compile and run the server on the same localhost connection as previously described: http://localhost:5173/.
 
     _**Remember to kill both the server and docker when done using TypeCalc, as this will otherwise consume a lot of ressources on the host system. The server can be shutdown using the command: `docker compose down` followed by `docker image rm $(docker image ls -q "spreadsheet*")` to remove the image completely.**_
 
