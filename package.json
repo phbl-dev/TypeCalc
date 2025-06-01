@@ -46,7 +46,6 @@
         "jsdoc": "^4.0.4",
         "playwright": "^1.51.1",
         "typedoc": "^0.28.5",
-        "typedoc-plugin-missing-check": "^0.4.0",
         "typescript": "~5.7.2",
         "typescript-eslint": "^8.24.1",
         "vite": "^6.2.0",
