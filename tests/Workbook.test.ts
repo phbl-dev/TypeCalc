@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { Workbook } from "../src/back-end/Workbook";
-import { Sheet, SheetRep } from "../src/back-end/Sheet";
+import { Sheet } from "../src/back-end/Sheet";
 import { Cell, Formula, NumberCell, TextCell } from "../src/back-end/Cells";
 import {
     FullCellAddress,
@@ -188,11 +188,11 @@ describe("Workbook", () => {
     });
 
     test("SheetCount", () => {
-        expect(workbook.SheetCount()).toBe(0);
+        expect(workbook.SheetCount).toBe(0);
         workbook.AddSheet(sheet);
-        expect(workbook.SheetCount()).toBe(1);
+        expect(workbook.SheetCount).toBe(1);
         workbook.Clear("sheets");
-        expect(workbook.SheetCount()).toBe(0);
+        expect(workbook.SheetCount).toBe(0);
     });
 
     test("Is the workbook iterable?", () => {
@@ -209,7 +209,7 @@ describe("Workbook", () => {
     });
 
     test("Clear", () => {
-        expect(workbook.SheetCount()).toBe(0);
+        expect(workbook.SheetCount).toBe(0);
         expect(workbook.GetEditedCells().length).toBe(0);
         expect(workbook.GetVolatileCells().size).toBe(0);
         expect(workbook.GetAwaitsEvaluation().length).toBe(0);
@@ -219,7 +219,7 @@ describe("Workbook", () => {
         // workbook.IncreaseVolatileSet() // Implement when we can make a volatile cell
         workbook.AddToQueue(sheet, 0, 0);
 
-        expect(workbook.SheetCount()).toBe(1);
+        expect(workbook.SheetCount).toBe(1);
         expect(workbook.GetEditedCells().length).toBe(1);
         //expect(workbook.GetVolatileCells().size).toBe(1);
         expect(workbook.GetAwaitsEvaluation().length).toBe(1);
@@ -229,7 +229,7 @@ describe("Workbook", () => {
         workbook.Clear("volatileCells");
         workbook.Clear("awaitsEvaluation");
 
-        expect(workbook.SheetCount()).toBe(0);
+        expect(workbook.SheetCount).toBe(0);
         expect(workbook.GetEditedCells().length).toBe(0);
         expect(workbook.GetVolatileCells().size).toBe(0);
         expect(workbook.GetAwaitsEvaluation().length).toBe(0);

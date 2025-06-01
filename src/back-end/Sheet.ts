@@ -77,6 +77,37 @@ export class Sheet {
         this.cols = val;
     }
 
+    public MoveCell(
+        fromCol: number,
+        fromRow: number,
+        col: number,
+        row: number,
+    ) {
+        if (this.cells != null) {
+            const originalCell: Cell = this.cells.Get(fromCol, fromRow)!;
+
+            const originalSupportSet = originalCell.GetSupportSet();
+
+            this.Set(
+                col as number,
+                originalCell.MoveContents(col - fromCol, row - fromRow),
+                row,
+            );
+
+            const newCell: Cell = this.cells.Get(col, row)!;
+
+            this.RemoveCell(fromCol, fromRow);
+
+            if (originalSupportSet != null) {
+                const blankCell = this.cells.Get(fromCol, fromRow)!;
+
+                newCell.TransferSupportTo(blankCell);
+                this.workbook.RecordCellChange(fromCol, fromRow, this);
+                this.workbook.RecordCellChange(col, row, this);
+            }
+        }
+    }
+
     /**
      * Returns the number of rows in the sheet.
      * @constructor
