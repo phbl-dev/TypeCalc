@@ -178,7 +178,7 @@ export function EvalCellsInViewport(): void {
 }
 
 /**
- * Returns the supports in the viewport
+ * Returns the IDs of the active cell's supporting cells in the viewport.
  * Uses the ForEachReferred method to iterate through the support set of the cell.
  * @param col
  * @param row
@@ -203,6 +203,12 @@ export function GetSupportsInViewPort(col: number, row: number): string[] {
     return supports;
 }
 
+/**
+ * Returns an array of strings containing the IDs of the dependencies of the active cell.
+ * @param col
+ * @param row
+ * @constructor
+ */
 export function GetDependenciesInViewPort(col: number, row: number): string[] {
     let supports: string[] = [];
     WorkbookManager.getActiveSheet()
@@ -214,6 +220,13 @@ export function GetDependenciesInViewPort(col: number, row: number): string[] {
     return supports;
 }
 
+/**
+ * Handles parsing from user input in the front-end to a cell in the back-end.
+ * @param content
+ * @param columnIndex
+ * @param rowIndex
+ * @constructor
+ */
 export function ParseCellToBackend(
     content: string,
     columnIndex: number,
