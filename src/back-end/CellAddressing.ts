@@ -501,7 +501,9 @@ export class SuperCellAddress {
     }
 }
 
-// TODO: WORK FROM HERE FOR DOCUMENTATION
+/**
+ * Represents a relative or absolute reference to a cell address, extending the functionality of the SuperCellAddress class.
+ */
 export class RARefCellAddress extends SuperCellAddress {
     constructor(cr: SuperRARef, col: number, row: number) {
         const caCol: number = cr.colAbs ? cr.colRef : cr.colRef + col;
@@ -517,6 +519,9 @@ export class A1RefCellAddress extends RARefCellAddress {
     }
 }
 
+/**
+ * Cell address, that includes a sheet reference.
+ */
 export class FullCellAddress {
     readonly sheet: Sheet;
     readonly cellAddress: SuperCellAddress;
@@ -571,11 +576,17 @@ export class FullCellAddress {
         return null;
     }
 
+    /**
+     * Safe way of getting a cell.
+     */
     public tryGetCell(): Cell | null {
         return this.sheet.Get(this.cellAddress);
     }
 }
 
+/**
+ * A supportSet is a list of cells that depend on a given cell.
+ */
 export class SupportSet {
     readonly ranges: SupportRange[] = [];
 
@@ -620,6 +631,10 @@ export class SupportSet {
         this.ranges.push(range);
     }
 
+    /**
+     * For each value, that we support.
+     * @param act
+     */
     forEachSupported(
         act: (sheet: Sheet, col: number, row: number) => void,
     ): void {
@@ -629,6 +644,10 @@ export class SupportSet {
     }
 }
 
+/**
+ * Represents an abstract concept of a range within a spreadsheet, which could
+ * either be a single cell or a larger area.
+ */
 export abstract class SupportRange {
     static make(
         sheet: Sheet,
@@ -644,6 +663,13 @@ export abstract class SupportRange {
         return new SupportArea(sheet, colInterval, rowInterval);
     }
 
+    /**
+     * Remove a cell from a support set.
+     * @param set
+     * @param sheet
+     * @param col
+     * @param row
+     */
     abstract removeCell(
         set: SupportSet,
         sheet: Sheet,
@@ -651,17 +677,24 @@ export abstract class SupportRange {
         row: number,
     ): boolean;
 
-    //have to use an arrow function here to preserve the function signature for an abstract function
     abstract forEachSupported(
         act: (sheet: Sheet, col: number, row: number) => void,
     ): void;
 
+    /**
+     * Checks if a cell exists in the support set.
+     * @param sheet
+     * @param col
+     * @param row
+     */
     abstract contains(sheet: Sheet, col: number, row: number): boolean;
 
     abstract get count(): number;
 }
-
-//I don't understand why we have to call super when the superclass has no constructor. Have to investigate.
+/**
+ *  type of SupportRange that represents a single cell in a sheet that another cell
+ * depends on
+ */
 export class SupportCell extends SupportRange {
     readonly sheet: Sheet;
     readonly col: number;
@@ -674,7 +707,6 @@ export class SupportCell extends SupportRange {
         this.row = row;
     }
 
-    //Is this even implemented???
     removeCell(
         set: SupportSet,
         sheet: Sheet,
@@ -698,7 +730,6 @@ export class SupportCell extends SupportRange {
         return 1;
     }
 
-    //interesting implementation requires testing
     toString(): string {
         return new FullCellAddress(
             this.sheet,
@@ -724,10 +755,11 @@ export class SupportArea extends SupportRange {
         this.rowInterval = rowInterval;
     }
 
-    //Removes a cell (sheet, col, row) from the given support set (set) by removing it from the
-    //support area, and splitting the remaining area in to new areas. For example, the area defined
-    //by intervals colInt: 1-3 and rowInt: 1-3 is a single area, but if we remove cell: 2,2 from the
-    //area, the remaining area has to be split into 4 new areas (N, S, E, W).
+    /**Removes a cell (sheet, col, row) from the given support set (set) by removing it from the
+    support area, and splitting the remaining area in to new areas. For example, the area defined
+    by intervals colInt: 1-3 and rowInt: 1-3 is a single area, but if we remove cell: 2,2 from the
+    area, the remaining area has to be split into 4 new areas (N, S, E, W).
+        */
     override removeCell(
         set: SupportSet,
         sheet: Sheet,
@@ -838,7 +870,6 @@ export class SupportArea extends SupportRange {
         );
     }
 
-    //Iterates over all regions of a SupportArea, except for overlapping region with another SupportArea.
     private forEachExcept(
         overlap: SupportArea,
         act: (sheet: Sheet, row: number, col: number) => void,
@@ -877,7 +908,6 @@ export class SupportArea extends SupportRange {
             );
     }
 
-    //does something
     private static forEachInArea(
         sheet: Sheet,
         colInt: Interval,

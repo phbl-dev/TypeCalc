@@ -16,7 +16,7 @@ import {
     SuperCellAddress,
 } from "./CellAddressing";
 import { ErrorConst, type Expr } from "./Expressions"; // This should be imported when it's done
-import { CyclicException, Formats } from "./Types";
+import { Formats } from "./Types";
 import { SpreadsheetVisitor } from "./Parser.ts";
 import type { Workbook } from "./Workbook"; // This should be imported when it's done
 
@@ -132,7 +132,7 @@ export abstract class Cell {
     public abstract Reset(): void;
 
     /** Mark the cell dirty, for later evaluation
-    @note refrain from using this method, instead use Cell.MarkCellDirty
+     * This is only relevant for FormulaCells, which maintain a CellState
      */
     public abstract MarkDirty(): void;
 
@@ -158,7 +158,9 @@ export abstract class Cell {
         this.textField = text;
     }
 
-    // Enqueue this cell for evaluation
+    /**
+     * Enqueue this cell for evaluation
+     */
     public abstract EnqueueForEvaluation(
         sheet: Sheet,
         col: number,
@@ -166,7 +168,7 @@ export abstract class Cell {
     ): void;
 
     /**
-     * Checks if cell exists in sheet, and Enqueues it for evaluation.
+     * Checks if cell exists in the Sheet, and Enqueues it for evaluation.
      * @param sheet
      * @param sheet
      * @param col
@@ -184,7 +186,7 @@ export abstract class Cell {
         }
     }
 
-    /*
+    /**
     The showValue() method calls the Eval function to evaluate the value of the cell and then returns this value as a string.
     If the value is null then an empty string is returned.
 
@@ -192,6 +194,7 @@ export abstract class Cell {
     - sheet: Sheet
     - col: number
     - row: number
+    @deprecated
      */
     public showValue(sheet: Sheet, col: number, row: number): string {
         const v: Value | null = this.Eval(sheet, col, row);
@@ -209,6 +212,7 @@ export abstract class Cell {
     - fo: Formats
     col and row gives the location of the cell and fo gives the format of the spreadsheet which
     may differ (e.g. SUM(A1, B1) and SUM(R1C1, R1C1) which are the same)
+     @deprecated
      */
     public abstract Show(col: number, row: number, fo: Formats): string;
 
@@ -218,7 +222,6 @@ export abstract class Cell {
     - workbook: Workbook - We likely give this because parseCell() needs it. Maybe for retrieving references of cells in other sheets of that workbook.
     - col: number - The column where the cell is meant to be when it's inserted.
     - row: number - The row where the cell is meant to be when it's inserted.
-
     And then parses the text argument into a Cell object and returns this Cell.
      */
     public static Parse(
@@ -350,7 +353,9 @@ export abstract class Cell {
         act: (addr: FullCellAddress) => void,
     ): void;
 
-    // True if the expression in the cell is volatile
+    /**
+     *  True if the expression in the cell is volatile
+     */
     public abstract IsVolatile(): boolean;
 
     // Clone cell (supportSet, state fields) but not its sharable contents
@@ -431,19 +436,17 @@ export abstract class ConstCell extends Cell {
 
 /*
     A BlankCell is a blank cell, used only to record a blank cell's support set.
+    It maintains no values.
  */
 export class BlankCell extends ConstCell {
     constructor() {
         super();
     }
     public override Eval(sheet: Sheet, col: number, row: number): Value | null {
-        //console.log(sheet, col, row);
         return null;
     }
 
     public override Show(col: number, row: number, fo: Formats): string {
-        //console.log(col, row, fo);
-
         return "";
     }
 
@@ -452,15 +455,13 @@ export class BlankCell extends ConstCell {
     }
 }
 
+/**
+ * Represents a cell that holds a numeric value, derived from the `ConstCell` class.
+ * Designed to store and manage immutable numeric data within a spreadsheet model.
+ */
 export class NumberCell extends ConstCell {
     public readonly value: NumberValue; // Non-null
 
-    /**
-     Since we cannot have multiple constructors in TypeScript, we have created a constructor that
-     either:
-     - sets value to be a new NumberValue instance if d is a number,
-     - or sets value to be the value of d if d is already a NumberCell.
-     */
     constructor(d: number | NumberCell) {
         super();
         if (typeof d === "number") {
@@ -487,6 +488,10 @@ export class NumberCell extends ConstCell {
     }
 }
 
+/**
+ * The `QuoteCell` class represents a cell that holds a quoted textual value.
+ * It is derived from the `ConstCell` class and encapsulates a `TextValue` object.
+ */
 export class QuoteCell extends ConstCell {
     public readonly value: TextValue;
 
@@ -505,8 +510,7 @@ export class QuoteCell extends ConstCell {
     }
 
     public override Show(col: number, row: number, fo: Formats): string {
-        return "" + this.value.value; // not just the TextValue but the value of the TextValue which gives us an actual string.
-        // Question: Why add "'"?
+        return "" + this.value.value;
     }
 
     public override CloneCell(col: number, row: number): Cell {
@@ -566,14 +570,9 @@ export class TextCell extends ConstCell {
 }
 
 /**
- * @file This file contains the Formula, ArrayFormula, and CachedArrayFormula classes
- * These classes are subclasses of cells, and are essentially ways of handling cell formulas,
- * both individually and as part of an array
- */
-
-/**
  * A Formula is a non-null caching expression contained in a single cell
- * It extends upon the cell abstract class.
+ * It extends upon the cell abstract class Cell, and maintains a state, expression, and value, that needs to be evaluated.
+ * On initialization, Formulas are marked as Uptodate.
  */
 export class Formula extends Cell {
     public readonly workbook: Workbook;
@@ -589,6 +588,9 @@ export class Formula extends Cell {
         this.v = null;
     }
 
+    /**
+     * Creates a new Formula instance using the provided workbook and expression, or returns null if the expression is null.
+     */
     public static Make(workbook: Workbook, e: Expr): Formula | null {
         if (e == null) {
             return null;
