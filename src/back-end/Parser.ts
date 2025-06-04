@@ -900,7 +900,6 @@ export class SpreadsheetVisitor
     }
 
     public cellContents(ctx: CellContentsCstChildren): Cell {
-        console.log(JSON.stringify(ctx, null, 2));
         const e: Expr = this.visit(ctx.expression!);
         if (ctx.Equals) {
             this.cell = Formula.Make(this.workbook, e)!;
