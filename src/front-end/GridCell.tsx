@@ -152,6 +152,14 @@ export const GridCell: React.FC<GridCellProps> = ({
         forceRefresh(range.startCol, range.startRow);
 
         AreaMarked = false;
+
+        // We add the size of the pasted area to cellsPerAction
+        WorkbookManager.getActiveSheet()?.addCellsPerAction(
+            (range.endRow - range.startRow + 1) *
+                (range.endCol - range.startCol + 1),
+        );
+        // regardless of the number of cells per action, then CellsPerActionPointer should be increased by one.
+        WorkbookManager.getActiveSheet()?.increaseCellsPerActionPointer();
     }
 
     /**
@@ -253,13 +261,32 @@ export const GridCell: React.FC<GridCellProps> = ({
             switch (event.key) {
                 case "z": // Undo functionality:
                     event.preventDefault();
-                    WorkbookManager.getActiveSheet()?.undo();
+                    const undoCount: number | undefined =
+                        WorkbookManager.getActiveSheet()?.getCellsPerAction();
+                    console.log(undoCount);
+                    if (undoCount) {
+                        for (let i = 0; i < undoCount; i++) {
+                            WorkbookManager.getActiveSheet()?.undo();
+                        }
+                    }
+                    WorkbookManager.getActiveSheet()?.decreaseCellsPerActionPointer();
+
                     EvalCellsInViewport();
                     break;
 
                 case "y": // Redo functionality:
                     event.preventDefault();
-                    WorkbookManager.getActiveSheet()?.redo();
+
+                    WorkbookManager.getActiveSheet()?.increaseCellsPerActionPointer();
+                    const redoCount: number | undefined =
+                        WorkbookManager.getActiveSheet()?.getCellsPerAction();
+                    console.log(redoCount);
+                    if (redoCount) {
+                        for (let i = 0; i < redoCount; i++) {
+                            WorkbookManager.getActiveSheet()?.redo();
+                        }
+                    }
+
                     EvalCellsInViewport();
                     break;
 

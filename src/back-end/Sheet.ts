@@ -23,6 +23,8 @@ export class Sheet {
     private historyPointer: number; // Added for undo/redo functionality. Points at where we are in the history.
     private undoCount: number; // Added for undo/redo functionality. Counts how deep we are in undo calls.
     private functionSheet: boolean;
+    private cellsPerAction: number[]; // Added for undo/redo functionality.
+    private cellsPerActionPointer: number; // Added for undo/redo functionality.
 
     /**
      * Constructors are defined below. There is supposed to be two constructors,
@@ -57,6 +59,8 @@ export class Sheet {
         this.history = []; // Initially empty because no cells have been added yet
         this.historyPointer = 0; // Initially 0 because there is nothing else in the history to point at
         this.undoCount = 0; // Initially 0 because nothing have been undone
+        this.cellsPerAction = [];
+        this.cellsPerActionPointer = 0; // Initially 0 because there is nothing else in cellsPerAction to point at
     }
 
     /**
@@ -207,6 +211,32 @@ export class Sheet {
             // We decrease the undoCount because we have now recreated an action:
             this.undoCount--;
         }
+    }
+
+    public addCellsPerAction(amount: number): void {
+        this.cellsPerAction.push(amount);
+    }
+
+    public getCellsPerAction(): number {
+        console.log(
+            "works=: ",
+            this.cellsPerAction[this.cellsPerActionPointer - 1],
+        );
+        console.log("this.cellsPerAction: ", this.cellsPerAction);
+        console.log(
+            "this.cellsPerActionPointer: ",
+            this.cellsPerActionPointer - 1,
+        );
+
+        return this.cellsPerAction[this.cellsPerActionPointer - 1];
+    }
+
+    public increaseCellsPerActionPointer(): void {
+        this.cellsPerActionPointer++;
+    }
+
+    public decreaseCellsPerActionPointer(): void {
+        this.cellsPerActionPointer--;
     }
 
     /**
@@ -646,6 +676,7 @@ export class Sheet {
             // Otherwise, we use the slice method to exclude the first element
             // from the history array and give it length 99:
             this.history = this.history.slice(1);
+            this.cellsPerAction = this.cellsPerAction.slice(1);
             // Now we can call manageHistory() to add the new cell.
             this.manageHistory(row, col, newCell);
             // Note that we don't increase the history pointer here
@@ -675,6 +706,7 @@ export class Sheet {
             if (this.undoCount > 0) {
                 for (let i = 0; i < this.undoCount; i++) {
                     this.history.pop();
+                    this.cellsPerAction.pop();
                 }
 
                 // Reset undoCount because the history has been updated:

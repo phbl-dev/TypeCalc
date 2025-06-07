@@ -277,7 +277,17 @@ export function HandleArrayResult(
                     rowIndex + result!.values[0].length - 1,
                 ),
             );
+        // Set cells per action in accordance with the array-valued result
+        WorkbookManager.getActiveSheet()?.addCellsPerAction(
+            result!.values[0].length - 1,
+        );
+    } else {
+        // Otherwise, if it was not an array-valued result, there should be a single cell only
+        WorkbookManager.getActiveSheet()?.addCellsPerAction(1);
     }
+    // regardless of the number of cells per action, then CellsPerActionPointer should be increased by one.
+    WorkbookManager.getActiveSheet()?.increaseCellsPerActionPointer();
+
     return true;
 }
 
