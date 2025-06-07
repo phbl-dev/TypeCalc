@@ -10,6 +10,12 @@ import { type Adjusted, Interval, SuperCellAddress } from "./CellAddressing";
 import { Expr } from "./Expressions";
 import { adjustFormula } from "../front-end/HelperFunctions.tsx";
 
+interface SheetHistory {
+    cell: Cell;
+    row: number;
+    col: number;
+}
+
 /**
  * Represents a spreadsheet sheet.
  */
@@ -18,8 +24,8 @@ export class Sheet {
     public rows = 1048576;
     private name: string;
     public readonly workbook: Workbook;
-    private readonly cells: SheetRep;
-    private history: { cell: Cell; row: number; col: number }[]; // Added for undo/redo functionality. Array for caching added cells such that we can undo and redo them.
+    public cells: SheetRep;
+    private history: SheetHistory[]; // Added for undo/redo functionality. Array for caching added cells such that we can undo and redo them.
     private historyPointer: number; // Added for undo/redo functionality. Points at where we are in the history.
     private undoCount: number; // Added for undo/redo functionality. Counts how deep we are in undo calls.
     private functionSheet: boolean;
@@ -141,6 +147,16 @@ export class Sheet {
      *
      * @returns void
      */
+
+    /**
+     * The undo method is used when a user press "ctrl+z" to draw back an action in the spreadsheet.
+     *
+     * @remarks
+     * The functionality of the method will only be invoked if there are actions to undo, i.e.
+     * the size of the undoCount is smaller than the length of the history array.
+     *
+     * @returns void
+     */
     public undo(): void {
         // If the undoCount is smaller than the length of the history, then there are cells to undo.
         if (this.undoCount < this.history.length) {
@@ -167,21 +183,26 @@ export class Sheet {
                         this.history[this.history.length - this.undoCount].col
                 ) {
                     // Then set the cell to that previous state
-                    this.cells.Set(
-                        this.history[i].col,
-                        this.history[i].row,
-                        this.history[i].cell,
-                    );
+                    this.manageUpdates(i, this.history[i].cell);
                     return;
                 }
             }
-            // Else, set the cell to null because then it should just be blank
-            this.cells.Set(
-                this.history[this.historyPointer].col,
-                this.history[this.historyPointer].row,
-                new BlankCell(),
-            );
+            this.manageUpdates(this.historyPointer, new BlankCell());
         }
+    }
+
+    private manageUpdates(pointer: number, newCell: Cell): void {
+        const entry: SheetHistory = this.history[pointer];
+
+        const cell: Cell | null = this.cells.Get(entry.col, entry.row);
+
+        if (cell) {
+            cell.TransferSupportTo(newCell);
+            this.cells.Set(entry.col, entry.row, newCell);
+            this.workbook.RecordCellChange(entry.col, entry.row, this);
+            this.workbook.Recalculate();
+        }
+        return;
     }
 
     /**
@@ -195,11 +216,8 @@ export class Sheet {
             // We get index that undoCount is at in relation to the history length because we
             // want to redo and get update the cell in that spot.
             const i = this.history.length - this.undoCount;
-            this.cells.Set(
-                this.history[i].col,
-                this.history[i].row,
-                this.history[i].cell,
-            );
+
+            this.manageUpdates(i, this.history[i].cell);
 
             // We have moved one step forward in the history array so we increase the history pointer by 1:
             this.historyPointer++;
@@ -866,7 +884,7 @@ class SheetRep {
         this.W * this.H,
     )
         .fill(null)
-        .map(() => []);
+        .map((): never[] => []);
 
     /**
      * Retrieve a cell value from the sheet.
