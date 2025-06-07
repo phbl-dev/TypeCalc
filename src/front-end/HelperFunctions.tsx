@@ -1,6 +1,6 @@
 import { WorkbookManager } from "../API-Layer/WorkbookManager.ts";
 import { Cell as BackendCell } from "../back-end/Cells.ts";
-import { SuperCellAddress } from "../back-end/CellAddressing.ts";
+import { A1RARef, SuperCellAddress } from "../back-end/CellAddressing.ts";
 
 /**
  * Gets the HTML element based on a provided cell ID
@@ -49,6 +49,10 @@ export function adjustFormula(
     rowDiff: number,
     colDiff: number,
 ): string {
+    if (formula.match(/(=R[0-9]+C[0-9]+)/)) {
+        return formula;
+    }
+
     return formula.replace(
         /(\$?)([A-Z]+)(\$?)(\d+)/g,
         (match, colAbs, column, rowAbs, row) => {
